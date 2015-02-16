@@ -43,9 +43,14 @@ in stdenv.mkDerivation {
 
   patches = stdenv.lib.optionals stdenv.isDarwin [ ./no-xcode.patch ./pkg-libpath.patch ];
 
+  preBuild = if stdenv.isDarwin then ''
+    sed -e 's|^#!/usr/bin/env python$|#!${python}/bin/python|g' -i out/gyp-mac-tool
+  '' else null;
+
   buildInputs = [ python which zlib libuv openssl python ]
     ++ optionals stdenv.isLinux [ utillinux http-parser ]
-    ++ optionals stdenv.isDarwin [ pkgconfig openssl libtool ];
+    ++ optionals stdenv.isDarwin [ pkgconfig openssl libtool CoreServices ApplicationServices ];
+
   setupHook = ./setup-hook.sh;
 
   enableParallelBuilding = true;
