@@ -1,7 +1,7 @@
 { stdenv, git, clang,
-  fetchFromGitHub, requireFile, fuse,
+  fetchFromGitHub, requireFile,
   openssl, xz, gnutar, gcc,
-  automake, autoconf, libtool, clangStdenv, darling-dmg } :
+  automake, autoconf, libtool, clangStdenv } :
 
 clangStdenv.mkDerivation rec {
   name = "ios-cross-compile-${version}";
@@ -21,7 +21,7 @@ clangStdenv.mkDerivation rec {
     rev = "3064ed628108da4b9a52cfbe5d4c1a5817811400";
     sha256 = "1a6zaz8fgbi239l5zqx9xi3hsrv3jmfh8dkiy5gmnjs6v4gcf6sf";
   };
-  buildInputs = [ fuse darling-dmg git xz gnutar openssl automake autoconf libtool clang ];
+  buildInputs = [ git xz gnutar openssl automake autoconf libtool clang ];
   alt_wrapper = ./alt_wrapper.c;
   builder = ./9.2_builder.sh;
   meta = {
