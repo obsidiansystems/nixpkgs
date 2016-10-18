@@ -1,8 +1,8 @@
 diff --git a/src-bin/Boot.hs b/src-bin/Boot.hs
-index db8b12e..7b815c5 100644
+index 8e19b1d..03d3ac0 100644
 --- a/src-bin/Boot.hs
 +++ b/src-bin/Boot.hs
-@@ -526,9 +526,7 @@ initPackageDB :: B ()
+@@ -530,9 +530,7 @@ initPackageDB :: B ()
  initPackageDB = do
    msg info "creating package databases"
    initDB "--global" <^> beLocations . blGlobalDB
@@ -12,7 +12,7 @@ index db8b12e..7b815c5 100644
      initDB dbName db = do
        rm_rf db >> mkdir_p db
        ghcjs_pkg_ ["init", toTextI db] `catchAny_` return ()
-@@ -552,29 +550,22 @@ installDevelopmentTree = subTop $ do
+@@ -556,29 +554,22 @@ installDevelopmentTree = subTop $ do
    msgD info $ "preparing development boot tree"
    checkpoint' "ghcjs-boot-git" "ghcjs-boot repository already cloned and prepared" $ do
      testGit "ghcjs-boot" >>= \case
@@ -46,7 +46,7 @@ index db8b12e..7b815c5 100644
        mapM_ patchPackage =<< allPackages
        preparePrimops
        buildGenPrim
-@@ -1110,14 +1101,14 @@ cabalInstallFlags parmakeGhcjs = do
+@@ -1167,14 +1158,14 @@ cabalInstallFlags parmakeGhcjs = do
             , "--avoid-reinstalls"
             , "--builddir",      "dist"
             , "--with-compiler", ghcjs ^. pgmLocText
