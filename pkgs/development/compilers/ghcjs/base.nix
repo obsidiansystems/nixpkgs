@@ -1,4 +1,5 @@
 { mkDerivation
+, haskellPackages
 , test-framework
 , test-framework-hunit
 , test-framework-quickcheck2
@@ -39,7 +40,7 @@
 , coreutils
 , libiconv
 
-, version ? "0.2.0"
+, version ? "0.2.1"
 , ghcjsSrc ? fetchFromGitHub {
     owner = "ghcjs";
     repo = "ghcjs";
@@ -88,6 +89,7 @@
   ]
 
 , stage2 ? import ./stage2.nix
+, ghcLibdir ? null
 }:
 let
   inherit (bootPkgs) ghc;
@@ -159,6 +161,7 @@ in mkDerivation (rec {
         --with-cabal ${cabal-install}/bin/cabal \
         --with-gmp-includes ${gmp.dev}/include \
         --with-gmp-libraries ${gmp.out}/lib
+    ${if ghcLibdir == null then "" else ''echo "${ghcLibdir}" >$out/lib/ghcjs-${version}/ghc_libdir''}
   '';
   passthru = let
     ghcjsNodePkgs = callPackage ../../../top-level/node-packages.nix {
@@ -171,6 +174,7 @@ in mkDerivation (rec {
     isGhcjs = true;
     inherit nodejs ghcjsBoot;
     inherit (ghcjsNodePkgs) "socket.io";
+    ghcPackages = haskellPackages;
 
     inherit stage1Packages;
     mkStage2 = stage2 {
@@ -183,5 +187,4 @@ in mkDerivation (rec {
   license = stdenv.lib.licenses.bsd3;
   platforms = ghc.meta.platforms;
   maintainers = with stdenv.lib.maintainers; [ jwiegley cstrahan ];
-  broken = true;  # http://hydra.nixos.org/build/45110274
 })
