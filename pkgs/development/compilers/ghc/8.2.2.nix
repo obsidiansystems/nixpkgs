@@ -1,16 +1,31 @@
 { stdenv, targetPackages
 , buildPlatform, hostPlatform, targetPlatform
-, selfPkgs, cross ? null
 
 # build-tools
 , bootPkgs, alex, happy, hscolour
 , autoconf, automake, coreutils, fetchurl, perl, python3, sphinx
+, clang ? null, gcc ? null
 
-, libiconv ? null, ncurses
+, libffi, libiconv ? null, ncurses
+
+, # LLVM is conceptually a run-time-only depedendency, but for
+  # non-x86, we need LLVM to bootstrap later stages, so it becomes a
+  # build-time dependency too.
+  llvmPackages
 
 , # If enabled, GHC will be built with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
   enableIntegerSimple ? false, gmp ? null
+
+, # If enabled, use -fPIC when compiling static libs.
+  enableRelocatedStaticLibs ? targetPlatform != hostPlatform
+
+, # Whether to build dynamic libs for the standard library (on the target
+  # platform). Static libs are always built.
+  enableShared ?
+    !(targetPlatform.isDarwin
+      # On iOS, dynamic linking is not supported
+      && (targetPlatform.isAarch64 || targetPlatform.isArm))
 }:
 
 assert !enableIntegerSimple -> gmp != null;
@@ -24,20 +39,38 @@ let
     (targetPlatform != hostPlatform)
     "${targetPlatform.config}-";
 
-  buildMK = stdenv.lib.optionalString enableIntegerSimple ''
+  buildMK = ''
+    DYNAMIC_GHC_PROGRAMS = ${if enableShared then "YES" else "NO"}
+  '' + stdenv.lib.optionalString enableIntegerSimple ''
     INTEGER_LIBRARY = integer-simple
   '' + stdenv.lib.optionalString (targetPlatform != hostPlatform) ''
     BuildFlavour = perf-cross
+    Stage1Only = YES
+    HADDOCK_DOCS = NO
+    BUILD_SPHINX_HTML = NO
+    BUILD_SPHINX_PDF = NO
+  '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
+    GhcLibHcOpts += -fPIC
+    GhcRtsHcOpts += -fPIC
   '';
+
+  # Splicer will pull out correct variations
+  libDeps = platform: [ ncurses ]
+    ++ stdenv.lib.optional (!enableIntegerSimple) gmp
+    ++ stdenv.lib.optional (platform.libc == "libSystem") libiconv;
 in
 stdenv.mkDerivation (rec {
   inherit version;
-  name = "ghc-${version}";
+  name = "${targetPrefix}ghc-${version}";
 
   src = fetchurl {
     url = "https://downloads.haskell.org/~ghc/8.2.2/${name}-src.tar.xz";
     sha256 = "1z05vkpaj54xdypmaml50hgsdpw29dhbs2r7magx0cm199iw73mv";
   };
+
+  enableParallelBuilding = true;
+
+  outputs = [ "out" "doc" ];
 
   postPatch = "patchShebangs .";
 
@@ -50,19 +83,47 @@ stdenv.mkDerivation (rec {
     export NIX_LDFLAGS+=" -no_dtrace_dof"
   '';
 
-  buildInputs = [ alex autoconf automake ghc happy hscolour perl python3 sphinx ];
-
-  enableParallelBuilding = true;
-
+  # TODO(@Ericson2314): Always pass "--target" and always prefix.
+  configurePlatforms = [ "build" "host" ]
+    ++ stdenv.lib.optional (targetPlatform != hostPlatform) "target";
+  # `--with` flags for libraries needed for RTS linker
   configureFlags = [
-    "CC=${stdenv.cc}/bin/cc"
-    "--with-curses-includes=${ncurses.dev}/include" "--with-curses-libraries=${ncurses.out}/lib"
     "--datadir=$doc/share/doc/ghc"
-  ] ++ stdenv.lib.optional (! enableIntegerSimple) [
+    "--with-curses-includes=${ncurses.dev}/include" "--with-curses-libraries=${ncurses.out}/lib"
+  ] ++ stdenv.lib.optional (targetPlatform == hostPlatform && ! enableIntegerSimple) [
     "--with-gmp-includes=${gmp.dev}/include" "--with-gmp-libraries=${gmp.out}/lib"
-  ] ++ stdenv.lib.optional stdenv.isDarwin [
+  ] ++ stdenv.lib.optional (targetPlatform == hostPlatform && hostPlatform.isDarwin) [
     "--with-iconv-includes=${libiconv}/include" "--with-iconv-libraries=${libiconv}/lib"
+  ] ++ stdenv.lib.optionals (targetPlatform != hostPlatform) [
+    "--enable-bootstrap-with-devel-snapshot"
+  ] ++ stdenv.lib.optionals (targetPlatform.isDarwin && targetPlatform.isAarch64) [
+    # fix for iOS: https://www.reddit.com/r/haskell/comments/4ttdz1/building_an_osxi386_to_iosarm64_cross_compiler/d5qvd67/
+    "--disable-large-address-space"
   ];
+
+  nativeBuildInputs = [ alex autoconf automake ghc happy hscolour perl python3 sphinx ];
+
+  # For building runtime libs
+  __depsBuildTarget =
+    if hostPlatform == buildPlatform then [
+      __targetPackages.stdenv.cc
+    ] else assert targetPlatform == hostPlatform; [ # build != host == target
+      stdenv.cc
+    ];
+
+  buildInputs = libDeps hostPlatform;
+
+  propagatedBuildInputs = [
+    (if hostPlatform == buildPlatform
+     then __targetPackages.stdenv.cc
+     else (if hostPlatform.isDarwin then clang else gcc))
+  ] # Stringly speaking, LLVM is only needed for platforms the native
+    # code generator does not support, but using it when
+    # cross-compiling anywhere.]
+    ++ stdenv.lib.optional (targetPlatform != hostPlatform) llvmPackages.llvm;
+
+  __depsTargetTarget = map stdenv.lib.getDev (libDeps targetPlatform);
+  __depsTargetTargetPropagated = map (stdenv.lib.getOutput "out") (libDeps targetPlatform);
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
   # that in turn causes GHCi to abort
@@ -84,15 +145,10 @@ stdenv.mkDerivation (rec {
     done
   '';
 
-  outputs = [ "out" "doc" ];
-
   passthru = {
     inherit bootPkgs targetPrefix;
-  } // stdenv.lib.optionalAttrs (targetPlatform != buildPlatform) {
-    crossCompiler = selfPkgs.ghc.override {
-      cross = targetPlatform;
-      bootPkgs = selfPkgs;
-    };
+
+    inherit llvmPackages;
   };
 
   meta = {
@@ -102,26 +158,4 @@ stdenv.mkDerivation (rec {
     inherit (ghc.meta) license platforms;
   };
 
-} // stdenv.lib.optionalAttrs (cross != null) {
-  name = "${cross.config}-ghc-${version}";
-
-  configureFlags = [
-    "CC=${stdenv.cc}/bin/${cross.config}-cc"
-    "LD=${stdenv.cc.bintools}/bin/${cross.config}-ld"
-    "AR=${stdenv.cc.bintools}/bin/${cross.config}-ar"
-    "NM=${stdenv.cc.bintools}/bin/${cross.config}-nm"
-    "RANLIB=${stdenv.cc.bintools}/bin/${cross.config}-ranlib"
-    "--target=${cross.config}"
-    "--enable-bootstrap-with-devel-snapshot"
-  ] ++
-    # fix for iOS: https://www.reddit.com/r/haskell/comments/4ttdz1/building_an_osxi386_to_iosarm64_cross_compiler/d5qvd67/
-    stdenv.lib.optional (cross.config or null == "aarch64-apple-darwin14") "--disable-large-address-space";
-
-  configurePlatforms = [];
-
-  passthru = {
-    inherit bootPkgs cross;
-    cc = "${stdenv.cc}/bin/${cross.config}-cc";
-    ld = "${stdenv.cc}/bin/${cross.config}-ld";
-  };
-})
+}

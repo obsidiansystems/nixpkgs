@@ -1,4 +1,7 @@
-{ pkgs, lib, newScope, stdenv, buildPlatform, targetPlatform }:
+{ buildPackages, pkgs
+, newScope, stdenv
+, buildPlatform, targetPlatform
+}:
 
 let
   # These are attributes in compiler and packages that don't support integer-simple.
@@ -72,17 +75,15 @@ in rec {
       sphinx = pkgs.python27Packages.sphinx;
     };
     ghc822 = callPackage ../development/compilers/ghc/8.2.2.nix rec {
-      bootPkgs = packages.ghc7103Binary;
+      bootPkgs = if buildPlatform != targetPlatform then packages.ghc822 else packages.ghc7103Binary;
       inherit (bootPkgs) hscolour alex happy;
       inherit buildPlatform targetPlatform;
       sphinx = pkgs.python3Packages.sphinx;
       selfPkgs = packages.ghc822;
     };
     ghcHEAD = callPackage ../development/compilers/ghc/head.nix rec {
-      bootPkgs = packages.ghc821Binary;
+      bootPkgs = if buildPlatform != targetPlatform then packages.ghcHEAD else packages.ghc821Binary;
       inherit (bootPkgs) alex happy;
-      inherit buildPlatform targetPlatform;
-      selfPkgs = packages.ghcHEAD;
     };
     ghcjs = packages.ghc7103.callPackage ../development/compilers/ghcjs {
       bootPkgs = packages.ghc821Binary;
@@ -102,19 +103,17 @@ in rec {
 
     # The integer-simple attribute set contains all the GHC compilers
     # build with integer-simple instead of integer-gmp.
-    integer-simple =
-      let integerSimpleGhcNames =
-            pkgs.lib.filter (name: ! builtins.elem name integerSimpleExcludes)
-                            (pkgs.lib.attrNames compiler);
-          integerSimpleGhcs = pkgs.lib.genAttrs integerSimpleGhcNames
-                                (name: compiler."${name}".override { enableIntegerSimple = true; });
-      in pkgs.recurseIntoAttrs (integerSimpleGhcs // {
-           ghcHEAD = integerSimpleGhcs.ghcHEAD.override { selfPkgs = packages.integer-simple.ghcHEAD; };
-         });
-
+    integer-simple = let
+      integerSimpleGhcNames = pkgs.lib.filter
+        (name: ! builtins.elem name integerSimpleExcludes)
+        (pkgs.lib.attrNames compiler);
+    in pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
+      integerSimpleGhcNames
+      (name: compiler."${name}".override { enableIntegerSimple = true; }));
   };
 
-  packages = {
+  # Always get compilers from `buildPackages`
+  packages = let inherit (buildPackages.haskell) compiler; in {
 
     ghc7103 = callPackage ../development/haskell-modules {
       ghc = compiler.ghc7103;
@@ -140,11 +139,6 @@ in rec {
       ghc = compiler.ghcHEAD;
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-head.nix { };
     };
-    # TODO Support for multiple variants here
-    ghcCross = callPackage ../development/haskell-modules {
-      ghc = compiler.ghcHEAD.crossCompiler;
-      compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-head.nix { };
-    };
     ghcjs = callPackage ../development/haskell-modules {
       ghc = compiler.ghcjs;
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-7.10.x.nix { };
@@ -162,16 +156,16 @@ in rec {
 
     # The integer-simple attribute set contains package sets for all the GHC compilers
     # using integer-simple instead of integer-gmp.
-    integer-simple =
-      let integerSimpleGhcNames =
-            pkgs.lib.filter (name: ! builtins.elem name integerSimpleExcludes)
-                            (pkgs.lib.attrNames packages);
-      in pkgs.lib.genAttrs integerSimpleGhcNames (name: packages."${name}".override {
-       ghc = compiler.integer-simple."${name}";
-       overrides = _self : _super : {
-         integer-simple = null;
-         integer-gmp = null;
-       };
+    integer-simple = let
+      integerSimpleGhcNames = pkgs.lib.filter
+        (name: ! builtins.elem name integerSimpleExcludes)
+        (pkgs.lib.attrNames packages);
+    in pkgs.lib.genAttrs integerSimpleGhcNames (name: packages."${name}".override {
+      ghc = compiler.integer-simple."${name}";
+      overrides = _self : _super : {
+        integer-simple = null;
+        integer-gmp = null;
+      };
     });
 
   };
