@@ -1,6 +1,6 @@
 { stdenv, fetchgit, bootPkgs, perl, ncurses, libiconv, binutils, coreutils
-, autoconf, automake, happy, alex, python3, buildPlatform, targetPlatform
-, selfPkgs, cross ? null
+, autoconf, automake, happy, alex, python3
+, __targetPackages
 
   # If enabled GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
@@ -27,9 +27,13 @@ let
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
   '';
+
+  targetStdenv = assert stdenv ? cross; __targetPackages.stdenv;
+  prefix = stdenv.lib.optionalString (stdenv ? cross) "${stdenv.cross.config}-";
+
 in stdenv.mkDerivation (rec {
   inherit version rev;
-  name = "ghc-${version}";
+  name = "${prefix}ghc-${version}";
 
   src = fetchgit {
     url = "git://git.haskell.org/ghc.git";
@@ -76,11 +80,6 @@ in stdenv.mkDerivation (rec {
 
   passthru = {
     inherit bootPkgs;
-  } // stdenv.lib.optionalAttrs (targetPlatform != buildPlatform) {
-    crossCompiler = selfPkgs.ghc.override {
-      cross = targetPlatform;
-      bootPkgs = selfPkgs;
-    };
   };
 
   meta = {
@@ -90,32 +89,31 @@ in stdenv.mkDerivation (rec {
     inherit (ghc.meta) license platforms;
   };
 
-} // stdenv.lib.optionalAttrs (cross != null) {
-  name = "${cross.config}-ghc-${version}";
-
+} // stdenv.lib.optionalAttrs (stdenv ? cross) {
   preConfigure = commonPreConfigure + ''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
   '';
 
   configureFlags = [
-    "CC=${stdenv.ccCross}/bin/${cross.config}-cc"
-    "LD=${stdenv.binutilsCross}/bin/${cross.config}-ld"
-    "AR=${stdenv.binutilsCross}/bin/${cross.config}-ar"
-    "NM=${stdenv.binutilsCross}/bin/${cross.config}-nm"
-    "RANLIB=${stdenv.binutilsCross}/bin/${cross.config}-ranlib"
-    "--target=${cross.config}"
+    "CC=${targetStdenv.ccCross}/bin/${prefix}cc"
+    "LD=${targetStdenv.binutilsCross}/bin/${prefix}ld"
+    "AR=${targetStdenv.binutilsCross}/bin/${prefix}ar"
+    "NM=${targetStdenv.binutilsCross}/bin/${prefix}nm"
+    "RANLIB=${targetStdenv.binutilsCross}/bin/${prefix}ranlib"
+    "--target=${stdenv.cross.config}"
     "--enable-bootstrap-with-devel-snapshot"
   ];
 
-  buildInputs = commonBuildInputs ++ [ stdenv.ccCross stdenv.binutilsCross ];
+  buildInputs = commonBuildInputs ++ [ targetStdenv.ccCross targetStdenv.binutilsCross ];
 
   dontSetConfigureCross = true;
 
   passthru = {
-    inherit bootPkgs cross;
+    inherit bootPkgs;
+    inherit (stdenv) cross;
 
-    cc = "${stdenv.ccCross}/bin/${cross.config}-cc";
+    cc = "${targetStdenv.ccCross}/bin/${prefix}cc";
 
-    ld = "${stdenv.binutilsCross}/bin/${cross.config}-ld";
+    ld = "${targetStdenv.binutilsCross}/bin/${prefix}ld";
   };
 })
