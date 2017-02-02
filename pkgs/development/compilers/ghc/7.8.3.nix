@@ -1,4 +1,7 @@
-{ stdenv, fetchurl, ghc, perl, ncurses, libiconv
+{ stdenv, __targetPackages
+
+, fetchurl, ghc, perl
+, libffi, libiconv ? null, ncurses
 
 , # If enabled GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
@@ -9,22 +12,7 @@
 assert stdenv.targetPlatform == stdenv.hostPlatform;
 assert !enableIntegerSimple -> gmp != null;
 
-stdenv.mkDerivation rec {
-  version = "7.8.3";
-  name = "ghc-${version}";
-
-  src = fetchurl {
-    url = "http://www.haskell.org/ghc/dist/${version}/${name}-src.tar.xz";
-    sha256 = "0n5rhwl83yv8qm0zrbaxnyrf8x1i3b6si927518mwfxs96jrdkdh";
-  };
-
-  patches = [ ./relocation.patch ];
-
-  buildInputs = [ ghc perl ncurses ]
-                ++ stdenv.lib.optional (!enableIntegerSimple) gmp;
-
-  enableParallelBuilding = true;
-
+let
   buildMK = ''
     libraries/terminfo_CONFIGURE_OPTS += --configure-option=--with-curses-includes="${ncurses.dev}/include"
     libraries/terminfo_CONFIGURE_OPTS += --configure-option=--with-curses-libraries="${ncurses.out}/lib"
@@ -40,6 +28,26 @@ stdenv.mkDerivation rec {
     libraries/integer-gmp_CONFIGURE_OPTS += --configure-option=--with-gmp-includes="${gmp.dev}/include"
   '');
 
+  # Splicer will pull out correct variations
+  libDeps = [ ncurses libffi ]
+    ++ stdenv.lib.optional (!enableIntegerSimple) gmp
+    ++ stdenv.lib.optional (stdenv.hostPlatform.libc == "libSystem") libiconv;
+
+in
+
+stdenv.mkDerivation rec {
+  version = "7.8.3";
+  name = "ghc-${version}";
+
+  src = fetchurl {
+    url = "http://www.haskell.org/ghc/dist/${version}/${name}-src.tar.xz";
+    sha256 = "1i4254akbb4ym437rf469gc0m40bxm31blp6s1z1g15jmnacs6f3";
+  };
+
+  enableParallelBuilding = true;
+
+  patches = [ ./relocation.patch ];
+
   preConfigure = ''
     echo -n "${buildMK}" > mk/build.mk
     sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
@@ -48,6 +56,19 @@ stdenv.mkDerivation rec {
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
     export NIX_LDFLAGS+=" -no_dtrace_dof"
   '';
+
+  # TODO(@Ericson2314): Always pass "--target" and always prefix.
+  configurePlatforms = [ "build" "host" ];
+  configureFlags = [ "--with-system-libffi" ];
+
+  nativeBuildInputs = [ ghc perl ];
+  __depsBuildTarget = [ __targetPackages.stdenv.cc ];
+
+  buildInputs = libDeps;
+  propagatedBuildInputs = [ __targetPackages.stdenv.cc ];
+
+  __depsTargetTarget = map stdenv.lib.getDev libDeps;
+  __depsTargetTargetPropagated = map (stdenv.lib.getOutput "out") libDeps;
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
   # that in turn causes GHCi to abort
