@@ -1,6 +1,8 @@
-{ stdenv, fetchurl, ghc, pkgconfig, glibcLocales, coreutils, gnugrep, gnused
+{ stdenv, buildPackages, ghc, glibcLocales
 , jailbreak-cabal, hscolour, cpphs, nodePackages
 }: let isCross = (ghc.cross or null) != null; in
+
+let inherit (buildPackages) fetchurl pkgconfig coreutils gnugrep gnused; in
 
 { pname
 , dontStrip ? (ghc.isGhcjs or false)
