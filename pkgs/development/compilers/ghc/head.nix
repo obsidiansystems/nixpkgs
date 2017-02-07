@@ -10,23 +10,8 @@
 let
   inherit (bootPkgs) ghc;
 
-  commonBuildInputs = [ ghc perl autoconf automake happy alex python3 ];
-
   version = "8.1.20170106";
   rev = "b4f2afe70ddbd0576b4eba3f82ba1ddc52e9b3bd";
-
-  commonPreConfigure =  ''
-    echo ${version} >VERSION
-    echo ${rev} >GIT_COMMIT_ID
-    ./boot
-    sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
-  '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
-    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
-  '' + stdenv.lib.optionalString stdenv.isDarwin ''
-    export NIX_LDFLAGS+=" -no_dtrace_dof"
-  '' + stdenv.lib.optionalString enableIntegerSimple ''
-    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '';
 
   targetStdenv = assert stdenv ? cross; __targetPackages.stdenv;
   prefix = stdenv.lib.optionalString (stdenv ? cross) "${stdenv.cross.config}-";
@@ -43,9 +28,27 @@ in stdenv.mkDerivation (rec {
 
   postPatch = "patchShebangs .";
 
-  preConfigure = commonPreConfigure;
+  preConfigure = ''
+    echo ${version} >VERSION
+    echo ${rev} >GIT_COMMIT_ID
+    ./boot
+    sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
+  '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
+    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
+  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+    export NIX_LDFLAGS+=" -no_dtrace_dof"
+  '' + stdenv.lib.optionalString enableIntegerSimple ''
+    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
+  '' + stdenv.lib.optionalString (stdenv ? cross) ''
+    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
+  '';
 
-  buildInputs = commonBuildInputs;
+  buildInputs = [ ghc perl autoconf automake happy alex python3
+    # TODO awkward, need wrapped CC. Can we wrap GHC instead?
+  ] ++ stdenv.lib.optionals (stdenv ? cross) [
+    targetStdenv.ccCross
+    targetStdenv.binutilsCross
+  ];
 
   enableParallelBuilding = true;
 
@@ -80,6 +83,9 @@ in stdenv.mkDerivation (rec {
 
   passthru = {
     inherit bootPkgs;
+
+    cc = "${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc";
+    ld = "${targetStdenv.binutilsCross or binutils}/bin/${prefix}ld";
   };
 
   meta = {
@@ -89,11 +95,9 @@ in stdenv.mkDerivation (rec {
     inherit (ghc.meta) license platforms;
   };
 
+  # TODO: next mass rebuild / version bump just do
+  # dontSetConfigureCross = stdenv ? cross;
 } // stdenv.lib.optionalAttrs (stdenv ? cross) {
-  preConfigure = commonPreConfigure + ''
-    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
-  '';
-
   configureFlags = [
     "CC=${targetStdenv.ccCross}/bin/${prefix}cc"
     "LD=${targetStdenv.binutilsCross}/bin/${prefix}ld"
@@ -104,16 +108,5 @@ in stdenv.mkDerivation (rec {
     "--enable-bootstrap-with-devel-snapshot"
   ];
 
-  buildInputs = commonBuildInputs ++ [ targetStdenv.ccCross targetStdenv.binutilsCross ];
-
   dontSetConfigureCross = true;
-
-  passthru = {
-    inherit bootPkgs;
-    inherit (stdenv) cross;
-
-    cc = "${targetStdenv.ccCross}/bin/${prefix}cc";
-
-    ld = "${targetStdenv.binutilsCross}/bin/${prefix}ld";
-  };
 })
