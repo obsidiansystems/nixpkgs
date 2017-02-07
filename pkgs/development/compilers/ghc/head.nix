@@ -1,19 +1,22 @@
-{ stdenv, fetchgit, bootPkgs, perl, ncurses, libiconv, binutils, coreutils
+{ stdenv, fetchgit, bootPkgs, perl, binutils, coreutils
 , autoconf, automake, happy, alex, python3
 , __targetPackages
+, buildPlatform, hostPlatform, targetPlatform
 
   # If enabled GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-, enableIntegerSimple ? false, gmp
+, enableIntegerSimple ? false
 }:
 
 let
   inherit (bootPkgs) ghc;
 
+  inherit (__targetPackages) ncurses gmp libiconv;
+
   version = "8.1.20170106";
   rev = "b4f2afe70ddbd0576b4eba3f82ba1ddc52e9b3bd";
 
-  targetStdenv = assert stdenv ? cross; __targetPackages.stdenv;
+  targetStdenv = __targetPackages.stdenv;
   prefix = stdenv.lib.optionalString (stdenv ? cross) "${stdenv.cross.config}-";
 
 in stdenv.mkDerivation (rec {
@@ -53,12 +56,24 @@ in stdenv.mkDerivation (rec {
   enableParallelBuilding = true;
 
   configureFlags = [
-    "CC=${stdenv.cc}/bin/cc"
+    "CC=${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc"
     "--with-curses-includes=${ncurses.dev}/include" "--with-curses-libraries=${ncurses.out}/lib"
   ] ++ stdenv.lib.optional (! enableIntegerSimple) [
     "--with-gmp-includes=${gmp.dev}/include" "--with-gmp-libraries=${gmp.out}/lib"
   ] ++ stdenv.lib.optional stdenv.isDarwin [
     "--with-iconv-includes=${libiconv}/include" "--with-iconv-libraries=${libiconv}/lib"
+  ] ++ stdenv.lib.optional (stdenv ? cross) [
+
+    # TODO: next rebuild make these unconditional
+    #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
+    #"--host=x86_64-unknown-linux-gnu"#${hostPlatform.config}"
+    "--target=${targetPlatform.config}"
+    "LD=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ld"
+    "AR=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ar"
+    "NM=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}nm"
+
+    "--enable-bootstrap-with-devel-snapshot"
+    "--verbose"
   ];
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
@@ -98,15 +113,5 @@ in stdenv.mkDerivation (rec {
   # TODO: next mass rebuild / version bump just do
   # dontSetConfigureCross = stdenv ? cross;
 } // stdenv.lib.optionalAttrs (stdenv ? cross) {
-  configureFlags = [
-    "CC=${targetStdenv.ccCross}/bin/${prefix}cc"
-    "LD=${targetStdenv.binutilsCross}/bin/${prefix}ld"
-    "AR=${targetStdenv.binutilsCross}/bin/${prefix}ar"
-    "NM=${targetStdenv.binutilsCross}/bin/${prefix}nm"
-    "RANLIB=${targetStdenv.binutilsCross}/bin/${prefix}ranlib"
-    "--target=${stdenv.cross.config}"
-    "--enable-bootstrap-with-devel-snapshot"
-  ];
-
   dontSetConfigureCross = true;
 })
