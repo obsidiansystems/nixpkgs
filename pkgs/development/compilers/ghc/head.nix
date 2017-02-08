@@ -1,4 +1,4 @@
-{ stdenv, fetchgit, bootPkgs, perl, binutils, coreutils
+{ stdenv, fetchgit, bootPkgs, perl, ncurses, binutils, coreutils
 , autoconf, automake, happy, alex, python3
 , __targetPackages
 , buildPlatform, hostPlatform, targetPlatform
@@ -10,8 +10,6 @@
 
 let
   inherit (bootPkgs) ghc;
-
-  inherit (__targetPackages) ncurses gmp libiconv;
 
   version = "8.1.20170106";
   rev = "b4f2afe70ddbd0576b4eba3f82ba1ddc52e9b3bd";
@@ -46,22 +44,30 @@ in stdenv.mkDerivation (rec {
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
   '';
 
-  buildInputs = [ ghc perl autoconf automake happy alex python3
-    # TODO awkward, need wrapped CC. Can we wrap GHC instead?
-  ] ++ stdenv.lib.optionals (stdenv ? cross) [
+  nativeBuildInputs = [ ghc perl autoconf automake happy alex python3 ]
+    ++ stdenv.lib.optional (stdenv ? cross) ncurses;
+  buildInputs = stdenv.lib.optionals (stdenv ? cross) [
     targetStdenv.ccCross
     targetStdenv.binutilsCross
+    __targetPackages.ncurses
+    __targetPackages.gmp
+  ] ++ stdenv.lib.optionals (stdenv ? cross && stdenv.isDarwin) [
+    __targetPackages.libiconv
   ];
 
   enableParallelBuilding = true;
 
   configureFlags = [
     "CC=${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc"
-    "--with-curses-includes=${ncurses.dev}/include" "--with-curses-libraries=${ncurses.out}/lib"
-  ] ++ stdenv.lib.optional (! enableIntegerSimple) [
-    "--with-gmp-includes=${gmp.dev}/include" "--with-gmp-libraries=${gmp.out}/lib"
-  ] ++ stdenv.lib.optional stdenv.isDarwin [
-    "--with-iconv-includes=${libiconv}/include" "--with-iconv-libraries=${libiconv}/lib"
+  # TODO: next rebuild remove these `--with-*` altogether
+    "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
+    "--with-curses-libraries=${__targetPackages.ncurses.out}/lib"
+  ] ++ stdenv.lib.optional (!(stdenv ? cross) && ! enableIntegerSimple) [
+    "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
+    "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
+  ] ++ stdenv.lib.optional (!(stdenv ? cross) && stdenv.isDarwin) [
+    "--with-iconv-includes=${__targetPackages.libiconv}/include"
+    "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
   ] ++ stdenv.lib.optional (stdenv ? cross) [
 
     # TODO: next rebuild make these unconditional
