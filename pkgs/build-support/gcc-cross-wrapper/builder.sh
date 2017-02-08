@@ -86,7 +86,7 @@ mkGccWrapper() {
 }
 
 mkGccWrapper $out/bin/$crossConfig-gcc $gccPath/$crossConfig-gcc
-#ln -s gcc $out/bin/cc
+ln -s $crossConfig-gcc $out/bin/$crossConfig-cc
 
 mkGccWrapper $out/bin/$crossConfig-g++ $gccPath/$crossConfig-g++
 ln -s $crossConfig-g++ $out/bin/$crossConfig-c++
