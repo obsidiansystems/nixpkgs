@@ -1,7 +1,15 @@
 { stdenv, fetchgit, bootPkgs, perl, ncurses, binutils, coreutils
 , autoconf, automake, happy, alex, python3
-, __targetPackages
+, buildPackages, __targetPackages
 , buildPlatform, hostPlatform, targetPlatform
+
+, # LLVM is conceptually a run-time-only depedendency, but for
+  # non-x86, we need LLVM to bootstrap later stages, so it becomes a
+  # build-time dependency too.
+  #
+  # TODO: redundancy betweeen the configuration files and this in
+  # picking the appropriate LLVM version.
+  llvmPackages
 
   # If enabled GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
@@ -40,9 +48,9 @@ in stdenv.mkDerivation (rec {
     export NIX_LDFLAGS+=" -no_dtrace_dof"
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '' + stdenv.lib.optionalString (stdenv ? cross) ''
-    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
-  '';
+  '' + stdenv.lib.optionalString (stdenv ? cross)''
+    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
+  ''; # perf-cross
 
   nativeBuildInputs = [ ghc perl autoconf automake happy alex python3 ]
     ++ stdenv.lib.optional (stdenv ? cross) ncurses;
@@ -51,6 +59,13 @@ in stdenv.mkDerivation (rec {
     targetStdenv.binutilsCross
     __targetPackages.ncurses
     __targetPackages.gmp
+    # Stringly speaking, LLVM is only needed for platforms the native
+    # code generator does not support, but using it when
+    # cross-compiling anywhere.
+    #
+    # Using host != target llvm is better (but probably a no-op) in
+    # principle, but is currently broken.
+    buildPackages.llvmPackages.llvm
   ] ++ stdenv.lib.optionals (stdenv ? cross && stdenv.isDarwin) [
     __targetPackages.libiconv
   ];
@@ -104,6 +119,8 @@ in stdenv.mkDerivation (rec {
 
   passthru = {
     inherit bootPkgs;
+
+    inherit llvmPackages;
 
     cc = "${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc";
     ld = "${targetStdenv.binutilsCross or binutils}/bin/${prefix}ld";
