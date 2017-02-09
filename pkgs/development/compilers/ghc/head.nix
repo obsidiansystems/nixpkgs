@@ -103,8 +103,10 @@ in stdenv.mkDerivation (rec {
 
   checkTarget = "test";
 
+  # bash is smart about `{ghc}` but sh isn't, and doesn't treat that as a unary
+  # {x,y,z,..}  repetition.
   postInstall = ''
-    paxmark m $out/lib/${name}/bin/{ghc${stdenv.lib.optionalString (! stdenv ? cross) ",haddock"}}
+    paxmark m $out/lib/${name}/bin/${if stdenv ? cross) then "ghc" else "{ghc,haddock}"}
 
     # Install the bash completion file.
     install -D -m 444 utils/completion/ghc.bash $out/share/bash-completion/completions/${prefix}ghc
