@@ -104,10 +104,10 @@ in stdenv.mkDerivation (rec {
   checkTarget = "test";
 
   postInstall = ''
-    paxmark m $out/lib/${name}/bin/{ghc,haddock}
+    paxmark m $out/lib/${name}/bin/${prefix}{ghc,haddock}
 
     # Install the bash completion file.
-    install -D -m 444 utils/completion/ghc.bash $out/share/bash-completion/completions/ghc
+    install -D -m 444 utils/completion/${prefix}ghc.bash $out/share/bash-completion/completions/${prefix}ghc
 
     # Patch scripts to include "readelf" and "cat" in $PATH.
     for i in "$out/bin/"*; do
