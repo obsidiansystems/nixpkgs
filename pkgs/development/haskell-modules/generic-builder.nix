@@ -1,8 +1,12 @@
 { stdenv, buildPackages, ghc, glibcLocales
 , jailbreak-cabal, hscolour, cpphs, nodePackages
-}: let isCross = (ghc.cross or null) != null; in
+, buildPlatform, hostPlatform
+}:
 
-let inherit (buildPackages) fetchurl pkgconfig coreutils gnugrep gnused; in
+let
+  isCross = buildPlatform != hostPlatform;
+  inherit (buildPackages) fetchurl pkgconfig binutilsCross coreutils gnugrep gnused;
+in
 
 { pname
 , dontStrip ? (ghc.isGhcjs or false)
@@ -22,7 +26,7 @@ let inherit (buildPackages) fetchurl pkgconfig coreutils gnugrep gnused; in
 # TODO enable shared libs for cross-compiling
 , enableSharedExecutables ? !isCross && (((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version))
 , enableSharedLibraries ? !isCross && (((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version))
-, enableSplitObjs ? !stdenv.isDarwin # http://hackage.haskell.org/trac/ghc/ticket/4013
+, enableSplitObjs ? !(stdenv.isDarwin || isCross) # http://hackage.haskell.org/trac/ghc/ticket/4013 also ghcHEAD does split-sections instead
 , enableStaticLibraries ? true
 , extraLibraries ? [], librarySystemDepends ? [], executableSystemDepends ? []
 , homepage ? "http://hackage.haskell.org/package/${pname}"
@@ -91,12 +95,13 @@ let
   enableParallelBuilding = (versionOlder "7.8" ghc.version && !hasActiveLibrary) || versionOlder "8.0.1" ghc.version;
 
   crossCabalFlags = [
-    "--with-ghc=${ghc.cross.config}-ghc"
-    "--with-ghc-pkg=${ghc.cross.config}-ghc-pkg"
+    "--with-ghc=${crossPrefix}ghc"
+    "--with-ghc-pkg=${crossPrefix}ghc-pkg"
     "--with-gcc=${ghc.cc}"
     "--with-ld=${ghc.ld}"
     "--hsc2hs-options=--cross-compile"
     "--with-hsc2hs=${nativeGhc}/bin/hsc2hs"
+    "--with-strip=${binutilsCross}/bin/${crossPrefix}strip"
   ];
 
   crossCabalFlagsString =
@@ -121,7 +126,7 @@ let
     "--with-hsc2hs=${nativeGhc}/bin/hsc2hs"
     "--ghcjs"
   ] ++ optionals isCross ([
-    "--configure-option=--host=${ghc.cross.config}"
+    "--configure-option=--host=${hostPlatform.config}"
   ] ++ crossCabalFlags);
 
   setupCompileFlags = [
@@ -151,7 +156,7 @@ let
   setupBuilder = if isCross || isGhcjs then "${nativeGhc}/bin/ghc" else ghcCommand;
   setupCommand = "./Setup";
   ghcCommand' = if isGhcjs then "ghcjs" else "ghc";
-  crossPrefix = if (ghc.cross or null) != null then "${ghc.cross.config}-" else "";
+  crossPrefix = if isCross then "${hostPlatform.config}-" else "";
   ghcCommand = "${crossPrefix}${ghcCommand'}";
   ghcCommandCaps= toUpper ghcCommand';
 
@@ -347,4 +352,5 @@ stdenv.mkDerivation ({
 // optionalAttrs (dontStrip)            { inherit dontStrip; }
 // optionalAttrs (hardeningDisable != []) { inherit hardeningDisable; }
 // optionalAttrs (stdenv.isLinux)       { LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive"; }
+// optionalAttrs (stdenv.isLinux && isCross) { dontSetConfigureCross = true; }
 )
