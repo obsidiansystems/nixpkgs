@@ -139,4 +139,7 @@ in stdenv.mkDerivation (rec {
   # dontSetConfigureCross = stdenv ? cross;
 } // stdenv.lib.optionalAttrs (stdenv ? cross) {
   dontSetConfigureCross = true;
+
+  # It gets confused with ncurses
+  dontPatchELF = true;
 })
