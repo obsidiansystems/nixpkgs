@@ -23,7 +23,7 @@ let
   rev = "b4f2afe70ddbd0576b4eba3f82ba1ddc52e9b3bd";
 
   targetStdenv = __targetPackages.stdenv;
-  prefix = stdenv.lib.optionalString (stdenv ? cross) "${stdenv.cross.config}-";
+  prefix = stdenv.lib.optionalString (buildPlatform != targetPlatform) "${targetPlatform.config}-";
 
 in stdenv.mkDerivation (rec {
   inherit version rev;
@@ -48,13 +48,13 @@ in stdenv.mkDerivation (rec {
     export NIX_LDFLAGS+=" -no_dtrace_dof"
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '' + stdenv.lib.optionalString (stdenv ? cross)''
+  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
   ''; # perf-cross
 
   nativeBuildInputs = [ ghc perl autoconf automake happy alex python3 ]
-    ++ stdenv.lib.optional (stdenv ? cross) ncurses;
-  buildInputs = stdenv.lib.optionals (stdenv ? cross) [
+    ++ stdenv.lib.optional (buildPlatform != targetPlatform) ncurses;
+  buildInputs = stdenv.lib.optionals (buildPlatform != targetPlatform) [
     targetStdenv.ccCross
     targetStdenv.binutilsCross
     __targetPackages.ncurses
@@ -66,7 +66,7 @@ in stdenv.mkDerivation (rec {
     # Using host != target llvm is better (but probably a no-op) in
     # principle, but is currently broken.
     buildPackages.llvmPackages.llvm
-  ] ++ stdenv.lib.optionals (stdenv ? cross && stdenv.isDarwin) [
+  ] ++ stdenv.lib.optionals (buildPlatform != targetPlatform && stdenv.isDarwin) [
     __targetPackages.libiconv
   ];
 
@@ -77,13 +77,13 @@ in stdenv.mkDerivation (rec {
   # TODO: next rebuild remove these `--with-*` altogether
     "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
     "--with-curses-libraries=${__targetPackages.ncurses.out}/lib"
-  ] ++ stdenv.lib.optional (!(stdenv ? cross) && ! enableIntegerSimple) [
+  ] ++ stdenv.lib.optional (!(buildPlatform != targetPlatform) && ! enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
-  ] ++ stdenv.lib.optional (!(stdenv ? cross) && stdenv.isDarwin) [
+  ] ++ stdenv.lib.optional (!(buildPlatform != targetPlatform) && stdenv.isDarwin) [
     "--with-iconv-includes=${__targetPackages.libiconv}/include"
     "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
-  ] ++ stdenv.lib.optional (stdenv ? cross) [
+  ] ++ stdenv.lib.optional (buildPlatform != targetPlatform) [
 
     # TODO: next rebuild make these unconditional
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
@@ -106,7 +106,7 @@ in stdenv.mkDerivation (rec {
   # bash is smart about `{ghc}` but sh isn't, and doesn't treat that as a unary
   # {x,y,z,..}  repetition.
   postInstall = ''
-    paxmark m $out/lib/${name}/bin/${if stdenv ? cross then "ghc" else "{ghc,haddock}"}
+    paxmark m $out/lib/${name}/bin/${if buildPlatform != targetPlatform then "ghc" else "{ghc,haddock}"}
 
     # Install the bash completion file.
     install -D -m 444 utils/completion/ghc.bash $out/share/bash-completion/completions/${prefix}ghc
@@ -136,8 +136,8 @@ in stdenv.mkDerivation (rec {
   };
 
   # TODO: next mass rebuild / version bump just do
-  # dontSetConfigureCross = stdenv ? cross;
-} // stdenv.lib.optionalAttrs (stdenv ? cross) {
+  # dontSetConfigureCross = buildPlatform != targetPlatform;
+} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform) {
   dontSetConfigureCross = true;
 
   # It gets confused with ncurses
