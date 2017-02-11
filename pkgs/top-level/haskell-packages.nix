@@ -1,4 +1,6 @@
-{ pkgs, buildPackages, callPackage, stdenv }:
+{ pkgs, buildPackages, callPackage, stdenv
+, buildPlatform, targetPlatform
+}:
 
 let # These are attributes in compiler and packages that don't support integer-simple.
     integerSimpleExcludes = [
@@ -68,7 +70,7 @@ in rec {
       sphinx = pkgs.python27Packages.sphinx;
     };
     ghcHEAD = callPackage ../development/compilers/ghc/head.nix rec {
-      bootPkgs = if stdenv ? cross then packages.ghcHEAD else packages.ghc7103;
+      bootPkgs = if buildPlatform != targetPlatform then packages.ghcHEAD else packages.ghc7103;
       inherit (bootPkgs) alex happy;
     };
     ghcjs = packages.ghc7103.callPackage ../development/compilers/ghcjs {
