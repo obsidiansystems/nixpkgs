@@ -13,7 +13,7 @@ in
 , version, revision ? null
 , sha256 ? null
 , src ? fetchurl { url = "mirror://hackage/${pname}-${version}.tar.gz"; inherit sha256; }
-, buildDepends ? [], setupHaskellDepends ? [], libraryHaskellDepends ? [], executableHaskellDepends ? []
+, buildDepends ? [], setupHaskellDepends ? stdenv.lib.optionals isCross [ ghc.bootPkgs.Cabal ], libraryHaskellDepends ? [], executableHaskellDepends ? []
 , buildTarget ? ""
 , buildTools ? [], libraryToolDepends ? [], executableToolDepends ? [], testToolDepends ? []
 , configureFlags ? []
