@@ -1,11 +1,13 @@
 { stdenv, fetchurl, fetchFromGitHub, autoreconfHook, libxslt, libxml2
 , docbook_xml_dtd_412, docbook_xsl, gnome_doc_utils, flex, bison
-, pam ? null, glibcCross ? null }:
+, buildPlatform, hostPlatform
+, pam ? null, glibcCross ? null
+}:
 
 let
 
   glibc =
-    if stdenv ? cross
+    if buildPlatform != hostPlatform
     then glibcCross
     else assert stdenv ? glibc; stdenv.glibc;
 
