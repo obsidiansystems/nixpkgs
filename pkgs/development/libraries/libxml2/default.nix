@@ -1,5 +1,7 @@
 { stdenv, lib, fetchurl, zlib, xz, python2, findXMLCatalogs, libiconv, fetchpatch
-, pythonSupport ? (! stdenv ? cross) }:
+, buildPlatform, hostPlatform
+, pythonSupport ? buildPlatform == hostPlatform
+}:
 
 let
   python = python2;
@@ -46,7 +48,7 @@ in stdenv.mkDerivation rec {
 
   doCheck = !stdenv.isDarwin;
 
-  crossAttrs = lib.optionalAttrs (stdenv.cross.libc == "msvcrt") {
+  crossAttrs = lib.optionalAttrs (hostPlatform.libc == "msvcrt") {
     # creating the DLL is broken ATM
     dontDisableStatic = true;
     configureFlags = configureFlags ++ [ "--disable-shared" ];
