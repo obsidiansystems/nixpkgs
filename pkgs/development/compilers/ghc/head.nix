@@ -37,8 +37,10 @@ in stdenv.mkDerivation (rec {
 
   postPatch = "patchShebangs .";
 
+  #v p dyn
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
+    echo 'GhcLibWays = v dyn' >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
   '' + ''
