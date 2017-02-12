@@ -58,7 +58,7 @@ in stdenv.mkDerivation (rec {
     ++ stdenv.lib.optional (buildPlatform != targetPlatform) ncurses;
   buildInputs = stdenv.lib.optionals (buildPlatform != targetPlatform) [
     targetStdenv.ccCross
-    targetStdenv.binutilsCross
+    targetStdenv.binutils
     __targetPackages.ncurses
     __targetPackages.gmp
     # Stringly speaking, LLVM is only needed for platforms the native
@@ -91,9 +91,9 @@ in stdenv.mkDerivation (rec {
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
     #"--host=x86_64-unknown-linux-gnu"#${hostPlatform.config}"
     "--target=${targetPlatform.config}"
-    "LD=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ld"
-    "AR=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ar"
-    "NM=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}nm"
+    "LD=${targetStdenv.binutils or stdenv.binutils}/bin/${prefix}ld"
+    "AR=${targetStdenv.binutils or stdenv.binutils}/bin/${prefix}ar"
+    "NM=${targetStdenv.binutils or stdenv.binutils}/bin/${prefix}nm"
 
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
@@ -131,7 +131,7 @@ in stdenv.mkDerivation (rec {
     inherit llvmPackages;
 
     cc = "${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc";
-    ld = "${targetStdenv.binutilsCross or binutils}/bin/${prefix}ld";
+    ld = "${targetStdenv.binutils or binutils}/bin/${prefix}ld";
   };
 
   meta = {
