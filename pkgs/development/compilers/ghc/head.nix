@@ -37,7 +37,11 @@ in stdenv.mkDerivation (rec {
 
   postPatch = "patchShebangs .";
 
-  preConfigure = ''
+  preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
+    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
+  '' + stdenv.lib.optionalString enableIntegerSimple ''
+    echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
+  '' + ''
     echo ${version} >VERSION
     echo ${rev} >GIT_COMMIT_ID
     ./boot
@@ -46,10 +50,6 @@ in stdenv.mkDerivation (rec {
     export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
     export NIX_LDFLAGS+=" -no_dtrace_dof"
-  '' + stdenv.lib.optionalString enableIntegerSimple ''
-    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform)''
-    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
   ''; # perf-cross
 
   nativeBuildInputs = [ ghc perl autoconf automake happy alex python3 ]
