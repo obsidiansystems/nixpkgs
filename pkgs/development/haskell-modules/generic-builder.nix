@@ -198,7 +198,11 @@ stdenv.mkDerivation ({
     ${optionalString (hasActiveLibrary && hyperlinkSource) "export PATH=${hscolour}/bin:$PATH"}
 
     packageConfDir="$TMPDIR/package.conf.d"
-    mkdir -p $packageConfDir
+    mkdir -p $packageConfDir${optionalString (isCross && setupHaskellDepends != []) ''
+
+      setupPackageConfDir="$TMPDIR/setup-package.conf.d"
+      mkdir -p $setupPackageConfDir
+    ''}
 
     setupCompileFlags="${concatStringsSep " " setupCompileFlags}"
     configureFlags="${concatStringsSep " " defaultConfigureFlags} $configureFlags"
@@ -219,7 +223,22 @@ stdenv.mkDerivation ({
         configureFlags+=" --extra-lib-dirs=$p/lib"
       fi
     done
-    ${ghcCommand}-pkg --${packageDbFlag}="$packageConfDir" recache
+    ${optionalString (isCross && setupHaskellDepends != []) ''
+
+      for p in $inputClosure; do
+        if [ -d "$p/lib/${nativeGhc.name}/package.conf.d" ]; then
+          cp -f "$p/lib/${nativeGhc.name}/package.conf.d/"*.conf $setupPackageConfDir/
+          continue
+        fi
+        if [ -d "$p/include" ]; then
+          setupConfigureFlags+=" --extra-include-dirs=$p/include"
+        fi
+        if [ -d "$p/lib" ]; then
+          setupConfigureFlags+=" --extra-lib-dirs=$p/lib"
+        fi
+      done
+      ${setupBuilder}-pkg --${packageDbFlag}="$setupPackageConfDir" recache
+    ''}${ghcCommand}-pkg --${packageDbFlag}="$packageConfDir" recache
 
     runHook postSetupCompilerEnvironment
   '';
@@ -232,7 +251,10 @@ stdenv.mkDerivation ({
     done
 
     echo setupCompileFlags: $setupCompileFlags
-    ${setupBuilder} $setupCompileFlags --make -o Setup -odir $TMPDIR -hidir $TMPDIR $i
+    ${optionalString
+      (isCross && setupHaskellDepends != [])
+      ''GHC_PACKAGE_PATH="$setupPackageConfDir:" ''
+    }${setupBuilder} $setupCompileFlags --make -o Setup -odir $TMPDIR -hidir $TMPDIR $i
 
     runHook postCompileBuildDriver
   '';
