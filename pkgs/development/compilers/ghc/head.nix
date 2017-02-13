@@ -117,7 +117,11 @@ in stdenv.mkDerivation (rec {
     for i in "$out/bin/"*; do
       test ! -h $i || continue
       egrep --quiet '^#!' <(head -n 1 $i) || continue
-      sed -i -e '2i export PATH="$PATH:${stdenv.lib.makeBinPath [ binutils coreutils ]}"' $i
+      sed -i -e '2i export PATH="$PATH:${stdenv.lib.makeBinPath [
+        # TODO always use cross
+        (if stdenv.isDarwin then targetStdenv.binutilsCross or binutils else binutils)
+        coreutils
+      ]}"' $i
     done
   '';
 
