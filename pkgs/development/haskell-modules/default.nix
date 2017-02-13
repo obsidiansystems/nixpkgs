@@ -2,6 +2,7 @@
 , compilerConfig ? (self: super: {})
 , packageSetConfig ? (self: super: {})
 , overrides ? (self: super: {})
+, buildPlatform, hostPlatform
 }:
 
 let
@@ -14,7 +15,7 @@ let
       mkDerivation = pkgs.callPackage ./generic-builder.nix {
         inherit stdenv;
         inherit (pkgs) glibcLocales;
-        jailbreak-cabal = if (self.ghc.cross or null) != null
+        jailbreak-cabal = if buildPlatform != hostPlatform
           then self.ghc.bootPkgs.jailbreak-cabal
           else self.jailbreak-cabal;
         inherit (self) ghc;
