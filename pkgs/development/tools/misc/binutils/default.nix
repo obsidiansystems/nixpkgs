@@ -7,7 +7,7 @@ let basename = "binutils-2.27"; in
 with { inherit (stdenv.lib) optional optionals optionalString; };
 
 stdenv.mkDerivation rec {
-  name = basename + optionalString (cross != null) "-${cross.config}";
+  name = optionalString (cross != null) "${cross.config}-" + basename;
 
   src = fetchurl {
     url = "mirror://gnu/binutils/${basename}.tar.bz2";
@@ -40,6 +40,7 @@ stdenv.mkDerivation rec {
     ./no-plugins.patch
   ];
 
+  # TODO: all outputs on all platform
   outputs = [ "out" ]
     ++ optional (cross == null && !stdenv.isDarwin) "lib" # problems in Darwin stdenv
     ++ [ "info" ]
@@ -75,13 +76,14 @@ stdenv.mkDerivation rec {
   configureFlags =
     [ "--enable-shared" "--enable-deterministic-archives" "--disable-werror" ]
     ++ optional (stdenv.system == "mips64el-linux") "--enable-fix-loongson2f-nop"
-    ++ optional (cross != null) "--target=${cross.config}"
+    ++ optional (cross != null) "--target=${cross.config}" # TODO: make this unconditional
     ++ optionals gold [ "--enable-gold" "--enable-plugins" ]
     ++ optional (stdenv.system == "i686-linux") "--enable-targets=x86_64-linux-gnu";
 
   enableParallelBuilding = true;
 
-  postFixup = optionalString (cross == null) "ln -s $out/bin $dev/bin"; # tools needed for development
+  # Tools needed for development. TODO: better to remove this `postFixup` altogether.
+  postFixup = optionalString (cross == null) "ln -s $out/bin $dev/bin";
 
   meta = with stdenv.lib; {
     description = "Tools for manipulating binaries (linker, assembler, etc.)";

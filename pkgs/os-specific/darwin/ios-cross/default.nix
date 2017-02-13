@@ -51,7 +51,7 @@ let
     '';
   };
 in {
-  cc = runCommand "${prefix}-cc" { passthru = { inherit sdkType sdkVer sdk; }; } ''
+  cc = runCommand "${prefix}-ios-cc" { passthru = { inherit sdkType sdkVer sdk; }; } ''
     mkdir -p $out/bin
     ln -sv ${wrapper}/bin/clang $out/bin/${prefix}-cc
     mkdir -p $out/nix-support
@@ -64,7 +64,7 @@ in {
     fixupPhase
   '';
 
-  binutils = runCommand "${prefix}-binutils" {} ''
+  binutils = runCommand "${prefix}-ios-binutils" {} ''
     mkdir -p $out/bin
     ln -sv ${wrapper}/bin/ld $out/bin/${prefix}-ld
     for prog in ar nm ranlib; do
