@@ -6,6 +6,11 @@ let
   prefix = stdenv.lib.optionalString
     (buildPlatform != targetPlatform)
     "${targetPlatform.config}-";
+
+  cmds = [
+    "ar" "ranlib" "as" "dsymutil" "install_name_tool"
+    "ld" "strip" "otool" "lipo" "nm" "strings" "size"
+  ];
 in
 
 # TODO loop over prefixed binaries too
@@ -14,7 +19,7 @@ stdenv.mkDerivation {
   buildCommand = ''
     mkdir -p $out/bin $out/include
 
-    ln -s ${binutils-raw.out}/bin/c++filt $out/bin/c++filt
+    ln -s ${binutils-raw.out}/bin/${prefix}c++filt $out/bin/${prefix}c++filt
 
     # We specifically need:
     # - ld: binutils doesn't provide it on darwin
@@ -27,7 +32,7 @@ stdenv.mkDerivation {
     # - strip: the binutils one seems to break mach-o files
     # - lipo: gcc build assumes it exists
     # - nm: the gnu one doesn't understand many new load commands
-    for i in ar ranlib as dsymutil install_name_tool ld strip otool lipo nm strings size; do
+    for i in ${stdenv.lib.concatStringsSep " " (builtins.map (e: prefix + e) cmds)}; do
       ln -sf "${cctools}/bin/$i" "$out/bin/$i"
     done
 
