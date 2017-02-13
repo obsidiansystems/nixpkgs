@@ -24,8 +24,8 @@ in
 , enableLibraryProfiling ? false
 , enableExecutableProfiling ? false
 # TODO enable shared libs for cross-compiling
-, enableSharedExecutables ? !isCross && (((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version))
-, enableSharedLibraries ? !isCross && (((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version))
+, enableSharedExecutables ? ((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version)
+, enableSharedLibraries ? ((ghc.isGhcjs or false) || stdenv.lib.versionOlder "7.7" ghc.version)
 , enableSplitObjs ? !(stdenv.isDarwin || isCross) # http://hackage.haskell.org/trac/ghc/ticket/4013 also ghcHEAD does split-sections instead
 , enableStaticLibraries ? true
 , extraLibraries ? [], librarySystemDepends ? [], executableSystemDepends ? []
