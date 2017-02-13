@@ -6,7 +6,7 @@
 , stdenv
 , coreutils
 , gnugrep
-, targetPlatform
+, buildPlatform, targetPlatform
 }:
 
 /* As of this writing, known-good prefix/arch/simulator triples:
@@ -35,7 +35,8 @@ let
     nativeLibc = false;
     inherit binutils;
     libc = runCommand "empty-libc" {} "mkdir -p $out/{lib,include}";
-    cc = clang;
+    inherit (clang) cc;
+    inherit buildPlatform targetPlatform;
     extraBuildCommands = ''
       if ! [ -d ${sdk} ]; then
           echo "You must have ${sdkVer} of the iPhone${sdkType} sdk installed at ${sdk}" >&2
@@ -51,9 +52,9 @@ let
     '';
   };
 in {
-  cc = runCommand "${prefix}-ios-cc" { passthru = { inherit sdkType sdkVer sdk; }; } ''
+  cc = runCommand "${prefix}-ios-cc" { passthru = { inherit wrapper sdkType sdkVer sdk; }; } ''
     mkdir -p $out/bin
-    ln -sv ${wrapper}/bin/clang $out/bin/${prefix}-cc
+    ln -sv ${wrapper}/bin/${prefix}-clang $out/bin/${prefix}-cc
     mkdir -p $out/nix-support
     echo ${llvm} > $out/nix-support/propagated-native-build-inputs
     cat > $out/nix-support/setup-hook <<EOF
@@ -64,9 +65,9 @@ in {
     fixupPhase
   '';
 
-  binutils = runCommand "${prefix}-ios-binutils" {} ''
+  binutils = runCommand "${prefix}-ios-binutils" { passthru = { inherit wrapper; }; } ''
     mkdir -p $out/bin
-    ln -sv ${wrapper}/bin/ld $out/bin/${prefix}-ld
+    ln -sv ${wrapper}/bin/${prefix}-ld $out/bin/${prefix}-ld
     for prog in ar nm ranlib; do
       ln -s ${binutils}/bin/$prog $out/bin/${prefix}-$prog
     done
