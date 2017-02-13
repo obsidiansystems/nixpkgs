@@ -6105,13 +6105,13 @@ with pkgs;
       then darwin.binutils
     else if (buildPlatform != targetPlatform) && targetPlatform.libc == "libSystem"
       # Cross-compiling to Darwin
-      then darwin.cctools_cross
+      then darwin.cctools
     else
       # Neither build or target is darwin
       binutils-raw;
 
   binutils-raw = callPackage ../development/tools/misc/binutils {
-    noSysDirs = (hostPlatform == targetPlatform) && noSysDirs;
+    noSysDirs = (hostPlatform != targetPlatform) || noSysDirs;
     cross = if buildPlatform != targetPlatform then targetPlatform else null;
   };
 
@@ -10923,16 +10923,12 @@ with pkgs;
     cmdline = callPackage ../os-specific/darwin/command-line-tools {};
     apple-source-releases = callPackage ../os-specific/darwin/apple-source-releases { };
   in apple-source-releases // rec {
-    cctools_cross = callPackage (forcedNativePackages.callPackage ../os-specific/darwin/cctools/port.nix {}).cross {
-      cross = assert targetPlatform != buildPlatform; targetPlatform;
+    cctools = callPackage ../os-specific/darwin/cctools/port.nix {
+      inherit libobjc;
+      stdenv = if stdenv.isDarwin then stdenv else libcxxStdenv;
       inherit maloader;
       xctoolchain = xcode.toolchain;
     };
-
-    cctools = (callPackage ../os-specific/darwin/cctools/port.nix {
-      inherit libobjc;
-      stdenv = if stdenv.isDarwin then stdenv else libcxxStdenv;
-    }).native;
 
     cf-private = callPackage ../os-specific/darwin/cf-private {
       inherit (apple-source-releases) CF;

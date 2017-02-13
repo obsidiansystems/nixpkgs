@@ -1,7 +1,16 @@
-{ stdenv, binutils-raw, cctools }:
+{ stdenv, binutils-raw, cctools
+, buildPlatform, targetPlatform
+}:
 
+let
+  prefix = stdenv.lib.optionalString
+    (buildPlatform != targetPlatform)
+    "${targetPlatform.config}-";
+in
+
+# TODO loop over prefixed binaries too
 stdenv.mkDerivation {
-  name = "cctools-binutils-darwin";
+  name = "${prefix}cctools-binutils-darwin";
   buildCommand = ''
     mkdir -p $out/bin $out/include
 
@@ -22,7 +31,7 @@ stdenv.mkDerivation {
       ln -sf "${cctools}/bin/$i" "$out/bin/$i"
     done
 
-    for i in ${binutils-raw.dev}/include/*.h; do
+    for i in ${binutils-raw.dev or binutils-raw.out}/include/*.h; do
       ln -s "$i" "$out/include/$(basename $i)"
     done
 
