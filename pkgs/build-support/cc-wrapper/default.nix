@@ -168,7 +168,7 @@ stdenv.mkDerivation {
     + optionalString (stdenv.isSunOS && nativePrefix != "") ''
       # Solaris needs an additional ld wrapper.
       ldPath="${nativePrefix}/bin"
-      exec="$ldPath/ld"
+      exec="$ldPath/${prefix}ld"
       wrap ld-solaris ${./ld-solaris-wrapper.sh}
     '')
 
@@ -255,10 +255,10 @@ stdenv.mkDerivation {
 
       # some linkers on some platforms don't support specific -z flags
       hardening_unsupported_flags=""
-      if [[ "$($ldPath/ld -z now 2>&1 || true)" =~ un(recognized|known)\ option ]]; then
+      if [[ "$($ldPath/${prefix}ld -z now 2>&1 || true)" =~ un(recognized|known)\ option ]]; then
         hardening_unsupported_flags+=" bindnow"
       fi
-      if [[ "$($ldPath/ld -z relro 2>&1 || true)" =~ un(recognized|known)\ option ]]; then
+      if [[ "$($ldPath/${prefix}ld -z relro 2>&1 || true)" =~ un(recognized|known)\ option ]]; then
         hardening_unsupported_flags+=" relro"
       fi
 
