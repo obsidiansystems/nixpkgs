@@ -144,6 +144,9 @@ let version = "5.4.0";
         withFpu +
         withFloat +
         withMode +
+        # Ensure that -print-prog-name is able to find the correct programs.
+        " --with-as=${binutils}/bin/${cross.config}-as" +
+        " --with-ld=${binutils}/bin/${cross.config}-ld" +
         (if crossMingw && crossStageStatic then
           " --with-headers=${libcCross}/include" +
           " --with-gcc" +
@@ -168,11 +171,6 @@ let version = "5.4.0";
           else
           (if crossDarwin then " --with-sysroot=${getLib libcCross}/share/sysroot"
            else                " --with-headers=${getDev libcCross}/include") +
-          # Ensure that -print-prog-name is able to find the correct programs.
-          (stdenv.lib.optionalString (crossMingw || crossDarwin) (
-            " --with-as=${binutils}/bin/${cross.config}-as" +
-            " --with-ld=${binutils}/bin/${cross.config}-ld"
-          )) +
           " --enable-__cxa_atexit" +
           " --enable-long-long" +
           (if crossMingw then
