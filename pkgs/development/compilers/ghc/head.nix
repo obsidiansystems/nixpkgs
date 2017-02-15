@@ -1,5 +1,6 @@
-{ stdenv, fetchgit, bootPkgs, perl, ncurses, binutils, coreutils
+{ stdenv, fetchgit, bootPkgs, perl, binutils, coreutils
 , autoconf, automake, happy, alex, python3
+, ncurses, gmp, libffi
 , buildPackages, __targetPackages
 , buildPlatform, hostPlatform, targetPlatform
 
@@ -23,7 +24,12 @@ let
   rev = "b4f2afe70ddbd0576b4eba3f82ba1ddc52e9b3bd";
 
   targetStdenv = __targetPackages.stdenv;
-  prefix = stdenv.lib.optionalString (buildPlatform != targetPlatform) "${targetPlatform.config}-";
+  prefix = stdenv.lib.optionalString
+    (buildPlatform != targetPlatform)
+    "${targetPlatform.config}-";
+  underscorePrefix = stdenv.lib.optionalString
+    (buildPlatform != targetPlatform)
+    "${stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config}_";
 
 in stdenv.mkDerivation (rec {
   inherit version rev;
@@ -48,19 +54,28 @@ in stdenv.mkDerivation (rec {
     echo ${rev} >GIT_COMMIT_ID
     ./boot
     sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
-  '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
-    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
-  '' + stdenv.lib.optionalString stdenv.isDarwin ''
-    export NIX_LDFLAGS+=" -no_dtrace_dof"
-  ''; # perf-cross
+  '' +
+    ( if stdenv.isDarwin
+      then ''
+        export NIX_LDFLAGS+=" -no_dtrace_dof"
+      '' else ''
+        export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
+      ''); # perf-cross
 
-  nativeBuildInputs = [ ghc perl autoconf automake happy alex python3 ]
-    ++ stdenv.lib.optional (buildPlatform != targetPlatform) ncurses;
+  nativeBuildInputs = [
+    ghc perl autoconf automake happy alex python3
+  ];
   buildInputs = stdenv.lib.optionals (buildPlatform != targetPlatform) [
-    targetStdenv.ccCross
-    targetStdenv.binutilsCross
-    __targetPackages.ncurses
-    __targetPackages.gmp
+    targetStdenv.cc
+
+    ncurses.out ncurses.dev
+    gmp.out gmp.dev
+    libffi.out libffi.dev
+
+    __targetPackages.ncurses.out __targetPackages.ncurses.dev
+    __targetPackages.gmp.out __targetPackages.gmp.dev
+    __targetPackages.libffi.out __targetPackages.libffi.dev
+
     # Stringly speaking, LLVM is only needed for platforms the native
     # code generator does not support, but using it when
     # cross-compiling anywhere.
@@ -75,14 +90,14 @@ in stdenv.mkDerivation (rec {
   enableParallelBuilding = true;
 
   configureFlags = [
-    "CC=${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc"
+    "CC=${targetStdenv.cc or stdenv.cc}/bin/${prefix}cc"
   # TODO: next rebuild remove these `--with-*` altogether
     "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
     "--with-curses-libraries=${__targetPackages.ncurses.out}/lib"
-  ] ++ stdenv.lib.optional (!(buildPlatform != targetPlatform) && ! enableIntegerSimple) [
+  ] ++ stdenv.lib.optional (buildPlatform == targetPlatform && ! enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
-  ] ++ stdenv.lib.optional (!(buildPlatform != targetPlatform) && stdenv.isDarwin) [
+  ] ++ stdenv.lib.optional (buildPlatform == targetPlatform && stdenv.isDarwin) [
     "--with-iconv-includes=${__targetPackages.libiconv}/include"
     "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
   ] ++ stdenv.lib.optional (buildPlatform != targetPlatform) [
@@ -91,12 +106,10 @@ in stdenv.mkDerivation (rec {
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
     #"--host=x86_64-unknown-linux-gnu"#${hostPlatform.config}"
     "--target=${targetPlatform.config}"
-    "LD=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ld"
-    "AR=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}ar"
-    "NM=${targetStdenv.binutilsCross or stdenv.binutils}/bin/${prefix}nm"
 
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
+    "--with-system-libffi"
   ];
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
@@ -129,9 +142,6 @@ in stdenv.mkDerivation (rec {
     inherit bootPkgs;
 
     inherit llvmPackages;
-
-    cc = "${targetStdenv.ccCross or stdenv.cc}/bin/${prefix}cc";
-    ld = "${targetStdenv.binutilsCross or binutils}/bin/${prefix}ld";
   };
 
   meta = {
@@ -144,8 +154,6 @@ in stdenv.mkDerivation (rec {
   # TODO: next mass rebuild / version bump just do
   # dontSetConfigureCross = buildPlatform != targetPlatform;
 } // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform) {
-  dontSetConfigureCross = true;
-
   # It gets confused with ncurses
   dontPatchELF = true;
 })
