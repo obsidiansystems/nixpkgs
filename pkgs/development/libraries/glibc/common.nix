@@ -4,17 +4,24 @@
 cross:
 
 { name, fetchurl, lib, stdenv, installLocales ? false
-, gccCross ? null, linuxHeaders ? null
+, linuxHeaders ? null
 , profilingLibraries ? false, meta
 , withGd ? false, gd ? null, libpng ? null
-, preConfigure ? "", ... }@args:
+, preConfigure ? ""
+, buildPackages ? {}
+, ...
+} @ args:
 
 let
   version = "2.24";
   sha256 = "1ghzp41ryvsqxn4rhrm8r25wc33m2jf8zrcc1pj3jxyk8ad9a0by";
+
+  crossConfigDash = lib.optionalString
+    (cross != null)
+    (lib.replaceStrings ["-"] ["_"] cross.config + "_");
 in
 
-assert cross != null -> gccCross != null;
+assert cross != null -> buildPackages.stdenv ? cc;
 
 stdenv.mkDerivation ({
   inherit linuxHeaders installLocales;
@@ -112,8 +119,8 @@ stdenv.mkDerivation ({
 
   outputs = [ "out" "bin" "dev" "static" ];
 
-  buildInputs = lib.optionals (cross != null) [ gccCross ]
-    ++ lib.optionals withGd [ gd libpng ];
+  nativeBuildInputs = lib.optional (cross != null) buildPackages.stdenv.cc;
+  buildInputs = lib.optionals withGd [ gd libpng ];
 
   # Needed to install share/zoneinfo/zone.tab.  Set to impure /bin/sh to
   # prevent a retained dependency on the bootstrap tools in the stdenv-linux
@@ -125,13 +132,12 @@ stdenv.mkDerivation ({
   # I.e. when gcc is compiled with --with-arch=i686, then the
   # preprocessor symbol `__i686' will be defined to `1'.  This causes
   # the symbol __i686.get_pc_thunk.dx to be mangled.
-  NIX_CFLAGS_COMPILE = lib.optionalString (stdenv.system == "i686-linux") "-U__i686"
+  "NIX_${crossConfigDash}CFLAGS_COMPILE" =
+    lib.optionalString (stdenv.system == "i686-linux") "-U__i686"
     + " -Wno-error=strict-prototypes";
 }
 
-# Remove the `gccCross' attribute so that the *native* glibc store path
-# doesn't depend on whether `gccCross' is null or not.
-// (removeAttrs args [ "lib" "gccCross" "fetchurl" "withGd" "gd" "libpng" ]) //
+// (removeAttrs args [ "lib" "buildPackages" "fetchurl" "withGd" "gd" "libpng" ]) //
 
 {
   name = name + "-${version}" +
@@ -160,7 +166,15 @@ stdenv.mkDerivation ({
       ''makeFlags="$makeFlags BUILD_LDFLAGS=-Wl,-rpath,${stdenv.cc.libc}/lib"''
     }
 
-    ${preConfigure}
+    ${lib.optionalString (cross != null)
+    # AR detection is broken, and CC gives bad hint to make matters worse
+    # TODO make this nicer on next mass rebuild
+    ''
+      export AR=${cross.config}-ar
+      sed -i -e '/^AR=.*/d' $configureScript
+
+    ''
+    }${preConfigure}
   '';
 
   preBuild = lib.optionalString withGd "unset NIX_DONT_SET_RPATH";
