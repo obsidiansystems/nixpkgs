@@ -97,8 +97,8 @@ let
   crossCabalFlags = [
     "--with-ghc=${crossPrefix}ghc"
     "--with-ghc-pkg=${crossPrefix}ghc-pkg"
-    "--with-gcc=${ghc.cc}"
-    "--with-ld=${ghc.ld}"
+    "--with-gcc=${crossPrefix}cc"
+    "--with-ld=${crossPrefix}ld"
     "--hsc2hs-options=--cross-compile"
     "--with-hsc2hs=${nativeGhc}/bin/hsc2hs"
     "--with-strip=${binutils}/bin/${crossPrefix}strip"
