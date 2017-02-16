@@ -1,11 +1,11 @@
-{ stdenv, buildPackages, ghc, glibcLocales
+{ stdenv, buildPackages, ghc
 , jailbreak-cabal, hscolour, cpphs, nodePackages
 , buildPlatform, hostPlatform
 }:
 
 let
   isCross = buildPlatform != hostPlatform;
-  inherit (buildPackages) fetchurl pkgconfig binutils coreutils gnugrep gnused;
+  inherit (buildPackages) fetchurl pkgconfig binutils coreutils gnugrep gnused glibcLocales;
 in
 
 { pname

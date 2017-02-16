@@ -3,6 +3,7 @@
 , packageSetConfig ? (self: super: {})
 , overrides ? (self: super: {})
 , buildPlatform, hostPlatform
+, buildPackages
 }:
 
 let
@@ -14,7 +15,6 @@ let
 
       mkDerivation = pkgs.callPackage ./generic-builder.nix {
         inherit stdenv;
-        inherit (pkgs) glibcLocales;
         jailbreak-cabal = if buildPlatform != hostPlatform
           then self.ghc.bootPkgs.jailbreak-cabal
           else self.jailbreak-cabal;
@@ -64,7 +64,7 @@ let
           buildInputs = [ pkgs.cabal2nix ];
           phases = ["installPhase"];
           LANG = "en_US.UTF-8";
-          LOCALE_ARCHIVE = pkgs.lib.optionalString pkgs.stdenv.isLinux "${pkgs.glibcLocales}/lib/locale/locale-archive";
+          LOCALE_ARCHIVE = pkgs.lib.optionalString pkgs.stdenv.isLinux "${buildPackages.glibcLocales}/lib/locale/locale-archive";
           installPhase = ''
             export HOME="$TMP"
             mkdir -p "$out"
