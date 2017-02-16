@@ -34,9 +34,6 @@ stdenv.mkDerivation rec {
     "--enable-pc-files"
     "--enable-symlinks"
   ] ++ lib.optional unicode "--enable-widec";
-  #] ++ lib.optionals (buildPlatform != hostPlatform) [
-  #  "BUILD_CC=${buildPackages.stdenv.cc}/bin/cc"
-  #];
 
   # Only the C compiler, and explicitly not C++ compiler needs this flag on solaris:
   CFLAGS = lib.optionalString stdenv.isSunOS "-D_XOPEN_SOURCE_EXTENDED";
