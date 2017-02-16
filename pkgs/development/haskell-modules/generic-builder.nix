@@ -1,11 +1,11 @@
-{ stdenv, buildPackages, ghc, glibcLocales
+{ stdenv, buildPackages, ghc
 , jailbreak-cabal, hscolour, cpphs, nodePackages
 , buildPlatform, hostPlatform
 }:
 
 let
   isCross = buildPlatform != hostPlatform;
-  inherit (buildPackages) fetchurl pkgconfig binutilsCross coreutils gnugrep gnused;
+  inherit (buildPackages) fetchurl pkgconfig binutils coreutils gnugrep gnused glibcLocales;
 in
 
 { pname
@@ -101,7 +101,7 @@ let
     "--with-ld=${ghc.ld}"
     "--hsc2hs-options=--cross-compile"
     "--with-hsc2hs=${nativeGhc}/bin/hsc2hs"
-    "--with-strip=${binutilsCross}/bin/${crossPrefix}strip"
+    "--with-strip=${binutils}/bin/${crossPrefix}strip"
   ];
 
   crossCabalFlagsString =
