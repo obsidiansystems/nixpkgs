@@ -4799,8 +4799,8 @@ with pkgs;
 
   gccCrossStageStatic = assert targetPlatform != buildPlatform; let
     libcCross1 =
-      if stdenv.cross.libc == "msvcrt" then windows.mingw_w64_headers
-      else if stdenv.cross.libc == "libSystem" then darwin.xcode
+      if targetPlatform.libc == "msvcrt" then windows.mingw_w64_headers
+      else if targetPlatform.libc == "libSystem" then darwin.xcode
       else null;
     in wrapCCCross {
       cc = forcedNativePackages.gcc.cc.override {
@@ -5519,9 +5519,9 @@ with pkgs;
   };
 
   wrapCCCross =
-    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper"}:
+    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper", ... } @ args:
 
-    forcedNativePackages.ccWrapperFun {
+    forcedNativePackages.ccWrapperFun (args // {
       nativeTools = false;
       nativeLibc = false;
       noLibc = (libc == null);
@@ -5530,8 +5530,8 @@ with pkgs;
       isGNU = cc.isGNU or false;
       isClang = cc.isClang or false;
 
-      inherit cc binutils libc shell name;
-    };
+      inherit shell name; # defaults not in args
+    });
 
   # prolog
   yap = callPackage ../development/compilers/yap { };
@@ -8279,9 +8279,9 @@ with pkgs;
   # glibc provides libiconv so systems with glibc don't need to build libiconv
   # separately, but we also provide libiconvReal, which will always be a
   # standalone libiconv, just in case you want it
-  libiconv = if stdenv ? cross then
-    (if stdenv.cross.libc == "glibc" then libcCross
-      else if stdenv.cross.libc == "libSystem" then darwin.libiconv
+  libiconv = if buildPlatform != hostPlatform then
+    (if hostPlatform.libc == "glibc" && !hostPlatform.useAndroidPrebuilt then glibcCross
+      else if hostPlatform.libc == "libSystem" then darwin.libiconv
       else libiconvReal)
     else if stdenv.isGlibc then glibcIconv stdenv.cc.libc
     else if stdenv.isDarwin then darwin.libiconv

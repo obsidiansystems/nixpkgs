@@ -1,4 +1,4 @@
-{ fetchurl, stdenv, lib }:
+{ fetchurl, stdenv, lib, androidMinimal ? false }:
 
 assert !stdenv.isLinux || stdenv ? cross; # TODO: improve on cross
 
@@ -27,8 +27,9 @@ stdenv.mkDerivation rec {
   # (Windows' linker would need to be used somehow to produce an actual
   # DLL.)  Thus, build the static library too, and this is what Gettext
   # will actually use.
-    lib.optional stdenv.isCygwin "--enable-static"
-    ++ lib.optional stdenv.isFreeBSD "--with-pic";
+    lib.optional (stdenv.isCygwin || androidMinimal) "--enable-static"
+    ++ lib.optional stdenv.isFreeBSD "--with-pic"
+    ++ lib.optional androidMinimal "--without-cxx";
 
   crossAttrs = {
     # Disable stripping to avoid "libiconv.a: Archive has no index" (MinGW).

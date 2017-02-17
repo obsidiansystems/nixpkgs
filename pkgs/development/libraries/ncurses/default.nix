@@ -3,6 +3,7 @@
 , abiVersion
 , mouseSupport ? false
 , unicode ? true
+, androidMinimal ? false
 
 , gpm
 
@@ -33,7 +34,18 @@ stdenv.mkDerivation (rec {
     "--without-debug"
     "--enable-pc-files"
     "--enable-symlinks"
-  ] ++ lib.optional unicode "--enable-widec";
+  ] ++ lib.optional unicode "--enable-widec"
+  ++ lib.optionals androidMinimal [
+    "--without-cxx"
+    #"--host=arm"
+    "--enable-static"
+    #"--disable-shared"
+    #"--without-manpages"
+    #"--without-debug"
+    #"--without-termlib"
+    #"--without-ticlib"
+    "--without-cxx"
+  ];
 
   # Only the C compiler, and explicitly not C++ compiler needs this flag on solaris:
   CFLAGS = lib.optionalString stdenv.isSunOS "-D_XOPEN_SOURCE_EXTENDED";
