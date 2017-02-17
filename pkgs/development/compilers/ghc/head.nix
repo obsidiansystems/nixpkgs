@@ -31,9 +31,9 @@ let
     (buildPlatform != targetPlatform)
     "${stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config}_";
 
-  useLibiconv =
-    (buildPlatform == targetPlatform && stdenv.isDarwin) ||
-    (buildPlatform != targetPlatform && targetPlatform.useAndroidImpure or false);
+  androidTarget = targetPlatform.useAndroidPrebuilt or false;
+
+  useLibiconv = (buildPlatform == targetPlatform && stdenv.isDarwin) || androidTarget;
 
 in stdenv.mkDerivation (rec {
   inherit version rev;
@@ -51,7 +51,7 @@ in stdenv.mkDerivation (rec {
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
-  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.useAndroidImpure or false) ''
+  '' + stdenv.lib.optionalString androidTarget ''
     echo 'EXTRA_CC_OPTS   += -std=gnu99' >> mk/build.mk
     echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
@@ -161,7 +161,7 @@ in stdenv.mkDerivation (rec {
 
   # TODO: next mass rebuild / version bump just do
   # dontSetConfigureCross = buildPlatform != targetPlatform;
-} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform) {
+} // stdenv.lib.optionalAttrs androidTarget {
   # It gets confused with ncurses
   dontPatchELF = true;
   patches = [

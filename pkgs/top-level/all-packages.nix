@@ -8285,7 +8285,7 @@ with pkgs;
   # separately, but we also provide libiconvReal, which will always be a
   # standalone libiconv, just in case you want it
   libiconv = if buildPlatform != hostPlatform then
-    (if hostPlatform.libc == "glibc" && !hostPlatform.useAndroidImpure then glibcCross
+    (if hostPlatform.libc == "glibc" && !hostPlatform.useAndroidPrebuilt then glibcCross
       else if hostPlatform.libc == "libSystem" then darwin.libiconv
       else libiconvReal)
     else if stdenv.isGlibc then glibcIconv stdenv.cc.libc

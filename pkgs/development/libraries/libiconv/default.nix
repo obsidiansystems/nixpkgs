@@ -1,6 +1,6 @@
 { fetchurl, stdenv, lib
 , autoconf, automake, libtool, which
-, armMinimal ? false }:
+, androidMinimal ? false }:
 
 assert !stdenv.isLinux || stdenv ? cross; # TODO: improve on cross
 
@@ -28,9 +28,9 @@ stdenv.mkDerivation (rec {
   # (Windows' linker would need to be used somehow to produce an actual
   # DLL.)  Thus, build the static library too, and this is what Gettext
   # will actually use.
-    lib.optional (stdenv.isCygwin || armMinimal) "--enable-static"
+    lib.optional (stdenv.isCygwin || androidMinimal) "--enable-static"
     ++ lib.optional stdenv.isFreeBSD "--with-pic"
-    ++ lib.optionals armMinimal [
+    ++ lib.optionals androidMinimal [
       "--without-cxx"
     ];
 
@@ -61,19 +61,19 @@ stdenv.mkDerivation (rec {
     # This library is not needed on GNU platforms.
     hydraPlatforms = with lib.platforms; cygwin ++ darwin ++ freebsd;
   };
-} // lib.optionalAttrs armMinimal {
+} // lib.optionalAttrs androidMinimal {
   nativeBuildInputs = [ which ];
 
   postUnpack = ''
     sed -i libiconv-*/lib/Makefile.in -e 's/ar /$AR /g'
 
     mkdir tmp
-    ln -s $(which aarch64-unknown-linux-gnu-ar) tmp/ar
+    ln -s $(which aarch64-linux-android-ar) tmp/ar
     export PATH+=:$(pwd)/tmp
     echo $PATH
   '';
 
   postConfigure = ''
-    sed -e "s_AR='ar'_AR='aarch64-unknown-linux-gnu-ar'_" -i config.log
+    sed -e "s_AR='ar'_AR='aarch64-linux-android-ar'_" -i config.log
   '';
 })

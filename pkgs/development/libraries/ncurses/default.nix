@@ -3,7 +3,7 @@
 , abiVersion
 , mouseSupport ? false
 , unicode ? true
-, armMinimal ? false
+, androidMinimal ? false
 
 , gpm
 
@@ -35,7 +35,7 @@ stdenv.mkDerivation rec {
     "--enable-pc-files"
     "--enable-symlinks"
   ] ++ lib.optional unicode "--enable-widec"
-  ++ lib.optionals (armMinimal) [
+  ++ lib.optionals androidMinimal [
     "--without-cxx"
     #"--host=arm"
     "--enable-static"
@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
     #"--without-debug"
     #"--without-termlib"
     #"--without-ticlib"
-    "--without-cxx" 
+    "--without-cxx"
   ];
 
   # Only the C compiler, and explicitly not C++ compiler needs this flag on solaris:
@@ -98,7 +98,7 @@ stdenv.mkDerivation rec {
 
     # symlink the full suffixed include directory
     ln -svf . $dev/include/ncurses$suffix
-    ${lib.optionalString armMinimal "set -x"}
+
     for newsuffix in $suffixes ""; do
       # Create a non-abi versioned config util links
       ln -svf $cfg $dev/bin/ncurses$newsuffix-config
