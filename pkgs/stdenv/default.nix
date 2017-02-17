@@ -32,11 +32,16 @@ let
 
   stagesCross = import ./cross args;
 
+  stagesAndroidPrebuilt = import ./android-prebuilt args;
+
   stagesCustom = import ./custom args;
 
   # Select the appropriate stages for the platform `system'.
 in
-  if crossSystem != null then stagesCross
+  if crossSystem != null then
+    if crossSystem.useAndroidPrebuilt or false
+    then stagesAndroidPrebuilt
+    else stagesCross
   else if config ? replaceStdenv then stagesCustom
   else { # switch
     "i686-linux" = stagesLinux;
