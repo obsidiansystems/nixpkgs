@@ -144,6 +144,9 @@ in stdenv.mkDerivation (rec {
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
     #"--with-system-libffi"
+  ] ++ stdenv.lib.optionals (targetPlatform.config or "" == "aarch64-apple-darwin14") [
+    # Hack for iOS
+    "--disable-large-address-space"
   ];
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
