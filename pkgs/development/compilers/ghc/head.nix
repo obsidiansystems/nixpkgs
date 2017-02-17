@@ -48,8 +48,9 @@ in stdenv.mkDerivation (rec {
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
   '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.config == "aarch64-unknown-linux-gnu") ''
-    echo 'GhcLibHcOpts   += -fPIC -std=c11' >> mk/build.mk +
-    echo 'GhcRtsHcOpts   += -fPIC -std=c11' >> mk/build.mk
+    echo 'EXTRA_CC_OPTS   += -std=c99'
+    echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk +
+    echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
     #echo 'EXTRA_HC_OPTS   = -fPIC' >> mk/build.mk
     #echo 'SRC_CC_OPTS     = -fPIC -O' -std=c11 >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
@@ -162,6 +163,7 @@ in stdenv.mkDerivation (rec {
   # It gets confused with ncurses
   dontPatchELF = true;
   patches = [
+    ./android-patches/build-deps-extra-cc-opts.patch
     ./android-patches/unix-posix_vdisable.patch
     #./android-patches/unix-posix-files-imports.patch
     ./android-patches/enable-fPIC.patch
