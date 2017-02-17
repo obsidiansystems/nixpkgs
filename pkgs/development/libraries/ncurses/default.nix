@@ -3,6 +3,7 @@
 , abiVersion
 , mouseSupport ? false
 , unicode ? true
+, androidMinimal ? false
 
 , gpm
 
@@ -39,6 +40,16 @@ stdenv.mkDerivation rec {
     "--without-debug"
     "--enable-pc-files"
     "--enable-symlinks"
+  ] ++ lib.optionals androidMinimal [
+    "--without-cxx"
+    #"--host=arm"
+    "--enable-static"
+    #"--disable-shared"
+    #"--without-manpages"
+    #"--without-debug"
+    #"--without-termlib"
+    #"--without-ticlib"
+    "--without-cxx"
   ] ++ lib.optional unicode "--enable-widec"
     ++ lib.optional confusingIosHost "--host=arm-apple-darwin";
 
