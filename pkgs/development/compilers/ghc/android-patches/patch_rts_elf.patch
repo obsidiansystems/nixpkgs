@@ -7,7 +7,7 @@ index 604c3dc..2550372 100644
          return SECTIONKIND_CODE_OR_RODATA;
      }
 -#ifndef openbsd_HOST_OS
-+#ifndef SHT_INIT_ARRAY
++#ifdef SHT_INIT_ARRAY
      if (hdr->sh_type == SHT_INIT_ARRAY
          && (hdr->sh_flags & SHF_ALLOC) && (hdr->sh_flags & SHF_WRITE)) {
         /* .init_array section */
