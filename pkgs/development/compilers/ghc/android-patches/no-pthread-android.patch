@@ -1,0 +1,13 @@
+diff --git a/compiler/main/DriverPipeline.hs b/compiler/main/DriverPipeline.hs
+index adebdf4..ff6c2cc 100644
+--- a/compiler/main/DriverPipeline.hs
++++ b/compiler/main/DriverPipeline.hs
+@@ -1862,7 +1862,7 @@ linkBinary' staticLink dflags o_files dep_packages = do
+          | WayThreaded `elem` ways dflags =
+             let os = platformOS (targetPlatform dflags)
+             in if os `elem` [OSMinGW32, OSFreeBSD, OSOpenBSD,
+-                             OSNetBSD, OSHaiku, OSQNXNTO, OSiOS, OSDarwin]
++                             OSNetBSD, OSHaiku, OSQNXNTO, OSiOS, OSDarwin, OSAndroid]
+                then []
+                else ["-lpthread"]
+          | otherwise               = []
