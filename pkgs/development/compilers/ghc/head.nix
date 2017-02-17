@@ -14,7 +14,7 @@
 
   # If enabled GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-, enableIntegerSimple ? false
+, enableIntegerSimple ? buildPlatform != hostPlatform #false
 }:
 
 let
@@ -48,8 +48,25 @@ in stdenv.mkDerivation (rec {
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
   '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.config == "aarch64-unknown-linux-gnu") ''
-    echo 'EXTRA_HC_OPTS   = -fPIC' >> mk/build.mk
-    echo 'SRC_CC_OPTS     = -fPIC -O' >> mk/build.mk
+    #echo 'EXTRA_HC_OPTS   = -fPIC' -std=c11 >> mk/build.mk
+    #echo 'SRC_CC_OPTS     = -fPIC -O' -std=c11 >> mk/build.mk
+cat >> mk/build.mk <<EOF
+BuildFlavour = quick-cross
+SRC_HC_OPTS = -H64m -O0
+GhcStage1HcOpts = -O -fPIC
+GhcStage2HcOpts = -O0 -fPIC -fllvm
+SplitObjs = NO
+Stage1Only = YES
+DYNAMIC_BY_DEFAULT = NO
+DYNAMIC_GHC_PROGRAMS = NO
+HADDOCK_DOCS = NO
+BUILD_DOCBOOK_HTML = NO
+BUILD_DOCBOOK_PS   = NO
+BUILD_DOCBOOK_PDF  = NO
+#INTEGER_LIBRARY = integer-simple
+GhcHcOpts = -Rghc-timing
+GhcLibWays = v thr p
+EOF
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
   '' + ''
@@ -72,12 +89,12 @@ in stdenv.mkDerivation (rec {
     targetStdenv.cc
 
     ncurses.out ncurses.dev
-    gmp.out gmp.dev
-    libffi.out libffi.dev
+    #gmp.out gmp.dev
+    #libffi.out libffi.dev
 
     __targetPackages.ncurses.out __targetPackages.ncurses.dev
-    __targetPackages.gmp.out __targetPackages.gmp.dev
-    __targetPackages.libffi.out __targetPackages.libffi.dev
+    #__targetPackages.gmp.out __targetPackages.gmp.dev
+    #__targetPackages.libffi.out __targetPackages.libffi.dev
 
     # Stringly speaking, LLVM is only needed for platforms the native
     # code generator does not support, but using it when
@@ -112,7 +129,7 @@ in stdenv.mkDerivation (rec {
 
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
-    "--with-system-libffi"
+    #"--with-system-libffi"
   ];
 
   # required, because otherwise all symbols from HSffi.o are stripped, and
@@ -159,4 +176,14 @@ in stdenv.mkDerivation (rec {
 } // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform) {
   # It gets confused with ncurses
   dontPatchELF = true;
+  patches = [
+    ./android-patches/unix-posix_vdisable.patch
+    #./android-patches/unix-posix-files-imports.patch
+    ./android-patches/enable-fPIC.patch
+    ./android-patches/no-pthread-android.patch
+    ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
+    ./android-patches/undefine_MYTASK_USE_TLV_for_CC_SUPPORTS_TLS_zero.patch
+    ./android-patches/force-relocation-equal-pic.patch
+    ./android-patches/rts_android_log_write.patch
+  ];
 })

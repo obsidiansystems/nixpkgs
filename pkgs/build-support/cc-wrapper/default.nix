@@ -234,7 +234,7 @@ stdenv.mkDerivation {
       export real_cxx=${prefix}c++
       export default_cxx_stdlib_compile="${
         if stdenv.isLinux && !(cc.isGNU or false)
-          then "-isystem $(echo -n ${cc.gcc}/include/c++/*) -isystem $(echo -n ${cc.gcc}/include/c++/*)/$(${cc.gcc}/bin/${prefix}gcc -dumpmachine)"
+          then "-isystem $(echo -n ${cc.gcc}/include/c++/*) -isystem $(echo -n ${(x: builtins.trace x x) cc.gcc}/include/c++/*)/$(${cc.gcc}/bin/${prefix}gcc -dumpmachine)"
           else ""
       }"
 

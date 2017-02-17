@@ -32,11 +32,16 @@ let
 
   stagesCross = import ./cross args;
 
+  stagesAndroidImpure = import ./android-impure args;
+
   stagesCustom = import ./custom args;
 
   # Select the appropriate stages for the platform `system'.
 in
-  if crossSystem != null then stagesCross
+  if crossSystem != null then
+    if crossSystem.useAndroidImpure or false
+    then stagesAndroidImpure
+    else stagesCross
   else if config ? replaceStdenv then stagesCustom
   else { # switch
     "i686-linux" = stagesLinux;
