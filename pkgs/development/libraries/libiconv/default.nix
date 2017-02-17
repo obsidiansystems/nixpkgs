@@ -1,5 +1,6 @@
 { fetchurl, stdenv, lib
 , buildPlatform, hostPlatform
+, androidMinimal ? false
 }:
 
 assert !stdenv.isLinux || hostPlatform != buildPlatform; # TODO: improve on cross
@@ -20,7 +21,8 @@ stdenv.mkDerivation rec {
       '';
 
   configureFlags =
-    lib.optional stdenv.isFreeBSD "--with-pic";
+       lib.optional stdenv.isFreeBSD "--with-pic";
+    ++ lib.optional androidMinimal "--without-cxx";
 
   crossAttrs = {
     # Disable stripping to avoid "libiconv.a: Archive has no index" (MinGW).

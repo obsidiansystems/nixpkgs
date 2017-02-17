@@ -59,19 +59,19 @@ rec {
   makeStdenvCross = { stdenv
                     , cc
                     , buildPlatform, hostPlatform, targetPlatform
+                    , # Prior overrides are surely not valid as packages built
+                      # with this run on a different platform, so disable by
+                      # default.
+                      overrides ? _: _: {}
                     } @ overrideArgs: let
     stdenv = overrideArgs.stdenv.override {
       # TODO(@Ericson2314): Cannot do this for now because then Nix thinks the
       # resulting derivation should be built on the host platform.
       #hostPlatform = buildPlatform;
       #targetPlatform = hostPlatform;
-      inherit cc;
+      inherit cc overrides;
 
       allowedRequisites = null;
-
-      # Overrides are surely not valid as packages built with this run on a
-      # different platform.
-      overrides = _: _: {};
     };
   in stdenv // {
     mkDerivation =
