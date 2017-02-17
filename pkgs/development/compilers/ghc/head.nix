@@ -48,11 +48,9 @@ in stdenv.mkDerivation (rec {
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
   '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.config == "aarch64-unknown-linux-gnu") ''
-    echo 'EXTRA_CC_OPTS   += -std=c99'
-    echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk +
+    echo 'EXTRA_CC_OPTS   += -std=c99' >> mk/build.mk
+    echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
-    #echo 'EXTRA_HC_OPTS   = -fPIC' >> mk/build.mk
-    #echo 'SRC_CC_OPTS     = -fPIC -O' -std=c11 >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
   '' + ''
