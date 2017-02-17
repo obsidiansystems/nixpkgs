@@ -63,6 +63,9 @@ in bootStages ++ [
     stdenv = toolPackages.makeStdenvCross old.stdenv crossSystem toolPackages.ndkWrappedCC // {
       overrides = self: super: {
         glibcCross = libs;
+        libiconvReal = super.libiconvReal.override {
+          armMinimal = true;
+        };
         ncurses = super.ncurses.override {
           armMinimal = true;
         };
