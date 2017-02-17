@@ -5883,9 +5883,9 @@ with pkgs;
   };
 
   wrapCCCross =
-    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper"}:
+    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper", ... } @ args:
 
-    forcedNativePackages.ccWrapperFun {
+    forcedNativePackages.ccWrapperFun (args // {
       nativeTools = false;
       nativeLibc = false;
       noLibc = (libc == null);
@@ -5894,8 +5894,8 @@ with pkgs;
       isGNU = cc.isGNU or false;
       isClang = cc.isClang or false;
 
-      inherit cc binutils libc shell name;
-    };
+      inherit shell name; # defaults not in args
+    });
 
   # prolog
   yap = callPackage ../development/compilers/yap { };
@@ -7832,6 +7832,7 @@ with pkgs;
     # libc is hackily often used from the previous stage. This `or`
     # hack fixes the hack, *sigh*.
     /**/ if name == "glibc" then __targetPackages.glibcCross or glibcCross
+    else if name == "bionic" then __targetPackages.bionic
     else if name == "uclibc" then uclibcCross
     else if name == "msvcrt" then windows.mingw_w64
     else if name == "libSystem" then darwin.xcode

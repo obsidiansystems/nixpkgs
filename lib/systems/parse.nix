@@ -93,6 +93,7 @@ rec {
 
   isAbi = isType "abi";
   abis = setTypes "abi" {
+    android = {};
     cygnus = {};
     gnu = {};
     msvc = {};
