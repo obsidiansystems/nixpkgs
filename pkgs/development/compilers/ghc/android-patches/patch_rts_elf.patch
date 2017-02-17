@@ -1,0 +1,13 @@
+diff --git a/rts/linker/Elf.c b/rts/linker/Elf.c
+index 604c3dc..2550372 100644
+--- a/rts/linker/Elf.c
++++ b/rts/linker/Elf.c
+@@ -611,7 +611,7 @@ static int getSectionKind_ELF( Elf_Shdr *hdr, int *is_bss )
+         /* .rodata-style section */
+         return SECTIONKIND_CODE_OR_RODATA;
+     }
+-#ifndef openbsd_HOST_OS
++#ifndef SHT_INIT_ARRAY
+     if (hdr->sh_type == SHT_INIT_ARRAY
+         && (hdr->sh_flags & SHF_ALLOC) && (hdr->sh_flags & SHF_WRITE)) {
+        /* .init_array section */
