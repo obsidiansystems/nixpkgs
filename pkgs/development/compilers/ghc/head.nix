@@ -31,6 +31,10 @@ let
     (buildPlatform != targetPlatform)
     "${stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config}_";
 
+  useLibiconv =
+    (buildPlatform == targetPlatform && stdenv.isDarwin) ||
+    (buildPlatform != targetPlatform && targetPlatform.useAndroidImpure or false);
+
 in stdenv.mkDerivation (rec {
   inherit version rev;
   name = "${prefix}ghc-${version}";
@@ -47,7 +51,7 @@ in stdenv.mkDerivation (rec {
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
-  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.config == "aarch64-unknown-linux-gnu") ''
+  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.useAndroidImpure or false) ''
     echo 'EXTRA_CC_OPTS   += -std=c99' >> mk/build.mk
     echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
@@ -87,7 +91,7 @@ in stdenv.mkDerivation (rec {
     # Using host != target llvm is better (but probably a no-op) in
     # principle, but is currently broken.
     buildPackages.llvmPackages.llvm
-  ] ++ stdenv.lib.optionals (buildPlatform != targetPlatform && stdenv.isDarwin) [
+  ] ++ stdenv.lib.optionals useLibiconv [
     __targetPackages.libiconv
   ];
 
@@ -101,7 +105,7 @@ in stdenv.mkDerivation (rec {
   ] ++ stdenv.lib.optional (buildPlatform == targetPlatform && ! enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
-  ] ++ stdenv.lib.optional (buildPlatform == targetPlatform && stdenv.isDarwin) [
+  ] ++ stdenv.lib.optional useLibiconv [
     "--with-iconv-includes=${__targetPackages.libiconv}/include"
     "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
   ] ++ stdenv.lib.optional (buildPlatform != targetPlatform) [
