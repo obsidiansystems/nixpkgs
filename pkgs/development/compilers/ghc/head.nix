@@ -48,25 +48,10 @@ in stdenv.mkDerivation (rec {
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
     echo 'GhcLibWays = v dyn' >> mk/build.mk
   '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && targetPlatform.config == "aarch64-unknown-linux-gnu") ''
-    #echo 'EXTRA_HC_OPTS   = -fPIC' -std=c11 >> mk/build.mk
+    echo 'GhcLibHcOpts   += -fPIC -std=c11' >> mk/build.mk +
+    echo 'GhcRtsHcOpts   += -fPIC -std=c11' >> mk/build.mk
+    #echo 'EXTRA_HC_OPTS   = -fPIC' >> mk/build.mk
     #echo 'SRC_CC_OPTS     = -fPIC -O' -std=c11 >> mk/build.mk
-cat >> mk/build.mk <<EOF
-BuildFlavour = quick-cross
-SRC_HC_OPTS = -H64m -O0
-GhcStage1HcOpts = -O -fPIC
-GhcStage2HcOpts = -O0 -fPIC -fllvm
-SplitObjs = NO
-Stage1Only = YES
-DYNAMIC_BY_DEFAULT = NO
-DYNAMIC_GHC_PROGRAMS = NO
-HADDOCK_DOCS = NO
-BUILD_DOCBOOK_HTML = NO
-BUILD_DOCBOOK_PS   = NO
-BUILD_DOCBOOK_PDF  = NO
-#INTEGER_LIBRARY = integer-simple
-GhcHcOpts = -Rghc-timing
-GhcLibWays = v thr p
-EOF
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
   '' + ''
