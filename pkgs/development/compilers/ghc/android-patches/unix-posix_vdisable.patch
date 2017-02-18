@@ -6,16 +6,16 @@ diff -rupN a/libraries/unix/System/Posix/Terminal/Common.hsc b/libraries/unix/Sy
      let c_cc = (#ptr struct termios, c_cc) p
      val <- peekElemOff c_cc (cc2Word cc)
 -    if val == ((#const _POSIX_VDISABLE)::CCc)
-+    if val == ((#const '\0')::CCc)
++    if val == ((#const (-1))::CCc)
         then return Nothing
         else return (Just (chr (fromEnum val)))
- 
+
 @@ -280,7 +280,7 @@ withoutCC :: TerminalAttributes
  withoutCC termios cc = unsafePerformIO $ do
    withNewTermios termios $ \p -> do
      let c_cc = (#ptr struct termios, c_cc) p
 -    pokeElemOff c_cc (cc2Word cc) ((#const _POSIX_VDISABLE) :: CCc)
-+    pokeElemOff c_cc (cc2Word cc) ((#const '\0') :: CCc)
- 
++    pokeElemOff c_cc (cc2Word cc) ((#const (-1)) :: CCc)
+
  inputTime :: TerminalAttributes -> Int
  inputTime termios = unsafePerformIO $ do
