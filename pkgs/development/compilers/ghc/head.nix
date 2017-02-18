@@ -165,6 +165,7 @@ in stdenv.mkDerivation (rec {
   # It gets confused with ncurses
   dontPatchELF = true;
   patches = [
+    ./android-patches/add-llvm-target-data-layout.patch
     #./android-patches/build-deps-extra-cc-opts.patch
     ./android-patches/unix-posix_vdisable.patch
     #./android-patches/unix-posix-files-imports.patch
