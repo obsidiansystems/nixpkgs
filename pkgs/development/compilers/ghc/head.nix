@@ -168,7 +168,7 @@ in stdenv.mkDerivation (rec {
     #./android-patches/build-deps-extra-cc-opts.patch
     ./android-patches/unix-posix_vdisable.patch
     #./android-patches/unix-posix-files-imports.patch
-    #./android-patches/enable-fPIC.patch
+    ./android-patches/enable-fPIC.patch
     ./android-patches/no-pthread-android.patch
     ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
     ./android-patches/undefine_MYTASK_USE_TLV_for_CC_SUPPORTS_TLS_zero.patch
