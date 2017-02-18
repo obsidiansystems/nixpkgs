@@ -2,7 +2,8 @@
 , localSystem, crossSystem, config, overlays
 } @ args:
 
-assert crossSystem.config == "aarch64-linux-android";
+assert crossSystem.config == "aarch64-unknown-linux-android"
+    || crossSystem.config == "arm-unknown-linux-androideabi";
 
 let
   normalCrossStages = import ../cross args;
@@ -16,9 +17,14 @@ in bootStages ++ [
 
     inherit (vanillaPackages.androidenv) androidndk;
 
+    ndkInfo = {
+      "arm-unknown-linux-androideabi" = { triple = "arm-linux-androideabi"; gccVer = "4.8"; };
+      "aarch64-unknown-linux-android" = { triple = "aarch64-linux-android"; gccVer = "4.9"; };
+    }.${crossSystem.config} or crossSystem.config;
+
     # name == android-ndk-r10e ?
     ndkBin =
-      "${androidndk}/libexec/${androidndk.name}/toolchains/${crossSystem.config}-4.9/prebuilt/linux-x86_64/bin/";
+      "${androidndk}/libexec/${androidndk.name}/toolchains/${ndkInfo.triple}-${ndkInfo.gccVer}/prebuilt/linux-x86_64/bin";
 
     ndkBins = vanillaPackages.runCommand "ndk-gcc" {
       isGNU = true;
@@ -26,10 +32,10 @@ in bootStages ++ [
       propgatedBuildInputs = [ androidndk ];
     } ''
       mkdir -p $out/bin
-      for prog in ${ndkBin}/${crossSystem.config}-*; do
-        ln -s $prog $out/bin/$(basename $prog)
+      for prog in ${ndkBin}/${ndkInfo.triple}-*; do
+        prog_suffix=$(basename $prog | sed 's/${ndkInfo.triple}-//')
+        ln -s $prog $out/bin/${crossSystem.config}-$prog_suffix
       done
-      find $out
     '';
 
   in old // {
