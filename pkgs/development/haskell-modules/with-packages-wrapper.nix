@@ -2,6 +2,7 @@
 , ignoreCollisions ? false, withLLVM ? false
 , postBuild ? ""
 , haskellPackages
+, buildPlatform, hostPlatform
 }:
 
 # This wrapper works only with GHC 6.12 or later.
