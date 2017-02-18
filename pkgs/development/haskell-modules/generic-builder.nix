@@ -5,10 +5,6 @@
 
 let
   isCross = buildPlatform != hostPlatform;
-  hostTripleHaskell = if hostPlatform.config == "aarch64-linux-android"
-    then "aarch64-unknown-linux-android"
-    else hostPlatform.config;
-  hostTriple = hostPlatform.config;
   inherit (buildPackages) fetchurl pkgconfig binutils coreutils gnugrep gnused glibcLocales;
 in
 
@@ -99,8 +95,8 @@ let
   enableParallelBuilding = (versionOlder "7.8" ghc.version && !hasActiveLibrary) || versionOlder "8.0.1" ghc.version;
 
   crossCabalFlags = [
-    "--with-ghc=${crossPrefixHaskell}ghc"
-    "--with-ghc-pkg=${crossPrefixHaskell}ghc-pkg"
+    "--with-ghc=${crossPrefix}ghc"
+    "--with-ghc-pkg=${crossPrefix}ghc-pkg"
     "--with-gcc=${crossPrefix}cc"
     "--with-ld=${crossPrefix}ld"
     "--hsc2hs-options=--cross-compile"
@@ -130,7 +126,7 @@ let
     "--with-hsc2hs=${nativeGhc}/bin/hsc2hs"
     "--ghcjs"
   ] ++ optionals isCross ([
-    "--configure-option=--host=${hostTripleHaskell}"
+    "--configure-option=--host=${hostPlatform.config}"
   ] ++ crossCabalFlags);
 
   setupCompileFlags = [
@@ -160,9 +156,8 @@ let
   setupBuilder = if isCross || isGhcjs then "${nativeGhc}/bin/ghc" else ghcCommand;
   setupCommand = "./Setup";
   ghcCommand' = if isGhcjs then "ghcjs" else "ghc";
-  crossPrefix = if isCross then "${hostTriple}-" else "";
-  crossPrefixHaskell = if isCross then "${hostTripleHaskell}-" else "";
-  ghcCommand = "${crossPrefixHaskell}${ghcCommand'}";
+  crossPrefix = if isCross then "${hostPlatform.config}-" else "";
+  ghcCommand = "${crossPrefix}${ghcCommand'}";
   ghcCommandCaps= toUpper ghcCommand';
 
 in

@@ -116,7 +116,6 @@ in stdenv.mkDerivation (rec {
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
     #"--host=x86_64-unknown-linux-gnu"#${hostPlatform.config}"
     "--target=${targetPlatform.config}"
-    "STRIP_CMD=${targetStdenv.cc.binutils_bin}/bin/${prefix}strip"
 
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
@@ -132,7 +131,7 @@ in stdenv.mkDerivation (rec {
   # bash is smart about `{ghc}` but sh isn't, and doesn't treat that as a unary
   # {x,y,z,..}  repetition.
   postInstall = ''
-    paxmark m $out/lib/${if buildPlatform != targetPlatform then "*" else name}/bin/${if buildPlatform != targetPlatform then "ghc" else "{ghc,haddock}"}
+    paxmark m $out/lib/${name}/bin/${if buildPlatform != targetPlatform then "ghc" else "{ghc,haddock}"}
 
     # Install the bash completion file.
     install -D -m 444 utils/completion/ghc.bash $out/share/bash-completion/completions/${prefix}ghc
@@ -165,8 +164,15 @@ in stdenv.mkDerivation (rec {
   # TODO: next mass rebuild / version bump just do
   # dontSetConfigureCross = buildPlatform != targetPlatform;
 } // stdenv.lib.optionalAttrs androidTarget {
+
   # It gets confused with ncurses
   dontPatchELF = true;
+  dontCrossPatchELF = true;
+
+  # It uses the native strip on libraries too
+  dontStrip = true;
+  dontCrossStrip = true;
+
   patches = [
     ./android-patches/add-llvm-target-data-layout.patch
     #./android-patches/build-deps-extra-cc-opts.patch
