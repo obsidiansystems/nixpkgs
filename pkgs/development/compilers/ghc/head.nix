@@ -104,13 +104,13 @@ in stdenv.mkDerivation (rec {
   # TODO: next rebuild remove these `--with-*` altogether
     "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
     "--with-curses-libraries=${__targetPackages.ncurses.out}/lib"
-  ] ++ stdenv.lib.optional (buildPlatform == targetPlatform && ! enableIntegerSimple) [
+  ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform && ! enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
-  ] ++ stdenv.lib.optional useLibiconv [
+  ] ++ stdenv.lib.optionals useLibiconv [
     "--with-iconv-includes=${__targetPackages.libiconv}/include"
     "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
-  ] ++ stdenv.lib.optional (buildPlatform != targetPlatform) [
+  ] ++ stdenv.lib.optionals (buildPlatform != targetPlatform) [
 
     # TODO: next rebuild make these unconditional
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
