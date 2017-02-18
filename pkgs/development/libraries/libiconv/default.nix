@@ -1,6 +1,4 @@
-{ fetchurl, stdenv, lib
-, autoconf, automake, libtool, which
-, androidMinimal ? false }:
+{ fetchurl, stdenv, lib, androidMinimal ? false }:
 
 assert !stdenv.isLinux || stdenv ? cross; # TODO: improve on cross
 
@@ -31,9 +29,7 @@ stdenv.mkDerivation rec {
   # will actually use.
     lib.optional (stdenv.isCygwin || androidMinimal) "--enable-static"
     ++ lib.optional stdenv.isFreeBSD "--with-pic"
-    ++ lib.optionals androidMinimal [
-      "--without-cxx"
-    ];
+    ++ lib.optional androidMinimal "--without-cxx";
 
   crossAttrs = {
     # Disable stripping to avoid "libiconv.a: Archive has no index" (MinGW).
@@ -62,19 +58,4 @@ stdenv.mkDerivation rec {
     # This library is not needed on GNU platforms.
     hydraPlatforms = with lib.platforms; cygwin ++ darwin ++ freebsd;
   };
-} // lib.optionalAttrs androidMinimal {
-  nativeBuildInputs = [ which ];
-
-  postUnpack = ''
-    sed -i libiconv-*/lib/Makefile.in -e 's/ar /$AR /g'
-
-    mkdir tmp
-    ln -s $(which aarch64-linux-android-ar) tmp/ar
-    export PATH+=:$(pwd)/tmp
-    echo $PATH
-  '';
-
-  postConfigure = ''
-    sed -e "s_AR='ar'_AR='aarch64-linux-android-ar'_" -i config.log
-  '';
-})
+}
