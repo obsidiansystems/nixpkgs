@@ -176,5 +176,8 @@ in stdenv.mkDerivation (rec {
     #./android-patches/force-relocation-equal-pic.patch
     ./android-patches/rts_android_log_write.patch
     ./android-patches/patch_rts_elf.patch
+
+    ./android-patches/extra-modules-temp.patch
+    ./android-patches/pthread-die-temp.patch
   ];
 })

@@ -1,0 +1,12 @@
+diff --git a/rts/package.conf.in b/rts/package.conf.in
+index 338fcb1..0c77096 100644
+--- a/rts/package.conf.in
++++ b/rts/package.conf.in
+@@ -46,7 +46,6 @@ extra-libraries:
+                               ,"gdi32"      /* for the linker */
+                               ,"winmm"      /* for the linker */
+ #endif
+-                              , "pthread"   /* for pthread_getthreadid_np, pthread_create, etc. */
+ #if defined(DEBUG) && defined(HAVE_LIBBFD)
+                               ,"bfd", "iberty"  /* for debugging */
+ #endif
