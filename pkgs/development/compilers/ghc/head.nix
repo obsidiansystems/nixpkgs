@@ -116,7 +116,7 @@ in stdenv.mkDerivation (rec {
     #"--build=x86_64-unknown-linux-gnu"#${buildPlatform.config}"
     #"--host=x86_64-unknown-linux-gnu"#${hostPlatform.config}"
     "--target=${targetPlatform.config}"
-    "STRIP_CMD=${targetStdenv.cc.binutils}/bin/${prefix}strip"
+    "STRIP_CMD=${targetStdenv.cc.binutils_bin}/bin/${prefix}strip"
 
     "--enable-bootstrap-with-devel-snapshot"
     "--verbose"
