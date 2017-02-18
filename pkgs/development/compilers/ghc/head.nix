@@ -55,6 +55,7 @@ in stdenv.mkDerivation (rec {
     echo 'EXTRA_CC_OPTS   += -std=gnu99' >> mk/build.mk
     echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
+    echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
   '' + ''
