@@ -7,7 +7,7 @@ index e04d408..834b453 100644
   | hscTarget dflags == HscLlvm &&
     not ((arch == ArchX86_64) && (os == OSLinux || os == OSDarwin || os == OSFreeBSD)) &&
 -   not ((isARM arch) && (os == OSLinux)) &&
-+   not ((isARM arch) && (os == OSLinux || os == OSAndroid)) &&
++   not ((isARM arch)         && (os == OSLinux || os == OSDarwin || os == OSAndroid)) &&
     (gopt Opt_PIC dflags || WayDyn `elem` ways dflags)
      = if cGhcWithNativeCodeGen == "YES"
        then let dflags' = dflags { hscTarget = HscAsm }
