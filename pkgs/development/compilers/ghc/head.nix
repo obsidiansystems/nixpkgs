@@ -50,6 +50,7 @@ in stdenv.mkDerivation (rec {
   #v p dyn
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
+    echo 'DYNAMIC_GHC_PROGRAMS = YES' >> mk/build.mk
     #echo 'GhcLibWays += p v thr dyn' >> mk/build.mk
     echo 'Stage1Only       = YES' >> mk/build.mk
   '' + stdenv.lib.optionalString androidTarget ''
