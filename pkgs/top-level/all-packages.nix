@@ -7374,6 +7374,7 @@ with pkgs;
 
   # We can choose:
   libcCrossChooser = name: if name == "glibc" then __targetPackages.glibcCross
+    else if name == "bionic" then __targetPackages.bionic
     else if name == "uclibc" then uclibcCross
     else if name == "msvcrt" then windows.mingw_w64
     else if name == "libSystem" then darwin.xcode
@@ -8280,7 +8281,7 @@ with pkgs;
   # separately, but we also provide libiconvReal, which will always be a
   # standalone libiconv, just in case you want it
   libiconv = if buildPlatform != hostPlatform then
-    (if hostPlatform.libc == "glibc" && !hostPlatform.useAndroidPrebuilt then glibcCross
+    (if hostPlatform.libc == "glibc" then glibcCross
       else if hostPlatform.libc == "libSystem" then darwin.libiconv
       else libiconvReal)
     else if stdenv.isGlibc then glibcIconv stdenv.cc.libc
