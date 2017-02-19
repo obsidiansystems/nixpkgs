@@ -80,7 +80,7 @@ in bootStages ++ [
   in old // {
     stdenv = toolPackages.makeStdenvCross old.stdenv crossSystem toolPackages.ndkWrappedCC // {
       overrides = self: super: {
-        glibcCross = libs;
+        bionic = libs;
         libiconvReal = super.libiconvReal.override {
           androidMinimal = true;
         };
