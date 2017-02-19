@@ -91,15 +91,13 @@ in rec {
 
     # The integer-simple attribute set contains all the GHC compilers
     # build with integer-simple instead of integer-gmp.
-    integer-simple =
-      let integerSimpleGhcNames =
-            pkgs.lib.filter (name: ! builtins.elem name integerSimpleExcludes)
-                            (pkgs.lib.attrNames compiler);
-          integerSimpleGhcs = pkgs.lib.genAttrs integerSimpleGhcNames
-                                (name: compiler."${name}".override { enableIntegerSimple = true; });
-      in pkgs.recurseIntoAttrs (integerSimpleGhcs // {
-           ghcHEAD = integerSimpleGhcs.ghcHEAD.override { selfPkgs = packages.integer-simple.ghcHEAD; };
-         });
+    integer-simple = let
+      integerSimpleGhcNames = pkgs.lib.filter
+        (name: ! builtins.elem name integerSimpleExcludes)
+        (pkgs.lib.attrNames compiler);
+    in pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
+      integerSimpleGhcNames
+      (name: compiler."${name}".override { enableIntegerSimple = true; }));
   };
 
   # Always get compilers from `buildPackages`
@@ -166,16 +164,16 @@ in rec {
 
     # The integer-simple attribute set contains package sets for all the GHC compilers
     # using integer-simple instead of integer-gmp.
-    integer-simple =
-      let integerSimpleGhcNames =
-            pkgs.lib.filter (name: ! builtins.elem name integerSimpleExcludes)
-                            (pkgs.lib.attrNames packages);
-      in pkgs.lib.genAttrs integerSimpleGhcNames (name: packages."${name}".override {
-       ghc = compiler.integer-simple."${name}";
-       overrides = _self : _super : {
-         integer-simple = null;
-         integer-gmp = null;
-       };
+    integer-simple = let
+      integerSimpleGhcNames = pkgs.lib.filter
+        (name: ! builtins.elem name integerSimpleExcludes)
+        (pkgs.lib.attrNames packages);
+    in pkgs.lib.genAttrs integerSimpleGhcNames (name: packages."${name}".override {
+      ghc = compiler.integer-simple."${name}";
+      overrides = _self : _super : {
+        integer-simple = null;
+        integer-gmp = null;
+      };
     });
 
     # These attributes exist only for backwards-compatibility so that we don't break
