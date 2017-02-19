@@ -5,7 +5,7 @@
 
 with { inherit (stdenv.lib) optional optionalString; };
 
-let self = stdenv.mkDerivation rec {
+let self = stdenv.mkDerivation (rec {
   name = "gmp-6.1.1";
 
   src = fetchurl { # we need to use bz2, others aren't in bootstrapping stdenv
@@ -79,5 +79,7 @@ let self = stdenv.mkDerivation rec {
     platforms = platforms.all;
     maintainers = [ maintainers.peti maintainers.vrthra ];
   };
-};
+} // stdenv.lib.optionalAttrs (stdenv.isDarwin && buildPlatform != hostPlatform) {
+  dontSetConfigureCross = true;
+});
   in self
