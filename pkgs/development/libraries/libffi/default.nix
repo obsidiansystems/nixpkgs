@@ -1,4 +1,5 @@
-{ fetchurl, stdenv, dejagnu, doCheck ? false }:
+{ fetchurl, stdenv, dejagnu, doCheck ? false
+, buildPlatform, hostPlatform }:
 
 stdenv.mkDerivation rec {
   name = "libffi-3.2.1";
@@ -17,7 +18,7 @@ stdenv.mkDerivation rec {
   configureFlags = [
     "--with-gcc-arch=generic" # no detection of -march= or -mtune=
     "--enable-pax_emutramp"
-  ];
+  ] ++ stdenv.lib.optional (stdenv.isDarwin && buildPlatform != hostPlatform) "CC=${hostPlatform.config}-cc";
 
   inherit doCheck;
 
