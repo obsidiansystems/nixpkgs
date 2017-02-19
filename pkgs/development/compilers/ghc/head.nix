@@ -12,9 +12,15 @@
   # picking the appropriate LLVM version.
   llvmPackages
 
-  # If enabled GHC will be build with the GPL-free but slower integer-simple
+, # If enabled, GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-, enableIntegerSimple ? buildPlatform != hostPlatform #false
+  enableIntegerSimple ? buildPlatform != targetPlatform
+
+, # If enabled, use -fPIC when compiling static libs.
+  enableRelocatedStaticLibs ? buildPlatform != targetPlatform
+
+, # TODO: Make false by default
+  useVendoredLibffi ? true
 }:
 
 let
@@ -31,9 +37,10 @@ let
     (buildPlatform != targetPlatform)
     "${stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config}_";
 
-  androidTarget = targetPlatform.useAndroidPrebuilt or false;
+  prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
 
-  useLibiconv = (buildPlatform == targetPlatform && stdenv.isDarwin) || androidTarget;
+  # TODO: distinguish between host vs target needing this?
+  useLibiconv = stdenv.isDarwin || prebuiltAndroidTarget;
 
 in stdenv.mkDerivation (rec {
   inherit version rev;
@@ -49,17 +56,17 @@ in stdenv.mkDerivation (rec {
 
   #v p dyn
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
-    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = quick-cross|' mk/build.mk.sample > mk/build.mk
+    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
     echo 'DYNAMIC_GHC_PROGRAMS = YES' >> mk/build.mk
-    #echo 'GhcLibWays += p v thr dyn' >> mk/build.mk
-    echo 'Stage1Only       = YES' >> mk/build.mk
-  '' + stdenv.lib.optionalString androidTarget ''
-    echo 'EXTRA_CC_OPTS   += -std=gnu99' >> mk/build.mk
-    echo 'GhcLibHcOpts    += -fPIC' >> mk/build.mk
-    echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
-    echo 'GhcRtsHcOpts    += -fPIC' >> mk/build.mk
+    echo 'Stage1Only = YES' >> mk/build.mk
+  '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
+    echo 'GhcLibHcOpts += -fPIC' >> mk/build.mk
+    echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
+    echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
+  '' + stdenv.lib.optionalString prebuiltAndroidTarget ''
+    echo 'EXTRA_CC_OPTS += -std=gnu99' >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
-    echo "INTEGER_LIBRARY=integer-simple" >> mk/build.mk
+    echo "INTEGER_LIBRARY = integer-simple" >> mk/build.mk
   '' + ''
     echo ${version} >VERSION
     echo ${rev} >GIT_COMMIT_ID
@@ -76,16 +83,9 @@ in stdenv.mkDerivation (rec {
   nativeBuildInputs = [
     ghc perl autoconf automake happy alex python3
   ];
+
   buildInputs = stdenv.lib.optionals (buildPlatform != targetPlatform) [
     targetStdenv.cc
-
-    ncurses.out ncurses.dev
-    #gmp.out gmp.dev
-    #libffi.out libffi.dev
-
-    __targetPackages.ncurses.out __targetPackages.ncurses.dev
-    #__targetPackages.gmp.out __targetPackages.gmp.dev
-    #__targetPackages.libffi.out __targetPackages.libffi.dev
 
     # Stringly speaking, LLVM is only needed for platforms the native
     # code generator does not support, but using it when
@@ -94,6 +94,20 @@ in stdenv.mkDerivation (rec {
     # Using host != target llvm is better (but probably a no-op) in
     # principle, but is currently broken.
     buildPackages.llvmPackages.llvm
+
+    ncurses.dev __targetPackages.ncurses.dev
+  ] ++ stdenv.lib.optionals ((!enableIntegerSimple) && (buildPlatform != targetPlatform)) [
+    gmp.dev __targetPackages.gmp.dev
+  ] ++ stdenv.lib.optionals (!useVendoredLibffi) [
+    libffi.dev __targetPackages.libffi.dev
+  ];
+
+  propagatedBuildInputs = stdenv.lib.optionals (buildPlatform != targetPlatform) [
+    ncurses.out __targetPackages.ncurses.out
+  ] ++ stdenv.lib.optionals ((!enableIntegerSimple) && (buildPlatform != targetPlatform)) [
+    gmp.out __targetPackages.gmp.out
+  ] ++ stdenv.lib.optionals (!useVendoredLibffi) [
+    libffi.out __targetPackages.libffi.out
   ] ++ stdenv.lib.optionals useLibiconv [
     __targetPackages.libiconv
   ];
@@ -102,10 +116,11 @@ in stdenv.mkDerivation (rec {
 
   configureFlags = [
     "CC=${targetStdenv.cc or stdenv.cc}/bin/${prefix}cc"
-  # TODO: next rebuild remove these `--with-*` altogether
+  # TODO: With Cross rebuild (need to fix hooks) remove these `--with-*` altogether
+  ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform) [
     "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
     "--with-curses-libraries=${__targetPackages.ncurses.out}/lib"
-  ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform && ! enableIntegerSimple) [
+  ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform && !enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
   ] ++ stdenv.lib.optionals useLibiconv [
@@ -129,8 +144,8 @@ in stdenv.mkDerivation (rec {
 
   checkTarget = "test";
 
-  # bash is smart about `{ghc}` but sh isn't, and doesn't treat that as a unary
-  # {x,y,z,..}  repetition.
+  # zsh and other shells are smart about `{ghc}` but bash isn't, and doesn't
+  # treat that as a unary `{x,y,z,..}` repetition.
   postInstall = ''
     paxmark m $out/lib/${name}/bin/${if buildPlatform != targetPlatform then "ghc" else "{ghc,haddock}"}
 
@@ -164,7 +179,7 @@ in stdenv.mkDerivation (rec {
 
   # TODO: next mass rebuild / version bump just do
   # dontSetConfigureCross = buildPlatform != targetPlatform;
-} // stdenv.lib.optionalAttrs androidTarget {
+} // stdenv.lib.optionalAttrs prebuiltAndroidTarget {
 
   # It gets confused with ncurses
   dontPatchELF = true;
