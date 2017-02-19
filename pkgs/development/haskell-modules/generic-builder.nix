@@ -1,6 +1,7 @@
 { stdenv, buildPackages, ghc
 , jailbreak-cabal, hscolour, cpphs, nodePackages
 , buildPlatform, hostPlatform
+, libiconv
 }:
 
 let
@@ -145,7 +146,10 @@ let
   otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ setupHaskellDepends ++
                      buildTools ++ libraryToolDepends ++ executableToolDepends ++
                      optionals (allPkgconfigDepends != []) ([pkgconfig] ++ allPkgconfigDepends) ++
-                     optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends);
+                     optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
+                     optional (hostPlatform.useAndroidPrebuilt or false) [
+                       libiconv
+                     ];
   allBuildInputs = propagatedBuildInputs ++ otherBuildInputs;
 
   haskellBuildInputs = stdenv.lib.filter isHaskellPkg allBuildInputs;
