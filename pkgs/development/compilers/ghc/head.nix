@@ -198,7 +198,7 @@ in stdenv.mkDerivation (rec {
     ./android-patches/no-pthread-android.patch
     ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
     ./android-patches/undefine_MYTASK_USE_TLV_for_CC_SUPPORTS_TLS_zero.patch
-    #./android-patches/force-relocation-equal-pic.patch
+    ./android-patches/force-relocation-equal-pic.patch
     ./android-patches/rts_android_log_write.patch
     ./android-patches/patch_rts_elf.patch
 
