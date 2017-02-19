@@ -34,7 +34,7 @@ let
   ghc761OrLater = isGhcjs || lib.versionOlder "7.6.1" ghc.version;
   packageDBFlag = if ghc761OrLater then "--global-package-db" else "--global-conf";
   ghcCommand'    = if isGhcjs then "ghcjs" else "ghc";
-  crossPrefix = if buildPlatform != hostPlatform then "${hostPlatform}-" else "";
+  crossPrefix = if buildPlatform != hostPlatform then "${hostPlatform.config}-" else "";
   ghcCommand = "${crossPrefix}${ghcCommand'}";
   ghcCommandCaps= lib.toUpper ghcCommand';
   libDir        = "$out/lib/${ghcCommand}-${ghc.version}";
