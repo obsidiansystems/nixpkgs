@@ -39,9 +39,6 @@ let
 
   prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
 
-  # TODO: distinguish between host vs target needing this?
-  useLibiconv = stdenv.isDarwin || prebuiltAndroidTarget;
-
 in stdenv.mkDerivation (rec {
   inherit version rev;
   name = "${prefix}ghc-${version}";
@@ -108,7 +105,7 @@ in stdenv.mkDerivation (rec {
     gmp.out __targetPackages.gmp.out
   ] ++ stdenv.lib.optionals (!useVendoredLibffi) [
     libffi.out __targetPackages.libffi.out
-  ] ++ stdenv.lib.optionals useLibiconv [
+  ] ++ stdenv.lib.optionals (prebuiltAndroidTarget || (buildPlatform != hostPlatform && targetPlatform.libc or "" == "libsystem")) [
     __targetPackages.libiconv
   ];
 
@@ -123,7 +120,7 @@ in stdenv.mkDerivation (rec {
   ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform && !enableIntegerSimple) [
     "--with-gmp-includes=${__targetPackages.gmp.dev}/include"
     "--with-gmp-libraries=${__targetPackages.gmp.out}/lib"
-  ] ++ stdenv.lib.optionals useLibiconv [
+  ] ++ stdenv.lib.optionals (buildPlatform == targetPlatform && stdenv.isDarwin) [
     "--with-iconv-includes=${__targetPackages.libiconv}/include"
     "--with-iconv-libraries=${__targetPackages.libiconv}/lib"
   ] ++ stdenv.lib.optionals (buildPlatform != targetPlatform) [
