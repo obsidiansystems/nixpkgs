@@ -60,6 +60,8 @@ rec {
     stdenv = stdenvOrig.override {
       inherit cc;
 
+      allowedRequisites = null;
+
       # Overrides are surely not valid as packages built with this run on a
       # different platform.
       overrides = _: _: {};
