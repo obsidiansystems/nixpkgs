@@ -28,8 +28,8 @@ let
 
   sdk = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${sdkVer}.sdk";
 
-in import ../../../build-support/cc-wrapper {
-    inherit stdenv coreutils gnugrep;
+in (import ../../../build-support/cc-wrapper {
+    inherit stdenv coreutils gnugrep runCommand;
     nativeTools = false;
     nativeLibc = false;
     inherit binutils;
@@ -49,27 +49,6 @@ in import ../../../build-support/cc-wrapper {
       # Purposefully overwrite libc-ldflags-before, cctools ld doesn't know dynamic-linker and cc-wrapper doesn't do cross-compilation well enough to adjust
       echo "-arch ${arch} -L${sdk}/usr/lib ${lib.optionalString simulator "-L${sdk}/usr/lib/system "}-i${if simulator then "os_simulator" else "phoneos"}_version_min 7.0.0" > $out/nix-support/libc-ldflags-before
     '';
-  }/*;
-in {
-  cc = runCommand "${prefix}-ios-cc" { passthru = { inherit wrapper sdkType sdkVer sdk; }; } ''
-    mkdir -p $out/bin
-    ln -sv ${wrapper}/bin/${prefix}-clang $out/bin/${prefix}-cc
-    mkdir -p $out/nix-support
-    echo ${llvm} > $out/nix-support/propagated-native-build-inputs
-    cat > $out/nix-support/setup-hook <<EOF
-    if test "\$dontSetConfigureCross" != "1"; then
-        configureFlags="\$configureFlags --host=${prefix}"
-    fi
-    EOF
-    fixupPhase
-  '';
-
-  binutils = runCommand "${prefix}-ios-binutils" { passthru = { inherit wrapper; }; } ''
-    mkdir -p $out/bin
-    ln -sv ${wrapper}/bin/${prefix}-ld $out/bin/${prefix}-ld
-    for prog in ar nm ranlib; do
-      ln -s ${binutils}/bin/$prog $out/bin/${prefix}-$prog
-    done
-    fixupPhase
-  '';
-}*/
+  }) // {
+    inherit sdkType sdkVer sdk;
+  }
