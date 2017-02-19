@@ -15,7 +15,7 @@ let
     then "0fsn7xis81za62afan0vvm38bvgzg5wfmv1m86flqcj0nj7jjilh"
     else "0q3jck7lna77z5r42f13c4xglc7azd19pxfrjrpgp2yf615w4lgm";
 in
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (rec {
   name = "ncurses-${version}";
 
   src = fetchurl {
@@ -154,4 +154,6 @@ stdenv.mkDerivation rec {
     ldflags = "-lncurses";
     inherit unicode abiVersion;
   };
-}
+} // stdenv.lib.optionalAttrs (stdenv.isDarwin && buildPlatform != hostPlatform) {
+  dontSetConfigureCross = true;
+})
