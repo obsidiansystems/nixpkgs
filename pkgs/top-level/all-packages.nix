@@ -5519,9 +5519,9 @@ with pkgs;
   };
 
   wrapCCCross =
-    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper"}:
+    {cc, libc, binutils, shell ? "", name ? "gcc-cross-wrapper", ... } @ args:
 
-    forcedNativePackages.ccWrapperFun {
+    forcedNativePackages.ccWrapperFun (args // {
       nativeTools = false;
       nativeLibc = false;
       noLibc = (libc == null);
@@ -5530,8 +5530,8 @@ with pkgs;
       isGNU = cc.isGNU or false;
       isClang = cc.isClang or false;
 
-      inherit cc binutils libc shell name;
-    };
+      inherit shell name; # defaults not in args
+    });
 
   # prolog
   yap = callPackage ../development/compilers/yap { };
