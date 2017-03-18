@@ -57,9 +57,17 @@ in bootStages ++ [
           cc = ndkBins;
           binutils = ndkBins;
           libc = self.libcCross;
-          extraBuildCommands =
+          extraBuildCommands = lib.optionalString (crossSystem.config == "arm-unknown-linux-androideabi") ''
+              sed -E \
+                -i $out/bin/${crossSystem.config}-cc \
+                -i $out/bin/${crossSystem.config}-c++ \
+                -i $out/bin/${crossSystem.config}-gcc \
+                -i $out/bin/${crossSystem.config}-g++ \
+                -e '130i    extraBefore+=(-Wl,--fix-cortex-a8)' \
+                -e 's|^(extraBefore=)\(\)$|\1(-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb)|'
+            ''
             # GCC 4.9 is the first relase with "-fstack-protector"
-            lib.optionalString (lib.versionOlder ndkInfo.gccVer "4.9") ''
+            + lib.optionalString (lib.versionOlder ndkInfo.gccVer "4.9") ''
               sed -E \
                 -i $out/nix-support/add-hardening.sh \
                 -e 's|(-fstack-protector)-strong|\1|g'
