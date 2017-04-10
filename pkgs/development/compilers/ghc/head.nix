@@ -201,7 +201,7 @@ in stdenv.mkDerivation (rec {
     ./android-patches/extra-modules-temp.patch
     ./android-patches/pthread-die-temp.patch
   ];
-} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform && targetPlatform.libc or "" == "libsystem") {
+} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform && targetPlatform.libc or "" == "libSystem") {
   patches = [
     ./android-patches/enable-fPIC.patch
   ];
