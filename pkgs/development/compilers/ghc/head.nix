@@ -26,6 +26,13 @@
 
 , # TODO: Make false by default
   useVendoredLibffi ? true
+
+, # Whether to build dynamic libs for the standard library (on the target
+  # platform). Static libs are always built.
+  dynamic ? let triple = targetPlatform.config or "";
+    # On iOS, dynamic linking is not supported
+    in !(stdenv.lib.strings.hasPrefix "aarch64-apple-darwin" triple)
+    && !(stdenv.lib.strings.hasPrefix "arm-apple-darwin" triple)
 }:
 
 let
@@ -61,8 +68,9 @@ in stdenv.mkDerivation (rec {
   #v p dyn
   preConfigure = stdenv.lib.optionalString (buildPlatform != targetPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
-    echo 'DYNAMIC_GHC_PROGRAMS = YES' >> mk/build.mk
     echo 'Stage1Only = YES' >> mk/build.mk
+  '' + stdenv.lib.optionalString (buildPlatform != targetPlatform && dynamic) ''
+    echo 'DYNAMIC_GHC_PROGRAMS = YES' >> mk/build.mk
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
     echo 'GhcLibHcOpts += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
