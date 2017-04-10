@@ -59,7 +59,6 @@ in stdenv.mkDerivation (rec {
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
     echo 'GhcLibHcOpts += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
-    echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
   '' + stdenv.lib.optionalString prebuiltAndroidTarget ''
     echo 'EXTRA_CC_OPTS += -std=gnu99' >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
