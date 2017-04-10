@@ -1,16 +1,21 @@
 { stdenv, fetchgit, bootPkgs, perl, binutils, coreutils
 , autoconf, automake, happy, alex, python3
 , ncurses, gmp, libffi
-, buildPackages, __targetPackages
+, __targetPackages
 , buildPlatform, hostPlatform, targetPlatform
 
 , # LLVM is conceptually a run-time-only depedendency, but for
   # non-x86, we need LLVM to bootstrap later stages, so it becomes a
   # build-time dependency too.
   #
+  # We generally want the latest llvm package set, which would normally be
+  # `llvmPackages` on most platforms. But on Darwin, the default is the version
+  # released with OSX, so we force 3.9, which is the correct version at this
+  # time.
+  #
   # TODO: redundancy betweeen the configuration files and this in
   # picking the appropriate LLVM version.
-  llvmPackages
+  llvmPackages_39
 
 , # If enabled, GHC will be build with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
@@ -36,6 +41,8 @@ let
   underscorePrefix = stdenv.lib.optionalString
     (buildPlatform != targetPlatform)
     "${stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config}_";
+
+  llvmPackages = llvmPackages_39;
 
   prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
 
@@ -86,10 +93,7 @@ in stdenv.mkDerivation (rec {
     # Stringly speaking, LLVM is only needed for platforms the native
     # code generator does not support, but using it when
     # cross-compiling anywhere.
-    #
-    # Using host != target llvm is better (but probably a no-op) in
-    # principle, but is currently broken.
-    buildPackages.llvmPackages.llvm
+    llvmPackages.llvm
 
     ncurses.dev __targetPackages.ncurses.dev
   ] ++ stdenv.lib.optionals ((!enableIntegerSimple) && (buildPlatform != targetPlatform)) [
