@@ -6102,15 +6102,10 @@ with pkgs;
   bin_replace_string = callPackage ../development/tools/misc/bin_replace_string { };
 
   binutils =
-    if (buildPlatform == targetPlatform) && stdenv.isDarwin
-      # On Darwin targeting itself
-      then darwin.binutils
-    else if (buildPlatform != targetPlatform) && targetPlatform.libc == "libSystem"
-      # Cross-compiling to Darwin
-      then darwin.cctools
-    else
-      # Neither build or target is darwin
-      binutils-raw;
+    # If the target platform is Darwin. Check can be refined.
+    if (stdenv.isDarwin || targetPlatform.libc or "" == "libSystem")
+    then darwin.binutils
+    else binutils-raw;
 
   binutils-raw = callPackage ../development/tools/misc/binutils {
     noSysDirs = (hostPlatform != targetPlatform) || noSysDirs;
