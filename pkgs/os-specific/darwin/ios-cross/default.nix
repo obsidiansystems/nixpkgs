@@ -28,7 +28,7 @@ let
 
   sdk = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${sdkVer}.sdk";
 
-in import ../../../build-support/cc-wrapper {
+in (import ../../../build-support/cc-wrapper {
     inherit stdenv coreutils gnugrep runCommand;
     nativeTools = false;
     nativeLibc = false;
@@ -49,4 +49,6 @@ in import ../../../build-support/cc-wrapper {
       # Purposefully overwrite libc-ldflags-before, cctools ld doesn't know dynamic-linker and cc-wrapper doesn't do cross-compilation well enough to adjust
       echo "-arch ${arch} -L${sdk}/usr/lib ${lib.optionalString simulator "-L${sdk}/usr/lib/system "}-i${if simulator then "os_simulator" else "phoneos"}_version_min 7.0.0" > $out/nix-support/libc-ldflags-before
     '';
+  }) // {
+    inherit sdkType sdkVer sdk;
   }
