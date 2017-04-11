@@ -378,5 +378,5 @@ stdenv.mkDerivation ({
 // optionalAttrs (dontStrip)            { inherit dontStrip; }
 // optionalAttrs (hardeningDisable != []) { inherit hardeningDisable; }
 // optionalAttrs (stdenv.isLinux)       { LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive"; }
-// optionalAttrs (stdenv.isLinux && isCross) { dontSetConfigureCross = true; }
+// optionalAttrs (isCross)              { dontSetConfigureCross = true; }
 )
