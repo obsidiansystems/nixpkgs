@@ -142,7 +142,7 @@ stdenv.mkDerivation {
   '';
 
   doCheck = true;
-  dontSetConfigureCross = true;
+  configurePlatforms = [];
 
   # https://github.com/NixOS/nixpkgs/pull/21742#issuecomment-272305764
   # https://github.com/rust-lang/rust/issues/30181
