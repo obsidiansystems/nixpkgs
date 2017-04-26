@@ -11,6 +11,7 @@
 , dyld ? null # TODO: should this be a setup-hook on dyld?
 , isGNU ? false, isClang ? cc.isClang or false, gnugrep ? null
 , hostPlatform, targetPlatform
+, runCommand ? null
 }:
 
 with stdenv.lib;
