@@ -7826,7 +7826,6 @@ with pkgs;
     stdenv = buildPackages.makeStdenvCross
       buildPackages.buildPackages.stdenv
       buildPackages.targetPlatform
-      buildPackages.binutils
       buildPackages.gccCrossStageStatic;
   };
 
