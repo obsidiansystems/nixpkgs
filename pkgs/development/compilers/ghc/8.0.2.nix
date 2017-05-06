@@ -23,6 +23,9 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ ghc perl hscolour sphinx ];
 
+  # On Darwin, some Haskell packages require libiconv in order to use these tools, such as hsc2hs
+  propagatedNativeBuildInputs = stdenv.lib.optional stdenv.isDarwin libiconv;
+
   enableParallelBuilding = true;
 
   outputs = [ "out" "doc" ];
