@@ -4,7 +4,6 @@
 , writeScript
 , singularity
 , writeReferencesToFile
-, bash
 , vmTools
 , gawk
 , utillinux
@@ -42,7 +41,7 @@ rec {
   }:
     let layer = mkLayer {
           inherit name;
-          contents = contents ++ [ bash runScriptFile ];
+          contents = contents ++ [ runScriptFile ];
           };
         runAsRootFile = shellScript "run-as-root.sh" runAsRoot;
         runScriptFile = shellScript "run-script.sh" runScript;
@@ -74,6 +73,9 @@ rec {
             mkdir -p bin nix/store
             for f in $(cat $layerClosure) ; do
               cp -ar $f ./$f
+            done
+
+            for f in ${toString contents} ; do
               for f in $f/bin/* ; do
                 if [ ! -e bin/$(basename $f) ] ; then
                   ln -s $f bin/
