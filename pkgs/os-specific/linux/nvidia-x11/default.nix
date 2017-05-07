@@ -4,6 +4,8 @@ let
   generic = args: callPackage (import ./generic.nix args) { };
 in
 {
+  inherit generic;
+
   # Policy: use the highest stable version as the default (on our master).
   stable = generic {
     version = "384.90";
