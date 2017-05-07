@@ -6,7 +6,8 @@
 , stdenv
 , coreutils
 , gnugrep
-, hostPlatform, targetPlatform
+, hostPlatform
+, targetPlatform
 }:
 
 /* As of this writing, known-good prefix/arch/simulator triples:
@@ -24,7 +25,7 @@ let
 
   sdkType = if simulator then "Simulator" else "OS";
 
-  sdkVer = "10.2";
+  sdkVer = targetPlatform.sdkVer;
 
   sdk = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${sdkVer}.sdk";
 
