@@ -1,5 +1,5 @@
 { stdenv, stdenv_32bit, fetchurl, unzip, makeWrapper
-, platformTools, buildTools, support, supportRepository, platforms, sysimages, addons, sources
+, platformTools, buildTools, support, supportRepository, googleRepository, platforms, sysimages, addons, sources
 , libX11, libXext, libXrender, libxcb, libXau, libXdmcp, libXtst, mesa, alsaLib
 , freetype, fontconfig, glib, gtk2, atk, file, jdk, coreutils, libpulseaudio, dbus
 , zlib, glxinfo, xkeyboardconfig
@@ -163,6 +163,8 @@ stdenv.mkDerivation rec {
     ${if useGooglePlayServices then
        "ln -s ${addons.google_play_services}/google-play-services google_play_services"
      else ""}
+
+    ln -s ${googleRepository}/m2repository
       
     cd ../..
 
