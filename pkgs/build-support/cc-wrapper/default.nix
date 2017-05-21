@@ -10,6 +10,7 @@
 , zlib ? null, extraPackages ? [], extraBuildCommands ? ""
 , dyld ? null # TODO: should this be a setup-hook on dyld?
 , isGNU ? false, isClang ? cc.isClang or false, gnugrep ? null
+, targetPlatform
 }:
 
 with stdenv.lib;
@@ -74,7 +75,7 @@ stdenv.mkDerivation {
       }
     ''
 
-    + optionalString (!nativeLibc) (if (!stdenv.isDarwin) then ''
+    + optionalString (!nativeLibc) (if (!targetPlatform.isDarwin) then ''
       dynamicLinker="${libc_lib}/lib/$dynamicLinker"
       echo $dynamicLinker > $out/nix-support/dynamic-linker
 
@@ -113,7 +114,7 @@ stdenv.mkDerivation {
     ''
 
     + (if nativeTools then ''
-      ccPath="${if stdenv.isDarwin then cc else nativePrefix}/bin"
+      ccPath="${if targetPlatform.isDarwin then cc else nativePrefix}/bin"
       ldPath="${nativePrefix}/bin"
     '' else ''
       echo $cc > $out/nix-support/orig-cc
@@ -162,7 +163,7 @@ stdenv.mkDerivation {
       echo ${toString extraPackages} > $out/nix-support/propagated-native-build-inputs
     ''
 
-    + optionalString (stdenv.isSunOS && nativePrefix != "") ''
+    + optionalString (targetPlatform.isSunOS && nativePrefix != "") ''
       # Solaris needs an additional ld wrapper.
       ldPath="${nativePrefix}/bin"
       exec="$ldPath/ld"
@@ -190,7 +191,7 @@ stdenv.mkDerivation {
       export real_cc=cc
       export real_cxx=c++
       export default_cxx_stdlib_compile="${
-        if stdenv.isLinux && !(cc.isGNU or false)
+        if targetPlatform.isLinux && !(cc.isGNU or false)
           then "-isystem $(echo -n ${cc.gcc}/include/c++/*) -isystem $(echo -n ${cc.gcc}/include/c++/*)/$(${cc.gcc}/bin/gcc -dumpmachine)"
           else ""
       }"
@@ -271,7 +272,7 @@ stdenv.mkDerivation {
       (if stdenv.system == "i686-linux" then "ld-linux.so.2" else
        if stdenv.system == "x86_64-linux" then "ld-linux-x86-64.so.2" else
        # ARM with a wildcard, which can be "" or "-armhf".
-       if stdenv.isArm then "ld-linux*.so.3" else
+       if targetPlatform.isArm32 then "ld-linux*.so.3" else
        if stdenv.system == "aarch64-linux" then "ld-linux-aarch64.so.1" else
        if stdenv.system == "powerpc-linux" then "ld.so.1" else
        if stdenv.system == "mips64el-linux" then "ld.so.1" else
