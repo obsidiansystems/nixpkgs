@@ -507,7 +507,7 @@ stdenv.mkDerivation ({
 
   inherit enableParallelBuilding enableMultilib;
 
-  inherit (stdenv) is64bit;
+  inherit (hostPlatform) is64bit;
 
   meta = {
     homepage = http://gcc.gnu.org/;
