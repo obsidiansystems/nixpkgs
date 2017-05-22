@@ -1,4 +1,6 @@
-{ stdenv, lib, fetchurl, libiconv, xz }:
+{ stdenv, lib, fetchurl, libiconv, xz
+, hostPlatform
+}:
 
 stdenv.mkDerivation rec {
   name = "gettext-${version}";
@@ -15,10 +17,10 @@ stdenv.mkDerivation rec {
   # FIXME stackprotector needs gcc 4.9 in bootstrap tools
   hardeningDisable = [ "format" "stackprotector" ];
 
-  LDFLAGS = if stdenv.isSunOS then "-lm -lmd -lmp -luutil -lnvpair -lnsl -lidmap -lavl -lsec" else "";
+  LDFLAGS = if hostPlatform.isSunOS then "-lm -lmd -lmp -luutil -lnvpair -lnsl -lidmap -lavl -lsec" else "";
 
   configureFlags = [ "--disable-csharp" "--with-xz" ]
-     ++ lib.optionals stdenv.isCygwin [
+     ++ lib.optionals hostPlatform.isCygwin [
             "--disable-java"
             "--disable-native-java"
             # Share the cache among the various `configure' runs.
@@ -28,7 +30,7 @@ stdenv.mkDerivation rec {
             "--with-included-libcroco"
         ]
      # avoid retaining reference to CF during stdenv bootstrap
-     ++ lib.optionals stdenv.isDarwin [
+     ++ lib.optionals hostPlatform.isDarwin [
             "gt_cv_func_CFPreferencesCopyAppValue=no"
             "gt_cv_func_CFLocaleCopyCurrent=no"
         ];
@@ -49,11 +51,11 @@ stdenv.mkDerivation rec {
       echo gl_cv_func_wcwidth_works=yes > cachefile
       configureFlags="$configureFlags --cache-file=`pwd`/cachefile"
     fi
-  '' + lib.optionalString stdenv.isCygwin ''
+  '' + lib.optionalString hostPlatform.isCygwin ''
     sed -i -e "s/\(am_libgettextlib_la_OBJECTS = \)error.lo/\\1/" gettext-tools/gnulib-lib/Makefile.in
   '';
 
-  nativeBuildInputs = [ xz xz.bin ] ++ stdenv.lib.optional (!stdenv.isLinux) libiconv; # HACK, see #10874 (and 14664)
+  nativeBuildInputs = [ xz xz.bin ] ++ stdenv.lib.optional (!hostPlatform.isLinux) libiconv; # HACK, see #10874 (and 14664)
 
   enableParallelBuilding = true;
 
@@ -86,11 +88,11 @@ stdenv.mkDerivation rec {
   };
 }
 
-// stdenv.lib.optionalAttrs stdenv.isDarwin {
+// stdenv.lib.optionalAttrs hostPlatform.isDarwin {
   makeFlags = "CFLAGS=-D_FORTIFY_SOURCE=0";
 }
 
-// stdenv.lib.optionalAttrs stdenv.isCygwin {
+// stdenv.lib.optionalAttrs hostPlatform.isCygwin {
   patchPhase =
    # Make sure `error.c' gets compiled and is part of `libgettextlib.la'.
    # This fixes:
