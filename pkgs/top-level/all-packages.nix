@@ -719,8 +719,8 @@ with pkgs;
   brasero = callPackage ../tools/cd-dvd/brasero/wrapper.nix { };
 
   brltty = callPackage ../tools/misc/brltty {
-    alsaSupport = (!stdenv.isDarwin);
-    systemdSupport = stdenv.isLinux;
+    alsaSupport = (!hostPlatform.isDarwin);
+    systemdSupport = hostPlatform.isLinux;
   };
   bro = callPackage ../applications/networking/ids/bro { };
 
@@ -1425,8 +1425,8 @@ with pkgs;
   cool-retro-term = libsForQt56.callPackage ../applications/misc/cool-retro-term { };
 
   coreutils = callPackage ../tools/misc/coreutils {
-    aclSupport = stdenv.isLinux;
-    attrSupport = stdenv.isLinux;
+    aclSupport = hostPlatform.isLinux;
+    attrSupport = hostPlatform.isLinux;
   };
 
   coreutils-prefixed = coreutils.override { withPrefix = true; singleBinary = false; };
@@ -1476,10 +1476,10 @@ with pkgs;
 
   curl = callPackage ../tools/networking/curl rec {
     fetchurl = fetchurlBoot;
-    http2Support = !stdenv.isDarwin;
+    http2Support = !hostPlatform.isDarwin;
     zlibSupport = true;
     sslSupport = zlibSupport;
-    scpSupport = zlibSupport && !stdenv.isSunOS && !stdenv.isCygwin;
+    scpSupport = zlibSupport && !hostPlatform.isSunOS && !hostPlatform.isCygwin;
   };
 
   curl_unix_socket = callPackage ../tools/networking/curl-unix-socket rec { };
@@ -2110,10 +2110,10 @@ with pkgs;
   gnupg1compat = callPackage ../tools/security/gnupg/1compat.nix { };
   gnupg1 = gnupg1compat;    # use config.packageOverrides if you prefer original gnupg1
   gnupg20 = callPackage ../tools/security/gnupg/20.nix {
-    pinentry = if stdenv.isDarwin then pinentry_mac else pinentry;
+    pinentry = if hostPlatform.isDarwin then pinentry_mac else pinentry;
   };
   gnupg21 = callPackage ../tools/security/gnupg/21.nix {
-    pinentry = if stdenv.isDarwin then pinentry_mac else pinentry;
+    pinentry = if hostPlatform.isDarwin then pinentry_mac else pinentry;
   };
   gnupg = gnupg21;
 
@@ -2379,7 +2379,7 @@ with pkgs;
 
   highlight = callPackage ../tools/text/highlight ({
     lua = lua5;
-  } // lib.optionalAttrs stdenv.isDarwin {
+  } // lib.optionalAttrs hostPlatform.isDarwin {
     # doesn't build with clang_37
     inherit (llvmPackages_38) stdenv;
   });
@@ -3015,7 +3015,7 @@ with pkgs;
   # See https://github.com/NixOS/nixpkgs/issues/15849. I'm switching on isLinux because
   # it looks like gnulib is broken on non-linux, so it seems likely that this would cause
   # trouble on bsd and/or cygwin as well.
-  man = if stdenv.isLinux then man-db else man-old;
+  man = if hostPlatform.isLinux then man-db else man-old;
 
   man-old = callPackage ../tools/misc/man { };
 
@@ -3357,7 +3357,7 @@ with pkgs;
   ntopng = callPackage ../tools/networking/ntopng { };
 
   ntp = callPackage ../tools/networking/ntp {
-    libcap = if stdenv.isLinux then libcap else null;
+    libcap = if hostPlatform.isLinux then libcap else null;
   };
 
   numdiff = callPackage ../tools/text/numdiff { };
@@ -3442,9 +3442,9 @@ with pkgs;
   openssh =
     callPackage ../tools/networking/openssh {
       hpnSupport = false;
-      withKerberos = stdenv.isDarwin;
+      withKerberos = hostPlatform.isDarwin;
       etcDir = "/etc/ssh";
-      pam = if stdenv.isLinux then pam else null;
+      pam = if hostPlatform.isLinux then pam else null;
     };
 
   openssh_hpn = pkgs.appendToName "with-hpn" (openssh.override { hpnSupport = true; });
@@ -3638,7 +3638,7 @@ with pkgs;
   philter = callPackage ../tools/networking/philter { };
 
   pinentry = callPackage ../tools/security/pinentry {
-    libcap = if stdenv.isDarwin then null else libcap;
+    libcap = if hostPlatform.isDarwin then null else libcap;
     qt4 = null;
   };
 
@@ -3651,7 +3651,7 @@ with pkgs;
   };
 
   pinentry_qt5 = libsForQt5.callPackage ../tools/security/pinentry/qt5.nix {
-    libcap = if stdenv.isDarwin then null else libcap;
+    libcap = if hostPlatform.isDarwin then null else libcap;
   };
 
   pinentry_mac = callPackage ../tools/security/pinentry-mac {
@@ -3960,7 +3960,7 @@ with pkgs;
   rsnapshot = callPackage ../tools/backup/rsnapshot {
     # For the `logger' command, we can use either `utillinux' or
     # GNU Inetutils.  The latter is more portable.
-    logger = if stdenv.isLinux then utillinux else inetutils;
+    logger = if hostPlatform.isLinux then utillinux else inetutils;
   };
 
   rlwrap = callPackage ../tools/misc/rlwrap { };
@@ -4507,8 +4507,8 @@ with pkgs;
 
   uwsgi = callPackage ../servers/uwsgi {
     plugins = [];
-    withPAM = stdenv.isLinux;
-    withSystemd = stdenv.isLinux;
+    withPAM = hostPlatform.isLinux;
+    withSystemd = hostPlatform.isLinux;
   };
 
   vacuum = callPackage ../applications/networking/instant-messengers/vacuum {};
@@ -4968,7 +4968,7 @@ with pkgs;
 
   bash = lowPrio (callPackage ../shells/bash/4.4.nix {
     texinfo = null;
-    interactive = stdenv.isCygwin; # patch for cygwin requires readline support
+    interactive = hostPlatform.isCygwin; # patch for cygwin requires readline support
   });
 
   bashInteractive = appendToName "interactive" (callPackage ../shells/bash/4.4.nix {
@@ -5089,7 +5089,7 @@ with pkgs;
   };
 
   #Use this instead of stdenv to build with clang
-  clangStdenv = if stdenv.isDarwin then stdenv else lowPrio llvmPackages.stdenv;
+  clangStdenv = if hostPlatform.isDarwin then stdenv else lowPrio llvmPackages.stdenv;
   libcxxStdenv = lowPrio llvmPackages.libcxxStdenv;
 
   clean = callPackage ../development/compilers/clean { };
@@ -5211,7 +5211,7 @@ with pkgs;
 
     # bootstrapping a profiled compiler does not work in the sheevaplug:
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43944
-    profiledCompiler = !stdenv.isArm;
+    profiledCompiler = !hostPlatform.isArm32;
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
   }));
@@ -5220,12 +5220,12 @@ with pkgs;
     inherit noSysDirs;
 
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = with stdenv; (!isSunOS && !isDarwin && (isi686 || isx86_64));
+    profiledCompiler = with hostPlatform; (!isSunOS && !isDarwin && (isi686 || isx86_64));
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
 
-    isl = if !stdenv.isDarwin then isl_0_14 else null;
-    cloog = if !stdenv.isDarwin then cloog else null;
+    isl = if !hostPlatform.isDarwin then isl_0_14 else null;
+    cloog = if !hostPlatform.isDarwin then cloog else null;
     texinfo = texinfo5; # doesn't validate since 6.1 -> 6.3 bump
   }));
 
@@ -5233,46 +5233,46 @@ with pkgs;
     inherit noSysDirs;
 
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
+    profiledCompiler = with hostPlatform; (!isDarwin && (isi686 || isx86_64));
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
 
-    isl = if !stdenv.isDarwin then isl_0_11 else null;
+    isl = if !hostPlatform.isDarwin then isl_0_11 else null;
 
-    cloog = if !stdenv.isDarwin then cloog_0_18_0 else null;
+    cloog = if !hostPlatform.isDarwin then cloog_0_18_0 else null;
   }));
 
   gcc5 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/5 {
     inherit noSysDirs;
 
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
+    profiledCompiler = with hostPlatform; (!isDarwin && (isi686 || isx86_64));
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
 
-    isl = if !stdenv.isDarwin then isl_0_14 else null;
+    isl = if !hostPlatform.isDarwin then isl_0_14 else null;
   }));
 
   gcc6 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/6 {
     inherit noSysDirs;
 
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
+    profiledCompiler = with hostPlatform; (!isDarwin && (isi686 || isx86_64));
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
 
-    isl = if !stdenv.isDarwin then isl_0_14 else null;
+    isl = if !hostPlatform.isDarwin then isl_0_14 else null;
   }));
 
   gcc7 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/7 {
     inherit noSysDirs;
 
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
+    profiledCompiler = with hostPlatform; (!isDarwin && (isi686 || isx86_64));
 
     libcCross = if targetPlatform != buildPlatform then libcCross else null;
 
-    isl = if !stdenv.isDarwin then isl_0_17 else null;
+    isl = if !targetPlatform.isDarwin then isl_0_17 else null;
   }));
 
   gcc-snapshot = lowPrio (wrapCC (callPackage ../development/compilers/gcc/snapshot {
@@ -5519,7 +5519,7 @@ with pkgs;
   hugs = callPackage ../development/interpreters/hugs { };
 
   openjdk7 =
-    if stdenv.isDarwin then
+    if hostPlatform.isDarwin then
       callPackage ../development/compilers/openjdk-darwin { }
     else
       callPackage ../development/compilers/openjdk/7.nix {
@@ -5527,7 +5527,7 @@ with pkgs;
       };
 
   openjdk8 =
-    if stdenv.isDarwin then
+    if hostPlatform.isDarwin then
       callPackage ../development/compilers/openjdk-darwin/8.nix { }
     else
       callPackage ../development/compilers/openjdk/8.nix {
@@ -5547,7 +5547,7 @@ with pkgs;
     (lib.addMetaAttrs { outputsToInstall = [ "jre" ]; }
       (openjdk8.jre // { outputs = [ "jre" ]; }));
   jre8_headless =
-    if stdenv.isDarwin then jre8 else
+    if hostPlatform.isDarwin then jre8 else
       lib.setName "openjre-${lib.getVersion pkgs.openjdk8.jre}-headless"
         (lib.addMetaAttrs { outputsToInstall = [ "jre" ]; }
           ((openjdk8.override { minimal = true; }).jre // { outputs = [ "jre" ]; }));
@@ -5640,7 +5640,7 @@ with pkgs;
   llvm_34 = llvmPackages_34.llvm;
 
   llvmPackages = recurseIntoAttrs
-    (if stdenv.isDarwin then llvmPackages_4 else llvmPackages_39);
+    (if hostPlatform.isDarwin then llvmPackages_4 else llvmPackages_39);
 
   llvmPackagesSelf = llvmPackages_34.override {
     stdenv = libcxxStdenv;
@@ -5668,7 +5668,7 @@ with pkgs;
 
   llvmPackages_4 = callPackage ../development/compilers/llvm/4 ({
     inherit (stdenvAdapters) overrideCC;
-  } // stdenv.lib.optionalAttrs stdenv.isDarwin {
+  } // stdenv.lib.optionalAttrs hostPlatform.isDarwin {
     cmake = cmake.override { isBootstrap = true; };
     libxml2 = libxml2.override { pythonSupport = false; };
     python2 = callPackage ../development/interpreters/python/cpython/2.7/boot.nix { inherit (darwin) CF configd; };
@@ -5840,7 +5840,7 @@ with pkgs;
   serpent = callPackage ../development/compilers/serpent { };
 
   smlnjBootstrap = callPackage ../development/compilers/smlnj/bootstrap.nix { };
-  smlnj = if stdenv.isDarwin
+  smlnj = if hostPlatform.isDarwin
             then callPackage ../development/compilers/smlnj { }
             else callPackage_i686 ../development/compilers/smlnj { };
 
@@ -5906,7 +5906,7 @@ with pkgs;
     nativeLibc = stdenv.cc.nativeLibc or false;
     nativePrefix = stdenv.cc.nativePrefix or "";
     cc = baseCC;
-    dyld = if stdenv.isDarwin then darwin.dyld else null;
+    dyld = if hostPlatform.isDarwin then darwin.dyld else null;
     isGNU = baseCC.isGNU or false;
     isClang = baseCC.isClang or false;
     inherit libc extraBuildCommands;
@@ -6107,7 +6107,7 @@ with pkgs;
         glpk = null;
         suitesparse = null;
         jdk = null;
-        openblas = if stdenv.isDarwin then openblasCompat else openblas;
+        openblas = if hostPlatform.isDarwin then openblasCompat else openblas;
       };
 
       hgOctaveOptions =
@@ -6587,7 +6587,7 @@ with pkgs;
   ctodo = callPackage ../applications/misc/ctodo { };
 
   cmake_2_8 = callPackage ../development/tools/build-managers/cmake/2.8.nix {
-    wantPS = stdenv.isDarwin;
+    wantPS = hostPlatform.isDarwin;
     inherit (darwin) ps;
   };
 
@@ -6620,7 +6620,7 @@ with pkgs;
     inherit (perlPackages) perl
       ExporterLite FileWhich GetoptTabular RegexpCommon TermReadKey;
     inherit (llvmPackages_39) llvm clang-unwrapped;
-    utillinux = if stdenv.isLinux then utillinuxMinimal else null;
+    utillinux = if hostPlatform.isLinux then utillinuxMinimal else null;
   };
 
   cscope = callPackage ../development/tools/misc/cscope { };
@@ -6672,7 +6672,7 @@ with pkgs;
      wrapCC (distcc.links extraConfig)) {};
   distccStdenv = lowPrio (overrideCC stdenv distccWrapper);
 
-  distccMasquerade = if stdenv.isDarwin
+  distccMasquerade = if hostPlatform.isDarwin
     then null
     else callPackage ../development/tools/misc/distcc/masq.nix {
       gccRaw = gcc.cc;
@@ -7263,7 +7263,7 @@ with pkgs;
 
   aprutil = callPackage ../development/libraries/apr-util {
     bdbSupport = true;
-    db = if stdenv.isFreeBSD then db4 else db;
+    db = if hostPlatform.isFreeBSD then db4 else db;
     # XXX: only the db_185 interface was available through
     #      apr with db58 on freebsd (nov 2015), for unknown reasons
   };
@@ -7473,7 +7473,7 @@ with pkgs;
   cxxtest = callPackage ../development/libraries/cxxtest { };
 
   cyrus_sasl = callPackage ../development/libraries/cyrus-sasl {
-    kerberos = if stdenv.isFreeBSD then libheimdal else kerberos;
+    kerberos = if hostPlatform.isFreeBSD then libheimdal else kerberos;
   };
 
   # Make bdb5 the default as it is the last release under the custom
@@ -7609,17 +7609,17 @@ with pkgs;
 
   ffmpeg-full = callPackage ../development/libraries/ffmpeg-full {
     # The following need to be fixed on Darwin
-    frei0r = if stdenv.isDarwin then null else frei0r;
-    game-music-emu = if stdenv.isDarwin then null else game-music-emu;
-    libjack2 = if stdenv.isDarwin then null else libjack2;
-    libmodplug = if stdenv.isDarwin then null else libmodplug;
-    libvpx = if stdenv.isDarwin then null else libvpx;
-    openal = if stdenv.isDarwin then null else openal;
-    libpulseaudio = if stdenv.isDarwin then null else libpulseaudio;
-    samba = if stdenv.isDarwin then null else samba;
-    vid-stab = if stdenv.isDarwin then null else vid-stab;
-    x265 = if stdenv.isDarwin then null else x265;
-    xavs = if stdenv.isDarwin then null else xavs;
+    frei0r = if hostPlatform.isDarwin then null else frei0r;
+    game-music-emu = if hostPlatform.isDarwin then null else game-music-emu;
+    libjack2 = if hostPlatform.isDarwin then null else libjack2;
+    libmodplug = if hostPlatform.isDarwin then null else libmodplug;
+    libvpx = if hostPlatform.isDarwin then null else libvpx;
+    openal = if hostPlatform.isDarwin then null else openal;
+    libpulseaudio = if hostPlatform.isDarwin then null else libpulseaudio;
+    samba = if hostPlatform.isDarwin then null else samba;
+    vid-stab = if hostPlatform.isDarwin then null else vid-stab;
+    x265 = if hostPlatform.isDarwin then null else x265;
+    xavs = if hostPlatform.isDarwin then null else xavs;
     inherit (darwin) CF;
     inherit (darwin.apple_sdk.frameworks)
       Cocoa CoreServices CoreAudio AVFoundation MediaToolbox
@@ -7770,7 +7770,7 @@ with pkgs;
   icon-lang = callPackage ../development/interpreters/icon-lang { };
 
   libgit2 = callPackage ../development/libraries/git2 (
-    stdenv.lib.optionalAttrs stdenv.isDarwin {
+    stdenv.lib.optionalAttrs hostPlatform.isDarwin {
       inherit (darwin) libiconv;
     }
   );
@@ -7820,7 +7820,7 @@ with pkgs;
   libcCross = assert targetPlatform != buildPlatform; libcCrossChooser targetPlatform.libc;
 
   # Only supported on Linux
-  glibcLocales = if stdenv.isLinux then callPackage ../development/libraries/glibc/locales.nix { } else null;
+  glibcLocales = if hostPlatform.isLinux then callPackage ../development/libraries/glibc/locales.nix { } else null;
 
   glibcInfo = callPackage ../development/libraries/glibc/info.nix { };
 
@@ -7940,7 +7940,7 @@ with pkgs;
   gnutls = gnutls35;
 
   gnutls35 = callPackage
-    (if stdenv.isDarwin
+    (if hostPlatform.isDarwin
       # Avoid > 3.5.10 due to frameworks for now; see discussion on:
       # https://github.com/NixOS/nixpkgs/commit/d6454e6a1
       then ../development/libraries/gnutls/3.5.10.nix
@@ -8001,8 +8001,8 @@ with pkgs;
   pixman = callPackage ../development/libraries/pixman { };
 
   cairo = callPackage ../development/libraries/cairo {
-    glSupport = config.cairo.gl or (stdenv.isLinux &&
-      !stdenv.isArm && !stdenv.isMips);
+    glSupport = config.cairo.gl or (hostPlatform.isLinux &&
+      !hostPlatform.isArm32 && !hostPlatform.isMips);
   };
 
 
@@ -8024,8 +8024,8 @@ with pkgs;
   granite = callPackage ../development/libraries/granite { };
 
   gtk2 = callPackage ../development/libraries/gtk+/2.x.nix {
-    cupsSupport = config.gtk2.cups or stdenv.isLinux;
-    gdktarget = if stdenv.isDarwin then "quartz" else "x11";
+    cupsSupport = config.gtk2.cups or hostPlatform.isLinux;
+    gdktarget = if hostPlatform.isDarwin then "quartz" else "x11";
     inherit (darwin.apple_sdk.frameworks) AppKit Cocoa;
   };
 
@@ -8289,7 +8289,7 @@ with pkgs;
   libagar_test = callPackage ../development/libraries/libagar/libagar_test.nix { };
 
   libao = callPackage ../development/libraries/libao {
-    usePulseAudio = config.pulseaudio or stdenv.isLinux;
+    usePulseAudio = config.pulseaudio or hostPlatform.isLinux;
     inherit (darwin.apple_sdk.frameworks) CoreAudio CoreServices AudioUnit;
   };
 
@@ -8499,7 +8499,7 @@ with pkgs;
 
   libedit = callPackage ../development/libraries/libedit { };
 
-  libelf = if stdenv.isFreeBSD
+  libelf = if hostPlatform.isFreeBSD
   then callPackage ../development/libraries/libelf-freebsd { }
   else callPackage ../development/libraries/libelf { };
 
@@ -8700,7 +8700,7 @@ with pkgs;
   };
 
   libnatspec = callPackage ../development/libraries/libnatspec (
-    stdenv.lib.optionalAttrs stdenv.isDarwin {
+    stdenv.lib.optionalAttrs hostPlatform.isDarwin {
       inherit (darwin) libiconv;
     }
   );
@@ -8774,7 +8774,7 @@ with pkgs;
   };
 
   # On non-GNU systems we need GNU Gettext for libintl.
-  libintlOrEmpty = stdenv.lib.optional (!stdenv.isLinux) gettext;
+  libintlOrEmpty = stdenv.lib.optional (!hostPlatform.isLinux) gettext;
 
   libid3tag = callPackage ../development/libraries/libid3tag {
     gperf = gperf_3_0;
@@ -8805,7 +8805,7 @@ with pkgs;
   libjpeg_original = callPackage ../development/libraries/libjpeg { };
   libjpeg_turbo = callPackage ../development/libraries/libjpeg-turbo { };
   libjpeg_drop = callPackage ../development/libraries/libjpeg-drop { };
-  libjpeg = if stdenv.isLinux then libjpeg_turbo else libjpeg_original; # some problems, both on FreeBSD and Darwin
+  libjpeg = if hostPlatform.isLinux then libjpeg_turbo else libjpeg_original; # some problems, both on FreeBSD and Darwin
 
   libjreen = callPackage ../development/libraries/libjreen { };
 
@@ -8954,7 +8954,7 @@ with pkgs;
   };
 
   libproxy = callPackage ../development/libraries/libproxy {
-    stdenv = if stdenv.isDarwin
+    stdenv = if hostPlatform.isDarwin
       then overrideCC stdenv gcc
       else stdenv;
   };
@@ -9097,7 +9097,7 @@ with pkgs;
 
   libutempter = callPackage ../development/libraries/libutempter { };
 
-  libunwind = if stdenv.isDarwin
+  libunwind = if hostPlatform.isDarwin
     then darwin.libunwind
     else callPackage ../development/libraries/libunwind { };
 
@@ -9258,7 +9258,7 @@ with pkgs;
 
   mesaSupported = lib.elem system lib.platforms.mesaPlatforms;
 
-  mesaDarwinOr = alternative: if stdenv.isDarwin
+  mesaDarwinOr = alternative: if hostPlatform.isDarwin
     then callPackage ../development/libraries/mesa-darwin {
       inherit (darwin.apple_sdk.frameworks) OpenGL;
       inherit (darwin.apple_sdk.libs) Xplugin;
@@ -9373,7 +9373,7 @@ with pkgs;
 
   ncurses5 = callPackage ../development/libraries/ncurses { abiVersion = "5"; };
   ncurses6 = callPackage ../development/libraries/ncurses { abiVersion = "6"; };
-  ncurses = if stdenv.isDarwin then ncurses5 else ncurses6;
+  ncurses = if hostPlatform.isDarwin then ncurses5 else ncurses6;
 
   neardal = callPackage ../development/libraries/neardal { };
 
@@ -9686,10 +9686,10 @@ with pkgs;
     # GNOME dependencies are not used unless gtkStyle == true
     mesa = mesa_noglu;
     inherit (pkgs.gnome2) libgnomeui GConf gnome_vfs;
-    cups = if stdenv.isLinux then cups else null;
+    cups = if hostPlatform.isLinux then cups else null;
 
     # XXX: mariadb doesn't built on fbsd as of nov 2015
-    mysql = if (!stdenv.isFreeBSD) then mysql else null;
+    mysql = if (!hostPlatform.isFreeBSD) then mysql else null;
 
     inherit (pkgs.darwin) cf-private libobjc;
     inherit (pkgs.darwin.apple_sdk.frameworks) ApplicationServices OpenGL Cocoa AGL;
@@ -9965,9 +9965,9 @@ with pkgs;
 
   SDL = callPackage ../development/libraries/SDL {
     openglSupport = mesaSupported;
-    alsaSupport = stdenv.isLinux;
-    x11Support = !stdenv.isCygwin;
-    pulseaudioSupport = config.pulseaudio or stdenv.isLinux;
+    alsaSupport = hostPlatform.isLinux;
+    x11Support = !hostPlatform.isCygwin;
+    pulseaudioSupport = config.pulseaudio or hostPlatform.isLinux;
     inherit (darwin.apple_sdk.frameworks) OpenGL CoreAudio CoreServices AudioUnit Kernel Cocoa;
   };
 
@@ -9989,10 +9989,10 @@ with pkgs;
 
   SDL2 = callPackage ../development/libraries/SDL2 {
     openglSupport = mesaSupported;
-    alsaSupport = stdenv.isLinux;
-    x11Support = !stdenv.isCygwin;
-    udevSupport = stdenv.isLinux;
-    pulseaudioSupport = config.pulseaudio or stdenv.isLinux;
+    alsaSupport = hostPlatform.isLinux;
+    x11Support = !hostPlatform.isCygwin;
+    udevSupport = hostPlatform.isLinux;
+    pulseaudioSupport = config.pulseaudio or hostPlatform.isLinux;
     inherit (darwin.apple_sdk.frameworks) AudioUnit Cocoa CoreAudio CoreServices ForceFeedback OpenGL;
   };
 
@@ -10098,7 +10098,7 @@ with pkgs;
   srm = callPackage ../tools/security/srm { };
 
   srtp = callPackage ../development/libraries/srtp {
-    libpcap = if stdenv.isLinux then libpcap else null;
+    libpcap = if hostPlatform.isLinux then libpcap else null;
   };
 
   stxxl = callPackage ../development/libraries/stxxl { parallel = true; };
@@ -10548,7 +10548,7 @@ with pkgs;
   ### DEVELOPMENT / LIBRARIES / AGDA
 
   agda = callPackage ../build-support/agda {
-    glibcLocales = if pkgs.stdenv.isLinux then pkgs.glibcLocales else null;
+    glibcLocales = if pkgs.hostPlatform.isLinux then pkgs.glibcLocales else null;
     extension = self : super : { };
     inherit (haskellPackages) Agda;
   };
@@ -10975,7 +10975,7 @@ with pkgs;
   knot-dns = callPackage ../servers/dns/knot-dns { };
   knot-resolver = callPackage ../servers/dns/knot-resolver {
     # TODO: vimNox after it gets fixed on Darwin or something lighter
-    hexdump = if stdenv.isLinux then utillinux.bin else vim/*xxd*/;
+    hexdump = if hostPlatform.isLinux then utillinux.bin else vim/*xxd*/;
   };
 
   rdkafka = callPackage ../development/libraries/rdkafka { };
@@ -11218,7 +11218,7 @@ with pkgs;
   pgpool94 = pgpool.override { postgresql = postgresql94; };
 
   pgpool = callPackage ../servers/sql/pgpool/default.nix {
-    pam = if stdenv.isLinux then pam else null;
+    pam = if hostPlatform.isLinux then pam else null;
     libmemcached = null; # Detection is broken upstream
   };
 
@@ -11358,7 +11358,7 @@ with pkgs;
   uchiwa = callPackage ../servers/monitoring/uchiwa { };
 
   shishi = callPackage ../servers/shishi {
-      pam = if stdenv.isLinux then pam else null;
+      pam = if hostPlatform.isLinux then pam else null;
       # see also openssl, which has/had this same trick
   };
 
@@ -11443,13 +11443,13 @@ with pkgs;
       autoconf automake libtool xmlto asciidoc flex bison mtdev pixman
       cairo epoxy;
     inherit (darwin) apple_sdk cf-private libobjc;
-    bootstrap_cmds = if stdenv.isDarwin then darwin.bootstrap_cmds else null;
+    bootstrap_cmds = if hostPlatform.isDarwin then darwin.bootstrap_cmds else null;
     mesa = mesa_noglu;
     python = python2; # Incompatible with Python 3x
-    udev = if stdenv.isLinux then udev else null;
-    libdrm = if stdenv.isLinux then libdrm else null;
+    udev = if hostPlatform.isLinux then udev else null;
+    libdrm = if hostPlatform.isLinux then libdrm else null;
     abiCompat = config.xorg.abiCompat # `config` because we have no `xorg.override`
-      or (if stdenv.isDarwin then "1.18" else null); # 1.19 needs fixing on Darwin
+      or (if hostPlatform.isDarwin then "1.18" else null); # 1.19 needs fixing on Darwin
   } // { inherit xlibsWrapper; } );
 
   xwayland = callPackage ../servers/x11/xorg/xwayland.nix { };
@@ -11570,7 +11570,7 @@ with pkgs;
   in apple-source-releases // rec {
     cctools = callPackage ../os-specific/darwin/cctools/port.nix {
       inherit libobjc;
-      stdenv = if stdenv.isDarwin then stdenv else libcxxStdenv;
+      stdenv = if hostPlatform.isDarwin then stdenv else libcxxStdenv;
       inherit maloader;
       xctoolchain = xcode.toolchain;
     };
@@ -11656,7 +11656,7 @@ with pkgs;
                  [ "PATH_MAX" "MAXPATHLEN" "MAXHOSTNAMELEN" ]);
       });
     })
-    else if stdenv.isLinux
+    else if hostPlatform.isLinux
     then utillinuxMinimal
     else null;
 
@@ -14282,7 +14282,7 @@ with pkgs;
   };
 
   jbidwatcher = callPackage ../applications/misc/jbidwatcher {
-    java = if stdenv.isLinux then jre else jdk;
+    java = if hostPlatform.isLinux then jre else jdk;
   };
 
   qrencode = callPackage ../tools/graphics/qrencode { };
@@ -14416,7 +14416,7 @@ with pkgs;
   velox = callPackage ../applications/window-managers/velox { };
 
   i3 = callPackage ../applications/window-managers/i3 {
-    xcb-util-cursor = if stdenv.isDarwin then xcb-util-cursor-HEAD else xcb-util-cursor;
+    xcb-util-cursor = if hostPlatform.isDarwin then xcb-util-cursor-HEAD else xcb-util-cursor;
   };
 
   i3-gaps = callPackage ../applications/window-managers/i3/gaps.nix { };
@@ -15084,7 +15084,7 @@ with pkgs;
   };
 
   musescore =
-    if stdenv.isDarwin then
+    if hostPlatform.isDarwin then
       callPackage ../applications/audio/musescore/darwin.nix { }
     else
       libsForQt5.callPackage ../applications/audio/musescore { };
@@ -15253,7 +15253,7 @@ with pkgs;
   oblogout = callPackage ../tools/X11/oblogout { };
 
   obs-studio = libsForQt5.callPackage ../applications/video/obs-studio {
-    alsaSupport = stdenv.isLinux;
+    alsaSupport = hostPlatform.isLinux;
     pulseaudioSupport = config.pulseaudio or true;
   };
 
@@ -15665,7 +15665,7 @@ with pkgs;
   rstudio = libsForQt5.callPackage ../applications/editors/rstudio { };
 
   rsync = callPackage ../applications/networking/sync/rsync {
-    enableACLs = !(stdenv.isDarwin || stdenv.isSunOS || stdenv.isFreeBSD);
+    enableACLs = !(hostPlatform.isDarwin || hostPlatform.isSunOS || hostPlatform.isFreeBSD);
     enableCopyDevicesPatch = (config.rsync.enableCopyDevicesPatch or false);
   };
   rrsync = callPackage ../applications/networking/sync/rsync/rrsync.nix {};
@@ -16353,7 +16353,7 @@ with pkgs;
   vym = callPackage ../applications/misc/vym { };
 
   w3m = callPackage ../applications/networking/browsers/w3m {
-    graphicsSupport = !stdenv.isDarwin;
+    graphicsSupport = !hostPlatform.isDarwin;
   };
 
   # Should always be the version with the most features
@@ -16810,7 +16810,7 @@ with pkgs;
   amoeba = callPackage ../games/amoeba { };
   amoeba-data = callPackage ../games/amoeba/data.nix { };
 
-  andyetitmoves = if stdenv.isLinux then callPackage ../games/andyetitmoves {} else null;
+  andyetitmoves = if hostPlatform.isLinux then callPackage ../games/andyetitmoves {} else null;
 
   angband = callPackage ../games/angband { };
 
@@ -17902,13 +17902,13 @@ with pkgs;
   tini = callPackage ../applications/virtualization/tini {};
 
   isabelle = callPackage ../applications/science/logic/isabelle {
-    java = if stdenv.isLinux then jre else jdk;
+    java = if hostPlatform.isLinux then jre else jdk;
   };
 
   iprover = callPackage ../applications/science/logic/iprover {};
 
   jonprl = callPackage ../applications/science/logic/jonprl {
-    smlnj = if stdenv.isDarwin
+    smlnj = if hostPlatform.isDarwin
       then smlnjBootstrap
       else smlnj;
   };
@@ -17965,7 +17965,7 @@ with pkgs;
   tptp = callPackage ../applications/science/logic/tptp {};
 
   twelf = callPackage ../applications/science/logic/twelf {
-    smlnj = if stdenv.isDarwin
+    smlnj = if hostPlatform.isDarwin
       then smlnjBootstrap
       else smlnj;
   };
@@ -18330,7 +18330,7 @@ with pkgs;
 
   ghostscript = callPackage ../misc/ghostscript {
     x11Support = false;
-    cupsSupport = config.ghostscript.cups or (!stdenv.isDarwin);
+    cupsSupport = config.ghostscript.cups or (!hostPlatform.isDarwin);
   };
 
   ghostscriptX = appendToName "with-X" (ghostscript.override {
@@ -18728,7 +18728,7 @@ with pkgs;
       cairoSupport = true;
       cursesSupport = true;
       saneSupport = true;
-      pulseaudioSupport = config.pulseaudio or stdenv.isLinux;
+      pulseaudioSupport = config.pulseaudio or hostPlatform.isLinux;
       udevSupport = true;
       xineramaSupport = true;
       xmlSupport = true;
