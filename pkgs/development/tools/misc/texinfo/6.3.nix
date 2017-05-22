@@ -1,4 +1,7 @@
-{ stdenv, fetchurl, ncurses, perl, xz, libiconv, gawk, procps, interactive ? false }:
+{ stdenv, fetchurl, ncurses, perl, xz, libiconv, gawk, procps
+, interactive ? false
+, hostPlatform
+}:
 
 with stdenv.lib;
 
@@ -11,11 +14,11 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = [ perl xz ]
-    ++ optionals stdenv.isSunOS [ libiconv gawk ]
+    ++ optionals hostPlatform.isSunOS [ libiconv gawk ]
     ++ optional interactive ncurses
     ++ optional doCheck procps; # for tests
 
-  configureFlags = stdenv.lib.optional stdenv.isSunOS "AWK=${gawk}/bin/awk";
+  configureFlags = stdenv.lib.optional hostPlatform.isSunOS "AWK=${gawk}/bin/awk";
 
   # FIXME needs gcc 4.9 in bootstrap tools
   hardeningDisable = [ "stackprotector" ];
@@ -26,7 +29,7 @@ stdenv.mkDerivation rec {
   '';
 
   doCheck = interactive # simplify bootstrapping
-    && !stdenv.isDarwin && !stdenv.isSunOS/*flaky*/;
+    && !hostPlatform.isDarwin && !hostPlatform.isSunOS/*flaky*/;
 
   meta = with stdenv.lib; {
     homepage = "http://www.gnu.org/software/texinfo/";
