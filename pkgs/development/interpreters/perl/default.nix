@@ -1,4 +1,7 @@
-{ lib, stdenv, fetchurlBoot, enableThreading ? stdenv ? glibc }:
+{ lib, stdenv, fetchurlBoot
+, enableThreading ? stdenv ? glibc
+, hostPlatform
+}:
 
 with lib;
 
@@ -35,8 +38,8 @@ let
       [ # Do not look in /usr etc. for dependencies.
         ./no-sys-dirs.patch
       ]
-      ++ optional stdenv.isSunOS ./ld-shared.patch
-      ++ optional stdenv.isDarwin [ ./cpp-precomp.patch ./sw_vers.patch ];
+      ++ optional hostPlatform.isSunOS ./ld-shared.patch
+      ++ optional hostPlatform.isDarwin [ ./cpp-precomp.patch ./sw_vers.patch ];
 
     postPatch = ''
       pwd="$(type -P pwd)"
@@ -59,7 +62,7 @@ let
         "-Dlocincpth=${libcInc}/include"
         "-Dloclibpth=${libcLib}/lib"
       ]
-      ++ optional stdenv.isSunOS "-Dcc=gcc"
+      ++ optional hostPlatform.isSunOS "-Dcc=gcc"
       ++ optional enableThreading "-Dusethreads";
 
     configureScript = "${stdenv.shell} ./Configure";
@@ -74,9 +77,9 @@ let
     preConfigure =
       ''
         configureFlags="$configureFlags -Dprefix=$out -Dman1dir=$out/share/man/man1 -Dman3dir=$out/share/man/man3"
-      '' + optionalString (stdenv.isArm || stdenv.isMips) ''
+      '' + optionalString (hostPlatform.isArm32 || hostPlatform.isMips) ''
         configureFlagsArray=(-Dldflags="-lm -lrt")
-      '' + optionalString stdenv.isDarwin ''
+      '' + optionalString hostPlatform.isDarwin ''
         substituteInPlace hints/darwin.sh --replace "env MACOSX_DEPLOYMENT_TARGET=10.3" ""
       '' + optionalString (!enableThreading) ''
         # We need to do this because the bootstrap doesn't have a static libpthread
