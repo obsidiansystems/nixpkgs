@@ -5,6 +5,7 @@
 , autoconf, automake114x, texinfo
 , withPrefix ? false
 , singleBinary ? "symlinks" # you can also pass "shebangs" or false
+, hostPlatform
 }:
 
 assert aclSupport -> acl != null;
@@ -23,10 +24,10 @@ stdenv.mkDerivation rec {
   # FIXME needs gcc 4.9 in bootstrap tools
   hardeningDisable = [ "stackprotector" ];
 
-  patches = optional stdenv.isCygwin ./coreutils-8.23-4.cygwin.patch;
+  patches = optional hostPlatform.isCygwin ./coreutils-8.23-4.cygwin.patch;
 
   # The test tends to fail on btrfs and maybe other unusual filesystems.
-  postPatch = optionalString (!stdenv.isDarwin) ''
+  postPatch = optionalString (!hostPlatform.isDarwin) ''
     sed '2i echo Skipping dd sparse test && exit 0' -i ./tests/dd/sparse.sh
     sed '2i echo Skipping cp sparse test && exit 0' -i ./tests/cp/sparse.sh
     sed '2i echo Skipping rm deep-2 test && exit 0' -i ./tests/rm/deep-2.sh
@@ -39,13 +40,13 @@ stdenv.mkDerivation rec {
   configureFlags =
     optional (singleBinary != false)
       ("--enable-single-binary" + optionalString (isString singleBinary) "=${singleBinary}")
-    ++ optional stdenv.isSunOS "ac_cv_func_inotify_init=no"
+    ++ optional hostPlatform.isSunOS "ac_cv_func_inotify_init=no"
     ++ optional withPrefix "--program-prefix=g";
 
   buildInputs = [ gmp ]
     ++ optional aclSupport acl
     ++ optional attrSupport attr
-    ++ optionals stdenv.isCygwin [ autoconf automake114x texinfo ]   # due to patch
+    ++ optionals hostPlatform.isCygwin [ autoconf automake114x texinfo ]   # due to patch
     ++ optionals selinuxSupport [ libselinux libsepol ];
 
   crossAttrs = {
@@ -88,9 +89,9 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = false;
 
   NIX_LDFLAGS = optionalString selinuxSupport "-lsepol";
-  FORCE_UNSAFE_CONFIGURE = optionalString stdenv.isSunOS "1";
+  FORCE_UNSAFE_CONFIGURE = optionalString hostPlatform.isSunOS "1";
 
-  makeFlags = optionalString stdenv.isDarwin "CFLAGS=-D_FORTIFY_SOURCE=0";
+  makeFlags = optionalString hostPlatform.isDarwin "CFLAGS=-D_FORTIFY_SOURCE=0";
 
   meta = {
     homepage = http://www.gnu.org/software/coreutils/;
