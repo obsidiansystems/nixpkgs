@@ -1,4 +1,6 @@
-{ stdenv, fetchurl, m4, perl, help2man }:
+{ stdenv, fetchurl, m4, perl, help2man
+, hostPlatform
+}:
 
 stdenv.mkDerivation rec {
   name = "bison-3.0.4";
@@ -8,7 +10,7 @@ stdenv.mkDerivation rec {
     sha256 = "b67fd2daae7a64b5ba862c66c07c1addb9e6b1b05c5f2049392cfd8a2172952e";
   };
 
-  nativeBuildInputs = [ m4 perl ] ++ stdenv.lib.optional stdenv.isSunOS help2man;
+  nativeBuildInputs = [ m4 perl ] ++ stdenv.lib.optional hostPlatform.isSunOS help2man;
   propagatedBuildInputs = [ m4 ];
 
   # FIXME needs gcc 4.9 in bootstrap tools
