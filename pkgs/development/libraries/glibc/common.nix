@@ -33,7 +33,7 @@ stdenv.mkDerivation ({
   # The host/target system.
   crossConfig = if cross != null then cross.config else null;
 
-  inherit (stdenv) is64bit;
+  inherit (hostPlatform) is64bit;
 
   enableParallelBuilding = true;
 
@@ -60,7 +60,7 @@ stdenv.mkDerivation ({
          patch extends the search path by "/run/current-system/sw/bin". */
       ./fix_path_attribute_in_getconf.patch
     ]
-      ++ lib.optional stdenv.isi686 ./fix-i686-memchr.patch;
+      ++ lib.optional hostPlatform.isi686 ./fix-i686-memchr.patch;
 
   postPatch =
     # Needed for glibc to build with the gnumake 3.82
@@ -111,7 +111,7 @@ stdenv.mkDerivation ({
           && cross.platform.kernelMajor == "2.6") [
       "--enable-kernel=2.6.0"
       "--with-__thread"
-    ] ++ lib.optionals (cross == null && stdenv.isArm) [
+    ] ++ lib.optionals (cross == null && hostPlatform.isArm32) [
       "--host=arm-linux-gnueabi"
       "--build=arm-linux-gnueabi"
 
