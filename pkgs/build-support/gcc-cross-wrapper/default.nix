@@ -60,6 +60,8 @@ stdenv.mkDerivation {
     };
 
   passthru = {
+    isClang = false;
+    isGNU = true;
     target = cross;
   };
 }
