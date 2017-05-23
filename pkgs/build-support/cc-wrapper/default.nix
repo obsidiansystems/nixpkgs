@@ -42,6 +42,12 @@ let
   binutils_bin = if nativeTools then "" else getBin binutils;
   # The wrapper scripts use 'cat' and 'grep', so we may need coreutils.
   coreutils_bin = if nativeTools then "" else getBin coreutils;
+
+  dashlessTarget = stdenv.lib.replaceStrings ["-"] ["_"] targetPlatform.config;
+  # TODO(@Ericson2314) Make unconditional
+  infixSalt  = stdenv.lib.optionalString (targetPlatform != hostPlatform) dashlessTarget;
+  infixSalt_ = stdenv.lib.optionalString (targetPlatform != hostPlatform) (dashlessTarget + "_");
+  _infixSalt = stdenv.lib.optionalString (targetPlatform != hostPlatform) ("_" + dashlessTarget);
 in
 
 stdenv.mkDerivation {
@@ -56,17 +62,17 @@ stdenv.mkDerivation {
 
   passthru = {
     inherit libc nativeTools nativeLibc nativePrefix isGNU isClang
-            prefix;
+            prefix infixSalt infixSalt_ _infixSalt;
 
     emacsBufferSetup = pkgs: ''
       ; We should handle propagation here too
       (mapc (lambda (arg)
         (when (file-directory-p (concat arg "/include"))
-          (setenv "NIX_CFLAGS_COMPILE" (concat (getenv "NIX_CFLAGS_COMPILE") " -isystem " arg "/include")))
+          (setenv "NIX_${infixSalt_}CFLAGS_COMPILE" (concat (getenv "NIX_${infixSalt_}CFLAGS_COMPILE") " -isystem " arg "/include")))
         (when (file-directory-p (concat arg "/lib"))
-          (setenv "NIX_LDFLAGS" (concat (getenv "NIX_LDFLAGS") " -L" arg "/lib")))
+          (setenv "NIX_${infixSalt_}LDFLAGS" (concat (getenv "NIX_${infixSalt_}LDFLAGS") " -L" arg "/lib")))
         (when (file-directory-p (concat arg "/lib64"))
-          (setenv "NIX_LDFLAGS" (concat (getenv "NIX_LDFLAGS") " -L" arg "/lib64")))) '(${concatStringsSep " " (map (pkg: "\"${pkg}\"") pkgs)}))
+          (setenv "NIX_${infixSalt_}LDFLAGS" (concat (getenv "NIX_${infixSalt_}LDFLAGS") " -L" arg "/lib64")))) '(${concatStringsSep " " (map (pkg: "\"${pkg}\"") pkgs)}))
     '';
   };
 
