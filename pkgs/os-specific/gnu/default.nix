@@ -1,8 +1,8 @@
 # Packages that make up the GNU/Hurd operating system (aka. GNU).
 
 args@{ fetchgit, stdenv, autoconf, automake, automake111x, libtool
-, texinfo, glibcCross, hurdPartedCross, libuuid, samba
-, gccCrossStageStatic, gccCrossStageFinal
+, texinfo, glibc, hurdPartedCross, libuuid, samba
+, gccCrossStageStatic ? null, gccCrossStageFinal ? null
 , forcedNativePackages, forceSystem, newScope, platform, config
 , targetPlatform, buildPlatform
 , overrides ? {} }:
@@ -11,6 +11,8 @@ with args;
 
 let
   callPackage = newScope gnu;
+
+  glibcCross = glibc;
 
   gnu = {
     hurdCross = forcedNativePackages.callPackage ./hurd {

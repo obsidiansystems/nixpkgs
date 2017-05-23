@@ -5035,47 +5035,6 @@ with pkgs;
 
   gccApple = throw "gccApple is no longer supported";
 
-  gccCrossStageStatic = assert targetPlatform != buildPlatform; let
-    libcCross1 =
-      if targetPlatform.libc == "msvcrt" then windows.mingw_w64_headers
-      else if targetPlatform.libc == "libSystem" then darwin.xcode
-      else null;
-    in wrapGCCCross {
-      gcc = forcedNativePackages.gcc.cc.override {
-        cross = targetPlatform;
-        crossStageStatic = true;
-        langCC = false;
-        libcCross = libcCross1;
-        enableShared = false;
-        # Why is this needed?
-        inherit (forcedNativePackages) binutils;
-      };
-      libc = libcCross1;
-      inherit (forcedNativePackages) binutils;
-      cross = targetPlatform;
-  };
-
-  # Only needed for mingw builds
-  gccCrossMingw2 = assert targetPlatform != buildPlatform; wrapGCCCross {
-    gcc = gccCrossStageStatic.gcc;
-    libc = windows.mingw_headers2;
-    inherit (forcedNativePackages) binutils;
-    cross = targetPlatform;
-  };
-
-  gccCrossStageFinal = assert targetPlatform != buildPlatform; wrapGCCCross {
-    gcc = forcedNativePackages.gcc.cc.override {
-      cross = targetPlatform;
-      crossStageStatic = false;
-
-      # Why is this needed?
-      inherit (forcedNativePackages) binutils;
-    };
-    libc = libcCross;
-    inherit (forcedNativePackages) binutils;
-    cross = targetPlatform;
-  };
-
   gcc45 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/4.5 {
     inherit noSysDirs;
     texinfo = texinfo4;
@@ -5087,11 +5046,8 @@ with pkgs;
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43944
     profiledCompiler = !stdenv.isArm;
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
   }));
 
   gcc48 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/4.8 {
@@ -5100,11 +5056,8 @@ with pkgs;
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
     profiledCompiler = with stdenv; (!isSunOS && !isDarwin && (isi686 || isx86_64));
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
 
     isl = if !stdenv.isDarwin then isl_0_14 else null;
     cloog = if !stdenv.isDarwin then cloog else null;
@@ -5117,11 +5070,8 @@ with pkgs;
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
     profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
 
     isl = if !stdenv.isDarwin then isl_0_11 else null;
 
@@ -5134,11 +5084,8 @@ with pkgs;
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
     profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
 
     isl = if !stdenv.isDarwin then isl_0_14 else null;
   }));
@@ -5149,11 +5096,8 @@ with pkgs;
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
     profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
 
     isl = if !stdenv.isDarwin then isl_0_14 else null;
   }));
@@ -5164,11 +5108,8 @@ with pkgs;
     # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
     profiledCompiler = with stdenv; (!isDarwin && (isi686 || isx86_64));
 
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = if targetPlatform != buildPlatform then libcCross else null;
+    cross = if targetPlatform != hostPlatform then targetPlatform else null;
+    libcCross = if targetPlatform != buildPlatform then libc else null;
 
     isl = isl_0_17;
   }));
@@ -7703,29 +7644,13 @@ with pkgs;
     withGd = true;
   };
 
-  # Being redundant to avoid cycles on boot. TODO: find a better way
-  glibcCross = callPackage ../development/libraries/glibc {
-    installLocales = config.glibc.locales or false;
-    # Can't just overrideCC, because then the stdenv-cross mkDerivation will be
-    # thrown away. TODO: find a better solution for this.
-    stdenv = buildPackages.makeStdenvCross
-      buildPackages.buildPackages.stdenv
-      buildPackages.targetPlatform
-      buildPackages.binutils
-      buildPackages.gccCrossStageStatic;
-  };
-
   # We can choose:
-  libcCrossChooser = name:
-    # libc is hackily often used from the previous stage. This `or`
-    # hack fixes the hack, *sigh*.
-    /**/ if name == "glibc" then __targetPackages.glibcCross or glibcCross
-    else if name == "uclibc" then uclibcCross
-    else if name == "msvcrt" then windows.mingw_w64
-    else if name == "libSystem" then darwin.xcode
-    else throw "Unknown libc";
-
-  libcCross = assert targetPlatform != buildPlatform; libcCrossChooser targetPlatform.libc;
+  libc = {
+    "glibc" = glibc;
+    "uclibc" = uclibc;
+    "msvcrt" = windows.mingw_w64;
+    "libSystem" = darwin.xcode;
+  }.${hostPlatform.libc} or (throw "Unknown libc");
 
   # Only supported on Linux
   glibcLocales = if stdenv.isLinux then callPackage ../development/libraries/glibc/locales.nix { } else null;
@@ -8658,7 +8583,7 @@ with pkgs;
   libiconv =
     if hostPlatform.libc == "glibc"
       then glibcIconv (if hostPlatform != buildPlatform
-                       then libcCross
+                       then libc
                        else stdenv.cc.libc)
     else if hostPlatform.isDarwin
       then darwin.libiconv
@@ -12368,13 +12293,9 @@ with pkgs;
 
   ubootGuruplug = callPackage ../misc/uboot/guruplug.nix { };
 
-  uclibc = callPackage ../os-specific/linux/uclibc { };
-
-  uclibcCross = lowPrio (callPackage ../os-specific/linux/uclibc {
-    inherit (buildPackages) linuxHeaders;
-    gccCross = gccCrossStageStatic;
-    cross = assert targetPlatform != buildPlatform; targetPlatform;
-  });
+  uclibc = callPackage ../os-specific/linux/uclibc {
+    cross = if hostPlatform != buildPlatform then hostPlatform else null;
+  };
 
   udev = systemd;
   libudev = udev;
@@ -12421,8 +12342,8 @@ with pkgs;
     jom = callPackage ../os-specific/windows/jom { };
 
     w32api = callPackage ../os-specific/windows/w32api {
-      gccCross = gccCrossStageStatic;
-      binutils = binutils;
+      gccCross = buildPackages.gccCrossStageStatic;
+      binutils = buildPackages.binutils;
     };
 
     w32api_headers = w32api.override {
@@ -12454,8 +12375,8 @@ with pkgs;
     };
 
     mingw_w64 = callPackage ../os-specific/windows/mingw-w64 {
-      gccCross = gccCrossStageStatic;
-      binutils = binutils;
+      gccCross = buildPackages.gccCrossStageStatic;
+      binutils = buildPackages.binutils;
     };
 
     mingw_w64_headers = callPackage ../os-specific/windows/mingw-w64 {

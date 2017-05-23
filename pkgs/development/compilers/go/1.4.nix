@@ -1,10 +1,12 @@
-{ stdenv, lib, fetchurl, fetchpatch, tzdata, iana-etc, libcCross
+{ stdenv, lib, fetchurl, fetchpatch, tzdata, iana-etc
 , pkgconfig
 , pcre
-, Security }:
+, Security
+, __targetPackages
+}:
 
 let
-  libc = if stdenv ? "cross" then libcCross else stdenv.cc.libc;
+  libc = if stdenv ? "cross" then __targetPackages.libc else stdenv.cc.libc;
 in
 
 stdenv.mkDerivation rec {
