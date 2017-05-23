@@ -96,8 +96,11 @@ stageFuns: let
   in
     if args.__raw or false
     then args'
-    else allPackages ((builtins.removeAttrs args' ["selfBuild"]) // {
-      buildPackages = if args.selfBuild or true then null else prevStage;
+    else allPackages ((builtins.removeAttrs args' [ "selfBuild" "skipPrev" ]) // {
+      buildPackages =
+        /**/ if args.selfBuild or true then null
+        else if args.skipPrev or false then prevStage.stdenv.__bootPackages
+        else                                prevStage;
       __targetPackages = if args.selfBuild or true then null else nextStage;
     });
 
