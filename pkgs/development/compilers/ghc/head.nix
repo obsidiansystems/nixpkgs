@@ -51,7 +51,9 @@ let
 
   llvmPackages = llvmPackages_39;
 
-in stdenv.mkDerivation rec {
+  prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
+
+in stdenv.mkDerivation (rec {
   inherit version rev;
   name = "${prefix}ghc-${version}";
 
@@ -72,6 +74,8 @@ in stdenv.mkDerivation rec {
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
     echo 'GhcLibHcOpts += -fPIC' >> mk/build.mk
     echo 'GhcRtsHcOpts += -fPIC' >> mk/build.mk
+  '' + stdenv.lib.optionalString prebuiltAndroidTarget ''
+    echo 'EXTRA_CC_OPTS += -std=gnu99' >> mk/build.mk
   '' + stdenv.lib.optionalString enableIntegerSimple ''
     echo "INTEGER_LIBRARY = integer-simple" >> mk/build.mk
   '' + ''
@@ -119,7 +123,7 @@ in stdenv.mkDerivation rec {
     gmp.out __targetPackages.gmp.out
   ] ++ stdenv.lib.optionals (!useVendoredLibffi) [
     libffi.out __targetPackages.libffi.out
-  ] ++ stdenv.lib.optionals (targetPlatform != hostPlatform && targetPlatform.libc == "libsystem") [
+  ] ++ stdenv.lib.optionals (prebuiltAndroidTarget || targetPlatform != hostPlatform && targetPlatform.libc == "libsystem") [
     __targetPackages.libiconv
   ];
 
@@ -194,4 +198,19 @@ in stdenv.mkDerivation rec {
     maintainers = with stdenv.lib.maintainers; [ marcweber andres peti ];
     inherit (ghc.meta) license platforms;
   };
-}
+
+  # TODO: next mass rebuild / version bump just do
+  # dontSetConfigureCross = buildPlatform != targetPlatform;
+} // stdenv.lib.optionalAttrs prebuiltAndroidTarget {
+
+  # It gets confused with ncurses
+  dontPatchELF = true;
+  dontCrossPatchELF = true;
+
+  # It uses the native strip on libraries too
+  dontStrip = true;
+  dontCrossStrip = true;
+
+  # Hack so we can get away with not stripping and patching.
+  noAuditTmpdir = true;
+})
