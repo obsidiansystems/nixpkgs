@@ -213,4 +213,25 @@ in stdenv.mkDerivation (rec {
 
   # Hack so we can get away with not stripping and patching.
   noAuditTmpdir = true;
+
+  patches = [
+    ./android-patches/add-llvm-target-data-layout.patch
+    #./android-patches/build-deps-extra-cc-opts.patch
+    ./android-patches/unix-posix_vdisable.patch
+    #./android-patches/unix-posix-files-imports.patch
+    ./android-patches/enable-fPIC.patch
+    ./android-patches/no-pthread-android.patch
+    ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
+    ./android-patches/undefine_MYTASK_USE_TLV_for_CC_SUPPORTS_TLS_zero.patch
+    ./android-patches/force-relocation-equal-pic.patch
+    ./android-patches/rts_android_log_write.patch
+    ./android-patches/patch_rts_elf.patch
+
+    ./android-patches/extra-modules-temp.patch
+    ./android-patches/pthread-die-temp.patch
+  ];
+} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform && targetPlatform.libc or "" == "libSystem") {
+  patches = [
+    ./android-patches/enable-fPIC.patch
+  ];
 })
