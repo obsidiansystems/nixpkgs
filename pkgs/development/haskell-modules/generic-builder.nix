@@ -1,6 +1,7 @@
 { stdenv, buildPackages, ghc
 , jailbreak-cabal, hscolour, cpphs, nodejs
 , buildPlatform, hostPlatform
+, libiconv
 }:
 
 let
@@ -159,7 +160,8 @@ let
                      optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
                      # ghcjs's hsc2hs calls out to the native hsc2hs
                      optional isGhcjs nativeGhc ++
-                     optionals withBenchmarkDepends (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkToolDepends);
+                     optionals withBenchmarkDepends (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkToolDepends) ++
+                     optional (hostPlatform.useAndroidPrebuilt or false) libiconv;
   allBuildInputs = propagatedBuildInputs ++ otherBuildInputs;
 
   haskellBuildInputs = stdenv.lib.filter isHaskellPkg allBuildInputs;
