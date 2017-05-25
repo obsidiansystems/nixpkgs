@@ -55,7 +55,11 @@ let
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
     GhcLibHcOpts += -fPIC
     GhcRtsHcOpts += -fPIC
+  '' + stdenv.lib.optionalString prebuiltAndroidTarget ''
+    EXTRA_CC_OPTS += -std=gnu99
   '';
+
+  prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
 
   # Splicer will pull out correct variations
   libDeps = platform: [ ncurses libffi ]
@@ -77,6 +81,15 @@ stdenv.mkDerivation rec {
   outputs = [ "out" "doc" ];
 
   postPatch = "patchShebangs .";
+
+  # It gets confused with ncurses
+  dontPatchELF = prebuiltAndroidTarget;
+
+  # It uses the native strip on libraries too
+  dontStrip = prebuiltAndroidTarget;
+
+  # Hack so we can get away with not stripping and patching.
+  noAuditTmpdir = prebuiltAndroidTarget;
 
   preConfigure = ''
     echo -n "${buildMK}" > mk/build.mk
