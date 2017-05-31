@@ -19,15 +19,8 @@ stdenv.mkDerivation rec {
 
   # http://www.gnu.org/software/make/manual/html_node/Libraries_002fSearch.html
   preConfigure = ''
-    makeFlags=VPATH=`cat $NIX_CC/nix-support/orig-libc`/lib
+    makeFlags=VPATH=`cat $NIX_${stdenv.cc.infixSalt_}CC/nix-support/orig-libc`/lib
   '';
-
-  crossAttrs = {
-    # This works for uclibc, at least.
-    preConfigure = ''
-      makeFlags=VPATH=`cat ${stdenv.ccCross}/nix-support/orig-libc`/lib
-    '';
-  };
 
   patches = [
     # Allow sessions to inherit the PATH from the parent dropbear.
