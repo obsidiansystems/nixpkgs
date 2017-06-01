@@ -24735,6 +24735,28 @@ in {
     };
   };
 
+  torch = self.torchWithoutCuda;
+
+  torchWithoutCuda = callPackage ../development/python-modules/torch {
+  };
+
+  torchWithCuda75 = callPackage ../development/python-modules/torch {
+    cudaSupport = true;
+    cudaVersion = "cu75";
+    cudatoolkit = pkgs.cudatoolkit75;
+    cudnn = pkgs.cudnn5_cudatoolkit75;
+  };
+
+  torchWithCuda80 = callPackage ../development/python-modules/torch {
+    cudaSupport = true;
+    cudaVersion = "cu75";
+    cudatoolkit = pkgs.cudatoolkit8;
+    cudnn = pkgs.cudnn51_cudatoolkit80;
+  };
+
+  torchvision = callPackage ../development/python-modules/torchvision {
+  };
+
   tox = buildPythonPackage rec {
     name = "tox-${version}";
     version = "2.4.1";
