@@ -29,9 +29,11 @@ let
   # these attributes. We should have a more general solution for selecting
   # whether `nativeDrv` or `crossDrv` is the default in `defaultScope`.
   pkgsWithoutFetchers = lib.filterAttrs (n: _: !lib.hasPrefix "fetch" n) pkgs;
+  targetPkgsWithoutFetchers = lib.filterAttrs (n: _: !lib.hasPrefix "fetch" n) pkgs.__targetPackages;
   defaultRunScope = pkgsWithoutFetchers // pkgs.xorg;
+  defaultEmitScope = targetPkgsWithoutFetchers // targetPkgsWithoutFetchers.xorg;
 
-  splicer = buildPkgs: runPkgs: let
+  splicer = buildPkgs: runPkgs: emitPkgs: let
     mash = buildPkgs // runPkgs;
     merge = name: {
       inherit name;
@@ -39,9 +41,11 @@ let
         defaultValue = mash.${name};
         buildValue = buildPkgs.${name} or {};
         runValue = runPkgs.${name} or {};
+        emitValue = emitPkgs.${name} or {};
         augmentedValue = defaultValue
           // (lib.optionalAttrs (buildPkgs ? ${name}) { nativeDrv = buildValue; })
-          // (lib.optionalAttrs (runPkgs ? ${name}) { crossDrv = runValue; });
+          // (lib.optionalAttrs (runPkgs ? ${name}) { crossDrv = runValue; })
+          // (lib.optionalAttrs (runPkgs ? ${name}) { __targetDrv = emitValue; });
         # Get the set of outputs of a derivation
         getOutputs = value:
           lib.genAttrs (value.outputs or []) (output: value.${output});
@@ -53,9 +57,9 @@ let
         # The derivation along with its outputs, which we recur
         # on to splice them together.
         else if lib.isDerivation defaultValue then augmentedValue
-          // splicer (getOutputs buildValue) (getOutputs runValue)
+          // splicer (getOutputs buildValue) (getOutputs runValue) (getOutputs emitValue)
         # Just recur on plain attrsets
-        else if lib.isAttrs defaultValue then splicer buildValue runValue
+        else if lib.isAttrs defaultValue then splicer buildValue runValue emitValue
         # Don't be fancy about non-derivations. But we could have used used
         # `__functor__` for functions instead.
         else defaultValue;
@@ -64,7 +68,7 @@ let
 
   splicedPackages =
     if actuallySplice
-    then splicer defaultBuildScope defaultRunScope // {
+    then splicer defaultBuildScope defaultRunScope defaultEmitScope // {
       # These should never be spliced under any circumstances
       inherit (pkgs) pkgs buildPackages __targetPackages
         buildPlatform targetPlatform hostPlatform;
