@@ -14,11 +14,15 @@ rec {
   mkDerivation =
     { name ? ""
 
+    , preNativeBuildInputs ? []
     , nativeBuildInputs ? []
     , buildInputs ? []
+    , __targetInputs ? []
 
+    , propagatedPreNativeBuildInputs ? []
     , propagatedNativeBuildInputs ? []
     , propagatedBuildInputs ? []
+    , __propagatedTargetInputs ? []
 
     , configureFlags ? []
     , # Target is not included by default because most programs don't care.
@@ -44,12 +48,16 @@ rec {
     , ... } @ attrs:
     let
       dependencies = [
+        (map (drv: drv.preNativeDrv or drv) preNativeBuildInputs)
         (map (drv: drv.nativeDrv or drv) nativeBuildInputs)
         (map (drv: drv.crossDrv or drv) buildInputs)
+        (map (drv: drv.__targetDrv or drv) __targetInputs)
       ];
       propagatedDependencies = [
+        (map (drv: drv.preNativeDrv or drv) propagatedPreNativeBuildInputs)
         (map (drv: drv.nativeDrv or drv) propagatedNativeBuildInputs)
         (map (drv: drv.crossDrv or drv) propagatedBuildInputs)
+        (map (drv: drv.__targetDrv or drv) __propagatedTargetInputs)
       ];
     in let
 
@@ -59,10 +67,10 @@ rec {
 
       dependencies' = let
           justMap = map lib.chooseDevOutputs dependencies;
-          nativeBuildInputs = lib.head justMap
+          nativeBuildInputs = lib.elemAt justMap 1
             ++ lib.optional separateDebugInfo ../../build-support/setup-hooks/separate-debug-info.sh
             ++ lib.optional stdenv.hostPlatform.isWindows ../../build-support/setup-hooks/win-dll-link.sh;
-        in [ nativeBuildInputs ] ++ lib.tail justMap;
+        in [ (lib.head justMap) nativeBuildInputs ] ++ lib.tail (lib.tail justMap);
 
       propagatedDependencies' = map lib.chooseDevOutputs propagatedDependencies;
 
@@ -92,11 +100,15 @@ rec {
           userHook = config.stdenv.userHook or null;
           __ignoreNulls = true;
 
-          nativeBuildInputs = lib.elemAt dependencies' 0;
-          buildInputs = lib.elemAt dependencies' 1;
+          preNativeBuildInputs = lib.elemAt dependencies' 0;
+          nativeBuildInputs = lib.elemAt dependencies' 1;
+          buildInputs = lib.elemAt dependencies' 2;
+          __targetInputs = lib.elemAt dependencies' 3;
 
-          propagatedNativeBuildInputs = lib.elemAt propagatedDependencies' 0;
-          propagatedBuildInputs = lib.elemAt propagatedDependencies' 1;
+          propagatedPreNativeBuildInputs = lib.elemAt propagatedDependencies' 0;
+          propagatedNativeBuildInputs = lib.elemAt propagatedDependencies' 1;
+          propagatedBuildInputs = lib.elemAt propagatedDependencies' 2;
+          __propagatedTargetInputs = lib.elemAt propagatedDependencies' 3;
 
           # This parameter is sometimes a string, sometimes null, and sometimes a list, yuck
           configureFlags = let inherit (lib) optional elem; in

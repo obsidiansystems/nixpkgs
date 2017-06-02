@@ -269,11 +269,28 @@ runHook preHook
 runHook addInputsHook
 
 
-# Recursively find all build inputs.
+# shellcheck disable=SC2034
+declare -ga preBuildPkgs buildPkgs hostPkgs __targetPkgs
+
+declare -ra pkgHookVars=(preBuildEnvHook buildEnvHook hostEnvHook __targetEnvHook)
+
+declare -ra pkgAccumVars=(BAD preBuildPkgs buildPkgs hostPkgs __targetPkgs BAD)
+
+declare -ra propagatedInputsFiles=(propagated-pre-native-build-inputs \
+                                   propagated-native-build-inputs \
+                                   propagated-build-inputs \
+                                   propagated-target-inputs)
+
+declare -ra allDepOffsets=({-2..1})
+
+# Mutually-recursively find all build inputs. See the dependency section of the
+# stdenv chapter of the Nixpkgs manual for the specification this algorithm
+# implements.
 findInputs() {
     local pkg="$1"
-    local var="$2"
-    local propagatedBuildInputsFile="$3"
+    local -i offset="$2"
+
+    local var="${pkgAccumVars[$2]}"
 
     # TODO(@Ericson2314): Restore using associative array once Darwin
     # nix-shell doesn't use impure bash. This should replace the O(n)
@@ -296,80 +313,77 @@ findInputs() {
         source "$pkg"
     fi
 
-    if [ -d "$pkg/bin" ]; then
+    # Only dependencies whose host platform is guaranteed to match the build
+    # platform are included here. That would be `nativeBuildInputs` and
+    # `preNativeBuildInputs`. Other aren't because of cross compiling, and we
+    # want to have consistent rules whether or not we are cross compiling.
+    if [[ "$offset" -le -1 && -d "$pkg/bin" ]]; then
         addToSearchPath _PATH "$pkg/bin"
     fi
 
-    if [ -f "$pkg/nix-support/setup-hook" ]; then
+    if [[ -f "$pkg/nix-support/setup-hook" ]]; then
         source "$pkg/nix-support/setup-hook"
     fi
 
-    if [ -f "$pkg/nix-support/$propagatedBuildInputsFile" ]; then
-        local pkgNext
-        for pkgNext in $(< "$pkg/nix-support/$propagatedBuildInputsFile"); do
-            findInputs "$pkgNext" "$var" "$propagatedBuildInputsFile"
-        done
-    fi
+    transitiveInputs "$pkg" "$offset"
 }
 
-if [ -z "$crossConfig" ]; then
-    # Not cross-compiling - both buildInputs (and variants like propagatedBuildInputs)
-    # are handled identically to nativeBuildInputs
-    declare -a nativePkgs
-    for i in $nativeBuildInputs $buildInputs \
-             $defaultNativeBuildInputs $defaultBuildInputs \
-             $propagatedNativeBuildInputs $propagatedBuildInputs; do
-        findInputs "$i" nativePkgs propagated-native-build-inputs
-    done
-else
-    declare -a crossPkgs
-    for i in $buildInputs $defaultBuildInputs $propagatedBuildInputs; do
-        findInputs "$i" crossPkgs propagated-build-inputs
-    done
 
-    declare -a nativePkgs
-    for i in $nativeBuildInputs $defaultNativeBuildInputs $propagatedNativeBuildInputs; do
-        findInputs "$i" nativePkgs propagated-native-build-inputs
-    done
-fi
+transitiveInputs() {
+    local pkg="$1"
+    local -i offset="$2"
 
+    local i
+    for i in "${allDepOffsets[@]}"; do
+        local file="${propagatedInputsFiles[$i + 2]}"
+        local -i offsetNext="$offset + $i"
+
+        if [[ "${pkgAccumVars[$offsetNext + 3]}" == BAD ]]; then continue; fi
+        if ! [[ -f "$pkg/nix-support/$file" ]];             then continue; fi
+
+        local pkgNext
+        for pkgNext in $(< "$pkg/nix-support/$file"); do
+            findInputs "$pkgNext" "$offsetNext"
+        done
+    done
+}
+
+for pkg in $preNativeBuildInputs $DefaultPreNativeBuildInputs $propagatedPreNativeBuildInputs; do
+    findInputs "$pkg" -2
+done
+for pkg in $nativeBuildInputs $defaultNativeBuildInputs $propagatedNativeBuildInputs; do
+    findInputs "$pkg" -1
+done
+for pkg in $buildInputs $defaultBuildInputs $propagatedBuildInputs; do
+    findInputs "$pkg" 0
+done
+for pkg in $__targetInputs $__defaultTargetInputs $__propagatedTargetInputs; do
+    findInputs "$pkg" 1
+done
 
 # Set the relevant environment variables to point to the build inputs
 # found above.
 #
-# These `depOffset`s tell the env hook what sort of dependency
-# (ignoring propagatedness) is being passed to the env hook. In a real
-# language, we'd append a closure with this information to the
-# relevant env hook array, but bash doesn't have closures, so it's
-# easier to just pass this in.
+# These `depOffset`s, beyond indexing the arrays, also tell the env
+# hook what sort of dependency (ignoring propagatedness) is being
+# passed to the env hook. In a real language, we'd append a closure
+# with this information to the relevant env hook array, but bash
+# doesn't have closures, so it's easier to just pass this in.
+_addToEnv() {
+    local -i depOffset
+    local pkg
 
-_addToNativeEnv() {
-    local pkg="$1"
-    if [[ -n "${crossConfig:-}" ]]; then
-        local -i depOffset=-1
-    else
-        local -i depOffset=0
-    fi
-
-    # Run the package-specific hooks set by the setup-hook scripts.
-    runHook envHook "$pkg"
+    for depOffset in "${allDepOffsets[@]}"; do
+        local hook="${pkgHookVars[$sort + 2]}"
+        local pkgsRef="${pkgAccumVars[$sort + 3]}[@]"
+        for pkg in "${!pkgsRef}"; do
+            runHook "$hook" "$pkg"
+        done
+    done
 }
 
-for i in "${nativePkgs[@]}"; do
-    _addToNativeEnv "$i"
-done
-
-_addToCrossEnv() {
-    local pkg="$1"
-    local -i depOffset=0
-
-    # Run the package-specific hooks set by the setup-hook scripts.
-    runHook crossEnvHook "$pkg"
-}
-
-for i in "${crossPkgs[@]}"; do
-    _addToCrossEnv "$i"
-done
+# Run the package-specific hooks set by the setup-hook scripts.
+_addToEnv
 
 
 _addRpathPrefix "$out"
@@ -815,6 +829,7 @@ installPhase() {
 # propagated-build-inputs.
 fixupPhase() {
     # Make sure everything is writable so "strip" et al. work.
+    local output
     for output in $outputs; do
         if [ -e "${!output}" ]; then chmod -R u+w "${!output}"; fi
     done
@@ -828,32 +843,22 @@ fixupPhase() {
     done
 
 
-    # Propagate build inputs and setup hook into the development output.
+    # Propagate pre-build, build, build, host, and target inputs, and setup hook, into the development output.
+    declare -ra propagatedInputsVars=(propagatedPreNativeBuildInputs \
+                                      propagatedNativeBuildInputs \
+                                      propagatedBuildInputs \
+                                      __propagatedTargetInputs)
 
-    if [ -z "$crossConfig" ]; then
-        # Not cross-compiling - propagatedBuildInputs are handled identically to propagatedNativeBuildInputs
-        local propagated="$propagatedNativeBuildInputs"
-        if [ -n "$propagatedBuildInputs" ]; then
-            propagated+="${propagated:+ }$propagatedBuildInputs"
-        fi
-        if [ -n "$propagated" ]; then
+    local propagatedInputsIndex
+    for propagatedInputsIndex in "${!propagatedInputsVars[@]}"; do
+        local propagatedInputsVar=${propagatedInputsVars[$propagatedInputsIndex]}
+        local propagatedInputsFile=${propagatedInputsFiles[$propagatedInputsIndex]}
+        if [ -n "$propagatedInputsVar" ]; then
             mkdir -p "${!outputDev}/nix-support"
             # shellcheck disable=SC2086
-            printWords $propagated > "${!outputDev}/nix-support/propagated-native-build-inputs"
+            printWords ${!propagatedInputsVar} > "${!outputDev}/nix-support/$propagatedInputsFile"
         fi
-    else
-        if [ -n "$propagatedBuildInputs" ]; then
-            mkdir -p "${!outputDev}/nix-support"
-            # shellcheck disable=SC2086
-            printWords $propagatedBuildInputs > "${!outputDev}/nix-support/propagated-build-inputs"
-        fi
-
-        if [ -n "$propagatedNativeBuildInputs" ]; then
-            mkdir -p "${!outputDev}/nix-support"
-            # shellcheck disable=SC2086
-            printWords $propagatedNativeBuildInputs > "${!outputDev}/nix-support/propagated-native-build-inputs"
-        fi
-    fi
+    done
 
     if [ -n "$setupHook" ]; then
         mkdir -p "${!outputDev}/nix-support"
