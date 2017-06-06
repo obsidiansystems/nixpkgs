@@ -114,6 +114,7 @@ let
        if targetPlatform.system == "powerpc-linux"  then "ld.so.1" else
        if targetPlatform.system == "mips64el-linux" then "ld.so.1" else
        if targetPlatform.isDarwin                   then "/usr/lib/dyld" else
+       if targetPlatform.libc == "bionic"           then "/system/bin/linker" else
        if stdenv.lib.hasSuffix "pc-gnu" targetPlatform.config then "ld.so.1" else
        builtins.trace
          "Don't know the name of the dynamic linker for platform ${targetPlatform.config}, so guessing instead."
@@ -163,7 +164,7 @@ stdenv.mkDerivation {
     ''
 
       # TODO(@Ericson2314): Unify logic next hash break
-    + optionalString (libc != null) (if (targetPlatform.isDarwin) then ''
+    + optionalString (libc != null) (if (targetPlatform.isDarwin || targetPlatform.libc == "bionic") then ''
       echo $dynamicLinker > $out/nix-support/dynamic-linker
 
       echo "export LD_DYLD_PATH=\"$dynamicLinker\"" >> $out/nix-support/setup-hook
