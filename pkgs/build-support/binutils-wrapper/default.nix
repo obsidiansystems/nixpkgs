@@ -50,6 +50,8 @@ let
   # shell glob that ought to match it.
   dynamicLinker =
     /**/ if libc == null then null
+    else if targetPlatform.libc == "bionic"           then "/system/bin/linker"
+    else if targetPlatform.isDarwin                   then "/usr/lib/dyld"
     else if targetPlatform.system == "i686-linux"     then "${libc_lib}/lib/ld-linux.so.2"
     else if targetPlatform.system == "x86_64-linux"   then "${libc_lib}/lib/ld-linux-x86-64.so.2"
     # ARM with a wildcard, which can be "" or "-armhf".
@@ -57,7 +59,6 @@ let
     else if targetPlatform.system == "aarch64-linux"  then "${libc_lib}/lib/ld-linux-aarch64.so.1"
     else if targetPlatform.system == "powerpc-linux"  then "${libc_lib}/lib/ld.so.1"
     else if targetPlatform.system == "mips64el-linux" then "${libc_lib}/lib/ld.so.1"
-    else if targetPlatform.isDarwin                   then "/usr/lib/dyld"
     else if stdenv.lib.hasSuffix "pc-gnu" targetPlatform.config then "ld.so.1"
     else null;
 
@@ -206,7 +207,7 @@ stdenv.mkDerivation {
       if [ -n "$dynamicLinker" ]; then
         echo $dynamicLinker > $out/nix-support/dynamic-linker
 
-    '' + (if targetPlatform.isDarwin then ''
+    '' + (if targetPlatform.isDarwin || targetPlatform.libc == "bionic" then ''
         printf "export LD_DYLD_PATH=%q\n" "$dynamicLinker" >> $out/nix-support/setup-hook
     '' else ''
         if [ -e ${libc_lib}/lib/32/ld-linux.so.2 ]; then
