@@ -153,9 +153,9 @@ let
   allPkgconfigDepends = pkgconfigDepends ++ libraryPkgconfigDepends ++ executablePkgconfigDepends ++
                         optionals doCheck testPkgconfigDepends ++ optionals withBenchmarkDepends benchmarkPkgconfigDepends;
 
+  nativeBuildInputs = setupHaskellDepends ++ buildTools ++ libraryToolDepends ++ executableToolDepends;
   propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends;
-  otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ setupHaskellDepends ++
-                     buildTools ++ libraryToolDepends ++ executableToolDepends ++
+  otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ optionals (hostPlatform == buildPlatform) nativeBuildInputs ++
                      optionals (allPkgconfigDepends != []) ([pkgconfig] ++ allPkgconfigDepends) ++
                      optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
                      # ghcjs's hsc2hs calls out to the native hsc2hs
@@ -191,8 +191,15 @@ stdenv.mkDerivation ({
 
   inherit src;
 
-  nativeBuildInputs = otherBuildInputs ++ optionals (!hasActiveLibrary) propagatedBuildInputs;
-  propagatedNativeBuildInputs = optionals hasActiveLibrary propagatedBuildInputs;
+  # TODO(@Ericson2314) Remove conditional soup next haskell-mass-rebuild
+  nativeBuildInputs = if hostPlatform == buildPlatform
+                      then otherBuildInputs ++ optionals (!hasActiveLibrary) propagatedBuildInputs
+                      else nativeBuildInputs;
+  buildInputs = optionals (hostPlatform != buildPlatform)
+    (otherBuildInputs ++ optionals (!hasActiveLibrary) propagatedBuildInputs);
+  ${if hostPlatform == buildPlatform
+    then "propagatedNativeBuildInputs"
+    else "propagatedBuildInputs"} = optionals hasActiveLibrary propagatedBuildInputs;
 
   LANG = "en_US.UTF-8";         # GHC needs the locale configured during the Haddock phase.
 
@@ -220,8 +227,10 @@ stdenv.mkDerivation ({
     configureFlags="${concatStringsSep " " defaultConfigureFlags} $configureFlags"
 
     local inputClosure=""
-    for i in $propagatedNativeBuildInputs $nativeBuildInputs; do
-      findInputs $i inputClosure propagated-native-build-inputs
+    ${if hostPlatform == buildPlatform
+      then "for i in $propagatedNativeBuildInputs $nativeBuildInputs; do"
+      else "for i in $propagatedBuildInputs $buildInputs; do"}
+      findInputs $i inputClosure propagated-${optionalString (hostPlatform == buildPlatform) "native-"}build-inputs
     done
     for p in $inputClosure; do
       if [ -d "$p/lib/${ghc.name}/package.conf.d" ]; then
