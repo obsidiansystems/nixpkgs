@@ -16,14 +16,16 @@ stdenv.mkDerivation rec {
   };
 
   configureFlags = []
-    ++ stdenv.lib.optional sslSupport "--with-ssl=${openssl.dev}"
     # TODO(@Ericson2314) this option doesn't really have much to do with
     # cross-compilation, and should probably be controlled separately
-    ++ stdenv.lib.optional (hostPlatform != buildPlatform) "--enable-widec";
+    ++ stdenv.lib.optional (hostPlatform == buildPlatform) "--enable-widec"
+    ++ stdenv.lib.optional (hostPlatform == buildPlatform && sslSupport) "--with-ssl"
+    ++ stdenv.lib.optional (hostPlatform != buildPlatform && sslSupport) "--with-ssl=${openssl.dev}";
 
   nativeBuildInputs = stdenv.lib.optional sslSupport pkgconfig;
 
   buildInputs = [ ncurses gzip ]
+    ++ stdenv.lib.optional (hostPlatform == buildPlatform && sslSupport) openssl.dev
     ++ stdenv.lib.optional (hostPlatform != buildPlatform) buildPackages.stdenv.cc;
 
   meta = with stdenv.lib; {
