@@ -1,6 +1,6 @@
 { stdenv
 , fetchurl, alsaLib
-, hostPlatform
+, buildPlatform, hostPlatform
 }:
 
 stdenv.mkDerivation rec {
@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = stdenv.lib.optional (!stdenv.isDarwin) alsaLib;
 
-  configureFlags =
+  ${if buildPlatform != hostPlatform then "configureFlags" else null} =
     stdenv.lib.optional (hostPlatform ? mpg123) "--with-cpu=${hostPlatform.mpg123.cpu}";
 
   meta = {
