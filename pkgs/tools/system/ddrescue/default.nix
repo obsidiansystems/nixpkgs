@@ -17,8 +17,8 @@ stdenv.mkDerivation rec {
 
   doCheck = hostPlatform == buildPlatform;
 
-  crossPlatforms = [ ];
-  configureFlags = optionals (hostPlatform != buildPlatform) [
+  ${if hostPlatform != buildPlatform then "crossPlatforms" else null} = [ ];
+  ${if hostPlatform != buildPlatform then "configureFlags" else null} = [
     "CXX=${stdenv.cc.prefix}c++"
   ];
 
