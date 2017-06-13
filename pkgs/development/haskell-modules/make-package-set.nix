@@ -91,13 +91,13 @@ self: let
   haskellSrc2nix = { name, src, sha256 ? null }:
     let
       sha256Arg = if isNull sha256 then "--sha256=" else ''--sha256="${sha256}"'';
-    in pkgs.stdenv.mkDerivation {
+    in pkgs.buildPackages.stdenv.mkDerivation {
       name = "cabal2nix-${name}";
-      buildInputs = [ pkgs.haskellPackages.cabal2nix ];
+      nativeBuildInputs = [ pkgs.buildPackages.haskellPackages.cabal2nix ];
       preferLocalBuild = true;
       phases = ["installPhase"];
       LANG = "en_US.UTF-8";
-      LOCALE_ARCHIVE = pkgs.lib.optionalString pkgs.stdenv.isLinux "${buildPackages.glibcLocales}/lib/locale/locale-archive";
+      LOCALE_ARCHIVE = pkgs.lib.optionalString pkgs.buildPlatform.isLinux "${buildPackages.glibcLocales}/lib/locale/locale-archive";
       installPhase = ''
         export HOME="$TMP"
         mkdir -p "$out"
