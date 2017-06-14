@@ -1,9 +1,10 @@
-{ stdenv, lib, ghc, llvmPackages, packages, symlinkJoin, makeWrapper
+{ stdenv, lib, ghc, llvmPackages, packages
 , ignoreCollisions ? false, withLLVM ? false
 , postBuild ? ""
 , haskellPackages
 , ghcLibdir ? null # only used by ghcjs, when resolving plugins
 , buildPlatform, hostPlatform
+, buildPackages
 }:
 
 assert ghcLibdir != null -> (ghc.isGhcjs or false);
@@ -50,10 +51,10 @@ let
   # https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/code-generators.html
   llvm          = lib.makeBinPath
                   ([ llvmPackages.llvm ]
-                   ++ lib.optional stdenv.isDarwin llvmPackages.clang);
+                   ++ lib.optional hostPlatform.isDarwin llvmPackages.clang);
 in
 if paths == [] && !withLLVM then ghc else
-symlinkJoin {
+buildPackages.symlinkJoin {
   # this makes computing paths from the name attribute impossible;
   # if such a feature is needed, the real compiler name should be saved
   # as a dedicated drv attribute, like `compiler-name`
@@ -62,7 +63,7 @@ symlinkJoin {
   extraOutputsToInstall = [ "out" "doc" ];
   inherit ignoreCollisions;
   postBuild = ''
-    . ${makeWrapper}/nix-support/setup-hook
+    . ${buildPackages.makeWrapper}/nix-support/setup-hook
 
     # wrap compiler executables with correct env variables
 
