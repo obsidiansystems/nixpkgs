@@ -2,14 +2,12 @@
 , llvm, libcxx, libcxxabi, clang, libuuid
 , libobjc ? null, maloader ? null, xctoolchain ? null
 , buildPlatform, hostPlatform, targetPlatform
-} @ args:
-
-if targetPlatform != hostPlatform then import ./port-old.nix args else
+}:
 
 let
-  # The targetPrefix prepended to binary names to allow multiple binuntils on the
+  # The prefix prepended to binary names to allow multiple binuntils on the
   # PATH to both be usable.
-  targetPrefix = stdenv.lib.optionalString
+  prefix = stdenv.lib.optionalString
     (targetPlatform != hostPlatform)
     "${targetPlatform.config}-";
 in
@@ -21,17 +19,15 @@ assert (!hostPlatform.isDarwin) -> (maloader != null && xctoolchain != null);
 
 let
   baseParams = rec {
-    name = "${targetPrefix}cctools-port-${version}";
-    version = "895";
+    name = "${prefix}cctools-port-${version}";
+    version = "886";
 
     src = fetchFromGitHub {
       owner  = "tpoechtrager";
       repo   = "cctools-port";
-      rev    = "2e569d765440b8cd6414a695637617521aa2375b"; # From branch 895-ld64-274.2
-      sha256 = "0l45mvyags56jfi24rawms8j2ihbc45mq7v13pkrrwppghqrdn52";
+      rev    = "02f0b8ecd87a3951653d838a321ae744815e21a5";
+      sha256 = "0bzyabzr5dvbxglr74d0kbrk2ij5x7s5qcamqi1v546q1had1wz1";
     };
-
-    outputs = [ "out" "dev" ];
 
     nativeBuildInputs = [ autoconf automake libtool_2 ];
     buildInputs = [ libuuid ] ++
@@ -41,17 +37,15 @@ let
 
     patches = [
       ./ld-rpath-nonfinal.patch ./ld-ignore-rpath-link.patch
-    ];
-
-    __propagatedImpureHostDeps = [
-      # As far as I can tell, otool from cctools is the only thing that depends on these two, and we should fix them
-      "/usr/lib/libobjc.A.dylib"
-      "/usr/lib/libobjc.dylib"
+    ] ++ stdenv.lib.optionals stdenv.isDarwin [
+      # See https://github.com/tpoechtrager/cctools-port/issues/24. Remove when that's fixed.
+      ./undo-unknown-triple.patch
+      ./ld-tbd-v2.patch
     ];
 
     enableParallelBuilding = true;
 
-    # TODO(@Ericson2314): Always pass "--target" and always targetPrefix.
+    # TODO(@Ericson2314): Always pass "--target" and always prefix.
     configurePlatforms = [ "build" "host" ] ++ stdenv.lib.optional (targetPlatform != hostPlatform) "target";
     configureFlags = stdenv.lib.optionals (!stdenv.isDarwin) [
       "CXXFLAGS=-I${libcxx}/include/c++/v1"
@@ -115,12 +109,12 @@ let
       '';
 
     passthru = {
-      inherit targetPrefix;
+      inherit prefix;
     };
 
     meta = {
-      homepage = http://www.opensource.apple.com/source/cctools/;
-      description = "MacOS Compiler Tools (cross-platform port)";
+      homepage = "http://www.opensource.apple.com/source/cctools/";
+      description = "Mac OS X Compiler Tools (cross-platform port)";
       license = stdenv.lib.licenses.apsl20;
     };
   };
