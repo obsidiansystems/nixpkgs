@@ -10,6 +10,9 @@
 , buildPackages
 }:
 
+let
+  confusingIosHost = hostPlatform.isDarwin && hostPlatform.isAarch64;
+in
 stdenv.mkDerivation rec {
   version = if abiVersion == "5" then "5.9" else "6.0-20170902";
   name = "ncurses-${version}";
@@ -27,12 +30,17 @@ stdenv.mkDerivation rec {
   outputs = [ "out" "dev" "man" ];
   setOutputFlags = false; # some aren't supported
 
+  ${if confusingIosHost then "configurePlatforms" else null} = [
+    "build"
+  ];
+
   configureFlags = [
     "--with-shared"
     "--without-debug"
     "--enable-pc-files"
     "--enable-symlinks"
-  ] ++ lib.optional unicode "--enable-widec";
+  ] ++ lib.optional unicode "--enable-widec"
+    ++ lib.optional confusingIosHost "--host=arm-apple-darwin";
 
   # Only the C compiler, and explicitly not C++ compiler needs this flag on solaris:
   CFLAGS = lib.optionalString stdenv.isSunOS "-D_XOPEN_SOURCE_EXTENDED";
