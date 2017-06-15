@@ -107,7 +107,11 @@ buildPackages.symlinkJoin {
     # symlinkJoin:
     rm -f $dynamicLinksDir/*
     for d in $(grep dynamic-library-dirs $packageConfDir/*|awk '{print $2}'); do
-      ln -s $d/*.dylib $dynamicLinksDir
+      ${if hostPlatform != buildPlatform then '' # This can be removed (the 'true' case should work for both cross and non-cross compilation), but doing so will trigger a rebuild of all haskell packages on darwin
+        for f in $d/*.dylib ; do
+          ln -s "$f" "$dynamicLinksDir"
+        done
+      '' else "ln -s $d/*.dylib $dynamicLinksDir"}
     done
     for f in $packageConfDir/*.conf; do
       # Initially, $f is a symlink to a read-only file in one of the inputs

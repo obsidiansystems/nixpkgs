@@ -241,7 +241,11 @@ stdenv.mkDerivation ({
     local dynamicLinksDir="$out/lib/links"
     mkdir -p $dynamicLinksDir
     for d in $(grep dynamic-library-dirs $packageConfDir/*|awk '{print $2}'); do
-      ln -s $d/*.dylib $dynamicLinksDir
+      ${if hostPlatform != buildPlatform then '' # This can be removed (the 'true' case should work for both cross and non-cross compilation), but doing so will trigger a rebuild of all haskell packages on darwin
+        for f in $d/*.dylib ; do
+          ln -s "$f" "$dynamicLinksDir"
+        done
+      '' else "ln -s $d/*.dylib $dynamicLinksDir"}
     done
     # Edit the local package DB to reference the links directory.
     for f in $packageConfDir/*.conf; do
