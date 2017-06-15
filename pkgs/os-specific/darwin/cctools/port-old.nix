@@ -2,9 +2,7 @@
 , llvm, libcxx, libcxxabi, clang, libuuid
 , libobjc ? null, maloader ? null, xctoolchain ? null
 , buildPlatform, hostPlatform, targetPlatform
-}@args:
-
-if targetPlatform != hostPlatform then import ./port-old.nix args else
+}:
 
 let
   prefix = stdenv.lib.optionalString
@@ -19,14 +17,14 @@ assert (!hostPlatform.isDarwin) -> (maloader != null && xctoolchain != null);
 
 let
   baseParams = rec {
-    name = "${prefix}cctools-port-${version}";
-    version = "895";
+    name = "cctools-port-${version}";
+    version = "886";
 
     src = fetchFromGitHub {
       owner  = "tpoechtrager";
       repo   = "cctools-port";
-      rev    = "2e569d765440b8cd6414a695637617521aa2375b"; # From branch 895-ld64-274.2
-      sha256 = "0l45mvyags56jfi24rawms8j2ihbc45mq7v13pkrrwppghqrdn52";
+      rev    = "02f0b8ecd87a3951653d838a321ae744815e21a5";
+      sha256 = "0bzyabzr5dvbxglr74d0kbrk2ij5x7s5qcamqi1v546q1had1wz1";
     };
 
     buildInputs = [ autoconf automake libtool_2 libuuid ] ++
@@ -36,6 +34,10 @@ let
 
     patches = [
       ./ld-rpath-nonfinal.patch ./ld-ignore-rpath-link.patch
+    ] ++ stdenv.lib.optionals stdenv.isDarwin [
+      # See https://github.com/tpoechtrager/cctools-port/issues/24. Remove when that's fixed.
+      ./undo-unknown-triple.patch
+      ./ld-tbd-v2.patch
     ];
 
     enableParallelBuilding = true;
