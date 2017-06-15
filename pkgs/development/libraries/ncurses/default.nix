@@ -15,8 +15,9 @@ let
   sha256 = if abiVersion == "5"
     then "0fsn7xis81za62afan0vvm38bvgzg5wfmv1m86flqcj0nj7jjilh"
     else "0q3jck7lna77z5r42f13c4xglc7azd19pxfrjrpgp2yf615w4lgm";
+  badHost = hostPlatform.isDarwin && hostPlatform.isArm64;
 in
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "ncurses-${version}";
 
   src = fetchurl {
@@ -28,6 +29,10 @@ stdenv.mkDerivation (rec {
 
   outputs = [ "out" "dev" "man" ];
   setOutputFlags = false; # some aren't supported
+
+  ${if badHost then "configurePlatforms" else null} = [
+    "build"
+  ];
 
   configureFlags = [
     "--with-shared"
@@ -45,6 +50,8 @@ stdenv.mkDerivation (rec {
     #"--without-termlib"
     #"--without-ticlib"
     "--without-cxx"
+  ] ++ lib.optionals badHost [
+    "--host=arm-apple-darwin"
   ];
 
   # Only the C compiler, and explicitly not C++ compiler needs this flag on solaris:
@@ -166,6 +173,4 @@ stdenv.mkDerivation (rec {
     ldflags = "-lncurses";
     inherit unicode abiVersion;
   };
-} // stdenv.lib.optionalAttrs (stdenv.isDarwin && buildPlatform != hostPlatform) {
-  dontSetConfigureCross = true;
-})
+}

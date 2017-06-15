@@ -5,7 +5,7 @@
 
 let inherit (stdenv.lib) optional optionalString; in
 
-let self = stdenv.mkDerivation (rec {
+let self = stdenv.mkDerivation rec {
   name = "gmp-6.1.2";
 
   src = fetchurl { # we need to use bz2, others aren't in bootstrapping stdenv
@@ -21,6 +21,8 @@ let self = stdenv.mkDerivation (rec {
 
   nativeBuildInputs = [ m4 ]
     ++ stdenv.lib.optional (buildPlatform != hostPlatform) buildPackages.stdenv.cc;
+
+  ${if hostPlatform != buildPlatform then "configurePlatforms" else null} = [];
 
   configureFlags =
     # Build a "fat binary", with routines for several sub-architectures
@@ -79,7 +81,5 @@ let self = stdenv.mkDerivation (rec {
     platforms = platforms.all;
     maintainers = [ maintainers.peti maintainers.vrthra ];
   };
-} // stdenv.lib.optionalAttrs (stdenv.isDarwin && buildPlatform != hostPlatform) {
-  dontSetConfigureCross = true;
-});
+};
   in self
