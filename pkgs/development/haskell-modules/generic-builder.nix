@@ -250,7 +250,9 @@ stdenv.mkDerivation ({
     local dynamicLinksDir="$out/lib/links"
     mkdir -p $dynamicLinksDir
     for d in $(grep dynamic-library-dirs "$packageConfDir/"*|awk '{print $2}'|sort -u); do
-      ln -s "$d/"*.dylib $dynamicLinksDir
+      for f in $d/*.dylib ; do
+        ln -s "$f" "$dynamicLinksDir"
+      done
     done
     # Edit the local package DB to reference the links directory.
     for f in "$packageConfDir/"*.conf; do
