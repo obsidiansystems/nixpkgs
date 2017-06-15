@@ -122,7 +122,9 @@ buildPackages.symlinkJoin {
     # symlinkJoin:
     rm -f $dynamicLinksDir/*
     for d in $(grep dynamic-library-dirs $packageConfDir/*|awk '{print $2}'); do
-      ln -s $d/*.dylib $dynamicLinksDir
+      for f in $d/*.dylib ; do
+        ln -s "$f" "$dynamicLinksDir"
+      done
     done
     for f in $packageConfDir/*.conf; do
       # Initially, $f is a symlink to a read-only file in one of the inputs
