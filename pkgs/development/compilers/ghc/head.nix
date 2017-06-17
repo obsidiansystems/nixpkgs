@@ -133,8 +133,11 @@ in stdenv.mkDerivation (rec {
 
   enableParallelBuilding = true;
 
+  outputs = [ "out" "doc" ];
+
   configureFlags = [
     "CC=${targetStdenv.cc or stdenv.cc}/bin/${prefix}cc"
+    "--datadir=$doc/share/doc/ghc"
   # TODO: With Cross rebuild (need to fix hooks) remove these `--with-*` altogether
   ] ++ stdenv.lib.optionals (targetPlatform == hostPlatform) [
     "--with-curses-includes=${__targetPackages.ncurses.dev}/include"
