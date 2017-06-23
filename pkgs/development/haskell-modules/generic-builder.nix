@@ -364,18 +364,6 @@ stdenv.mkDerivation ({
         export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+''${LD_LIBRARY_PATH}:}${
           makeLibraryPath (filter (x: !isNull x) systemBuildInputs)
         }"
-        ${optionalString stdenv.isDarwin ''
-          allPkgs="$nativePkgs[@]"
-          for x in ${toString haskellBuildInputs} ; do
-            findInputs "$x" allPkgs propagated-native-build-inputs
-          done
-          export NIX_CFLAGS_LINK="''${NIX_CFLAGS_LINK:-}"
-          for x in $allPkgs ; do
-            if [ -d "$x/Library/Frameworks" ] ; then
-              NIX_CFLAGS_LINK+=" -F$x/Library/Frameworks"
-            fi
-          done
-        ''}
         ${if isHaLVM
             then ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/HaLVM-${ghc.version}"''
             else ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/${ghcCommand}-${ghc.version}"''}

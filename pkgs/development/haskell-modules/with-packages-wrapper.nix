@@ -77,12 +77,10 @@ buildPackages.symlinkJoin {
       done
       for x in $allPkgs ; do
         if [ -d "$x/Library/Frameworks" ] ; then
-          WRAPPER_NIX_CFLAGS_LINK+=" -F$x/Library/Frameworks"
+          WRAPPER_NIX_CFLAGS_LINK+=" -framework-path$x/Library/Frameworks"
         fi
       done
     ''}
-
-    echo "$WRAPPER_NIX_CFLAGS_LINK"
 
     for prg in ${ghcCommand} ${ghcCommand}i ${ghcCommand}-${ghc.version} ${ghcCommand}i-${ghc.version}; do
       if [[ -x "${ghc}/bin/$prg" ]]; then
@@ -93,7 +91,7 @@ buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
           --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
-          --suffix "NIX_CFLAGS_LINK" " "       "'$WRAPPER_NIX_CFLAGS_LINK'" \
+          --add-flags                          "$WRAPPER_NIX_CFLAGS_LINK"   \
           ${lib.optionalString withLLVM ''--prefix "PATH" ":" "${llvm}"''}
       fi
     done
@@ -107,7 +105,7 @@ buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
           --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
-          --suffix "NIX_CFLAGS_LINK" " "       "'$WRAPPER_NIX_CFLAGS_LINK'"
+          --add-flags                          "$WRAPPER_NIX_CFLAGS_LINK"
       fi
     done
 
