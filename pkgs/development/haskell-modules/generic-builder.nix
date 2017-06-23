@@ -34,6 +34,10 @@ in
 , enableStaticLibraries ? true
 , enableHsc2hsViaAsm ? hostPlatform.isWindows && stdenv.lib.versionAtLeast ghc.version "8.4"
 , extraLibraries ? [], librarySystemDepends ? [], executableSystemDepends ? []
+# On macOS, statically linking against system frameworks is not supported;
+# see https://developer.apple.com/library/content/qa/qa1118/_index.html
+# They must be propagated to the environment of any executable linking with the library
+, libraryDarwinFrameworkDepends ? [], executableDarwinFrameworkDepends ? []
 , homepage ? "http://hackage.haskell.org/package/${pname}"
 , platforms ? with stdenv.lib.platforms; unix ++ windows # GHC can cross-compile
 , hydraPlatforms ? null
@@ -170,9 +174,9 @@ let
 
   nativeBuildInputs = [ ghc nativeGhc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
                       buildTools ++ libraryToolDepends ++ executableToolDepends;
-  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends;
-  otherBuildInputs = setupHaskellDepends ++ extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++
-                     optionals (allPkgconfigDepends != []) allPkgconfigDepends ++
+  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryDarwinFrameworkDepends;
+  otherBuildInputs = setupHaskellDepends ++ extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableDarwinFrameworkDepends ++
+                     optionals (allPkgconfigDepends != []) ([pkgconfig] ++ allPkgconfigDepends) ++
                      optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
                      optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkToolDepends);
   allBuildInputs = propagatedBuildInputs ++ otherBuildInputs;
@@ -402,6 +406,21 @@ stdenv.mkDerivation ({
         export NIX_${ghcCommandCaps}PKG="${ghcEnv}/bin/${ghcCommand}-pkg"
         # TODO: is this still valid?
         export NIX_${ghcCommandCaps}_DOCDIR="${ghcEnv}/share/doc/ghc/html"
+        export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+''${LD_LIBRARY_PATH}:}${
+          stdenv.lib.makeLibraryPath (stdenv.lib.filter (x: !isNull x) systemBuildInputs)
+        }"
+        ${optionalString stdenv.isDarwin ''
+          allPkgs="$nativePkgs[@]"
+          for x in ${toString haskellBuildInputs} ; do
+            findInputs "$x" allPkgs propagated-native-build-inputs
+          done
+          export NIX_CFLAGS_LINK="''${NIX_CFLAGS_LINK:-}"
+          for x in $allPkgs ; do
+            if [ -d "$x/Library/Frameworks" ] ; then
+              NIX_CFLAGS_LINK+=" -F$x/Library/Frameworks"
+            fi
+          done
+        ''}
         ${if isHaLVM
             then ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/HaLVM-${ghc.version}"''
             else ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/${ghcCommand}-${ghc.version}"''}
