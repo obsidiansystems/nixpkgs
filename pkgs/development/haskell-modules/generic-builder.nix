@@ -157,8 +157,10 @@ let
                         optionals doCheck testPkgconfigDepends ++ optionals withBenchmarkDepends benchmarkPkgconfigDepends;
 
   nativeBuildInputs = setupHaskellDepends ++ buildTools ++ libraryToolDepends ++ executableToolDepends;
-  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryDarwinFrameworkDepends;
-  otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableDarwinFrameworkDepends ++
+  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++
+                          optionals stdenv.isDarwin libraryDarwinFrameworkDepends;
+  otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++
+                     optionals stdenv.isDarwin executableDarwinFrameworkDepends ++
                      optionals (allPkgconfigDepends != []) ([pkgconfig] ++ allPkgconfigDepends) ++
                      optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
                      # ghcjs's hsc2hs calls out to the native hsc2hs
