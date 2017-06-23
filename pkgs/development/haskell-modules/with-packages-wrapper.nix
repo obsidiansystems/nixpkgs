@@ -60,12 +60,29 @@ buildPackages.symlinkJoin {
   # as a dedicated drv attribute, like `compiler-name`
   name = ghc.name + "-with-packages";
   paths = paths ++ [ghc];
+  propagatedNativeBuildInputs = packages;
   extraOutputsToInstall = [ "out" "doc" ];
   inherit ignoreCollisions;
   postBuild = ''
     . ${buildPackages.makeWrapper}/nix-support/setup-hook
 
     # wrap compiler executables with correct env variables
+
+    WRAPPER_NIX_CFLAGS_LINK=""
+    ${lib.optionalString stdenv.isDarwin ''
+      # Find all the Framework paths that must be available at link time
+      allPkgs="$nativePkgs[@]"
+      for x in ${toString packages} ; do
+        findInputs "$x" allPkgs propagated-native-build-inputs
+      done
+      for x in $allPkgs ; do
+        if [ -d "$x/Library/Frameworks" ] ; then
+          WRAPPER_NIX_CFLAGS_LINK+=" -F$x/Library/Frameworks"
+        fi
+      done
+    ''}
+
+    echo "$WRAPPER_NIX_CFLAGS_LINK"
 
     for prg in ${ghcCommand} ${ghcCommand}i ${ghcCommand}-${ghc.version} ${ghcCommand}i-${ghc.version}; do
       if [[ -x "${ghc}/bin/$prg" ]]; then
@@ -76,6 +93,7 @@ buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
           --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
+          --suffix "NIX_CFLAGS_LINK" " "       "'$WRAPPER_NIX_CFLAGS_LINK'" \
           ${lib.optionalString withLLVM ''--prefix "PATH" ":" "${llvm}"''}
       fi
     done
@@ -88,7 +106,8 @@ buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}"        "$out/bin/${ghcCommand}"     \
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
-          --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"
+          --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
+          --suffix "NIX_CFLAGS_LINK" " "       "'$WRAPPER_NIX_CFLAGS_LINK'"
       fi
     done
 
