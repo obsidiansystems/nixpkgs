@@ -103,7 +103,8 @@ buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}"        "$out/bin/${ghcCommand}"     \
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
-          --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"
+          --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
+          --add-flags                          "$WRAPPER_NIX_CFLAGS_LINK"
       fi
     done
 
