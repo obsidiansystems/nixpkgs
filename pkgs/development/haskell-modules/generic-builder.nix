@@ -33,6 +33,10 @@ in
 , enableDeadCodeElimination ? (!stdenv.isDarwin)  # TODO: use -dead_strip  for darwin
 , enableStaticLibraries ? true
 , extraLibraries ? [], librarySystemDepends ? [], executableSystemDepends ? []
+# On macOS, statically linking against system frameworks is not supported;
+# see https://developer.apple.com/library/content/qa/qa1118/_index.html
+# They must be propagated to the environment of any executable linking with the library
+, libraryDarwinFrameworkDepends ? [], executableDarwinFrameworkDepends ? []
 , homepage ? "http://hackage.haskell.org/package/${pname}"
 , platforms ? ghc.meta.platforms
 , hydraPlatforms ? platforms
@@ -162,8 +166,10 @@ let
 
   nativeBuildInputs = [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
                       buildTools ++ libraryToolDepends ++ executableToolDepends;
-  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends;
+  propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++
+                          optionals stdenv.isDarwin libraryDarwinFrameworkDepends;
   otherBuildInputs = setupHaskellDepends ++ extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++
+                     optionals stdenv.isDarwin executableDarwinFrameworkDepends ++
                      optionals (allPkgconfigDepends != []) allPkgconfigDepends ++
                      optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testToolDepends) ++
                      # ghcjs's hsc2hs calls out to the native hsc2hs
@@ -382,8 +388,8 @@ stdenv.mkDerivation ({
 
     env = stdenv.mkDerivation {
       name = "interactive-${pname}-${version}-environment";
-      buildInputs = systemBuildInputs;
-      nativeBuildInputs = [ ghcEnv ];
+      propagatedNativeBuildInputs = [ ghcEnv ];
+      propagatedBuildInputs = systemBuildInputs;
       LANG = "en_US.UTF-8";
       LOCALE_ARCHIVE = optionalString stdenv.isLinux "${glibcLocales}/lib/locale/locale-archive";
       shellHook = ''
@@ -394,6 +400,18 @@ stdenv.mkDerivation ({
         export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+''${LD_LIBRARY_PATH}:}${
           makeLibraryPath (filter (x: !isNull x) systemBuildInputs)
         }"
+        ${optionalString stdenv.isDarwin ''
+          allPkgs="$nativePkgs[@]"
+          for x in ${toString haskellBuildInputs} ; do
+            findInputs "$x" allPkgs propagated-native-build-inputs
+          done
+          export NIX_CFLAGS_LINK="''${NIX_CFLAGS_LINK:-}"
+          for x in $allPkgs ; do
+            if [ -d "$x/Library/Frameworks" ] ; then
+              NIX_CFLAGS_LINK+=" -F$x/Library/Frameworks"
+            fi
+          done
+        ''}
         ${if isHaLVM
             then ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/HaLVM-${ghc.version}"''
             else ''export NIX_${ghcCommandCaps}_LIBDIR="${ghcEnv}/lib/${ghcCommand}-${ghc.version}"''}
