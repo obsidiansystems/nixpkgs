@@ -64,35 +64,6 @@
   }
 , shims ? import ./shims.nix { inherit fetchFromGitHub; }
 
-# This is the list of the Stage 1 packages that are built into a booted ghcjs installation
-# It can be generated with the command:
-# nix-shell -p haskell.packages.ghcjs.ghc --command "ghcjs-pkg list | sed -n 's/^    \(.*\)-\([0-9.]*\)$/\1_\2/ p' | sed 's/\./_/g' | sed 's/^\([^_]*\)\(.*\)$/      \"\1\"/'"
-, stage1Packages ? [
-    "array"
-    "base"
-    "binary"
-    "bytestring"
-    "containers"
-    "deepseq"
-    "directory"
-    "filepath"
-    "ghc-boot"
-    "ghc-boot-th"
-    "ghc-prim"
-    "ghci"
-    "ghcjs-prim"
-    "ghcjs-th"
-    "integer-gmp"
-    "pretty"
-    "primitive"
-    "process"
-    "rts"
-    "template-haskell"
-    "time"
-    "transformers"
-    "unix"
-  ]
-
 , stage2 ? import ./stage2.nix
 
 , patches ? [ ./ghcjs.patch ]
@@ -103,7 +74,7 @@
 let
   inherit (bootPkgs) ghc;
 
-in mkDerivation (rec {
+in let this = mkDerivation (rec {
   pname = "ghcjs";
   inherit version;
   src = ghcjsSrc;
@@ -180,7 +151,6 @@ in mkDerivation (rec {
     inherit nodejs ghcjsBoot;
     inherit (ghcjsNodePkgs) "socket.io";
 
-    inherit stage1Packages;
     mkStage2 = stage2 {
       inherit ghcjsBoot;
     };
@@ -192,4 +162,13 @@ in mkDerivation (rec {
   platforms = ghc.meta.platforms;
   maintainers = with stdenv.lib.maintainers; [ jwiegley cstrahan dmjio ];
   inherit broken;
-})
+}); in this // {
+  stage1Packages = lib.filter (x: x != "") (lib.splitString "\n" (builtins.readFile (pkgs.runCommand "stage1Packages" {
+    buildCommand = ''
+      ghcjs-pkg list | sed -n 's/^    \(..*\)-\([0-9.]*\)$/\1/ p' > $out
+    '';
+    buildInputs = [
+      this
+    ];
+  } "")));
+}

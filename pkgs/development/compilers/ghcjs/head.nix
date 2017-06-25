@@ -23,30 +23,5 @@ bootPkgs.callPackage ./base.nix {
   };
 
   shims = import ./head_shims.nix { inherit fetchFromGitHub; };
-  stage1Packages = [
-    "array"
-    "base"
-    "binary"
-    "bytestring"
-    "containers"
-    "deepseq"
-    "directory"
-    "filepath"
-    "ghc-boot"
-    "ghc-boot-th"
-    "ghc-prim"
-    "ghci"
-    "ghcjs-prim"
-    "ghcjs-th"
-    "integer-gmp"
-    "pretty"
-    "primitive"
-    "process"
-    "rts"
-    "template-haskell"
-    "time"
-    "transformers"
-    "unix"
-  ];
   stage2 = import ./head_stage2.nix;
 }
