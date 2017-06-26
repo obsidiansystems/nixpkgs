@@ -4,11 +4,11 @@ if [ -n "@coreutils_bin@" ]; then
   PATH="@coreutils_bin@/bin"
 fi
 
-if [ -n "$NIX_GNAT_WRAPPER_START_HOOK" ]; then
-    source "$NIX_GNAT_WRAPPER_START_HOOK"
+if [ -n "$NIX_@infixSalt@_GNAT_WRAPPER_START_HOOK" ]; then
+    source "$NIX_@infixSalt@_GNAT_WRAPPER_START_HOOK"
 fi
 
-if [ -z "$NIX_GNAT_WRAPPER_FLAGS_SET" ]; then
+if [ -z "$NIX_@infixSalt@_GNAT_WRAPPER_FLAGS_SET" ]; then
     source @out@/nix-support/add-flags.sh
 fi
 
@@ -30,7 +30,7 @@ for i in "$@"; do
         nonFlagArgs=1
     elif [ "$i" = -m32 ]; then
         if [ -e @out@/nix-support/dynamic-linker-m32 ]; then
-            NIX_LDFLAGS="$NIX_LDFLAGS -dynamic-linker $(cat @out@/nix-support/dynamic-linker-m32)"
+            NIX_@infixSalt@_LDFLAGS="$NIX_@infixSalt@_LDFLAGS -dynamic-linker $(cat @out@/nix-support/dynamic-linker-m32)"
         fi
     fi
 done
@@ -71,7 +71,7 @@ fi
 
 
 # Clear march/mtune=native -- they bring impurity.
-if [ "$NIX_ENFORCE_NO_NATIVE" = 1 ]; then
+if [ "$NIX_@infixSalt@_ENFORCE_NO_NATIVE" = 1 ]; then
     rest=()
     for i in "${params[@]}"; do
         if [[ "$i" = -m*=native ]]; then
@@ -85,7 +85,7 @@ fi
 
 
 # Add the flags for the GNAT compiler proper.
-extraAfter=($NIX_GNATFLAGS_COMPILE)
+extraAfter=($NIX_@infixSalt@_GNATFLAGS_COMPILE)
 extraBefore=()
 
 if [ "`basename $0`x" = "gnatmakex" ]; then
@@ -93,8 +93,8 @@ if [ "`basename $0`x" = "gnatmakex" ]; then
 fi
 
 # Add the flags that should be passed to the linker (and prevent
-# `ld-wrapper' from adding NIX_LDFLAGS again).
-#for i in $NIX_LDFLAGS_BEFORE; do
+# `ld-wrapper' from adding NIX_@infixSalt@_LDFLAGS again).
+#for i in $NIX_@infixSalt@_LDFLAGS_BEFORE; do
 #    extraBefore=(${extraBefore[@]} "-largs $i")
 #done
 
@@ -114,8 +114,8 @@ if [ -n "$NIX_DEBUG" ]; then
   done
 fi
 
-if [ -n "$NIX_GNAT_WRAPPER_EXEC_HOOK" ]; then
-    source "$NIX_GNAT_WRAPPER_EXEC_HOOK"
+if [ -n "$NIX_@infixSalt@_GNAT_WRAPPER_EXEC_HOOK" ]; then
+    source "$NIX_@infixSalt@_GNAT_WRAPPER_EXEC_HOOK"
 fi
 
 PATH="$path_backup"

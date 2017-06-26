@@ -5,8 +5,8 @@ extraAfter="--GCC=@out@/bin/gcc"
 extraBefore=()
 
 # Add the flags that should be passed to the linker (and prevent
-# `ld-wrapper' from adding NIX_LDFLAGS again).
-#for i in $NIX_LDFLAGS_BEFORE; do
+# `ld-wrapper' from adding NIX_@infixSalt@_LDFLAGS again).
+#for i in $NIX_@infixSalt@_LDFLAGS_BEFORE; do
 #    extraBefore=(${extraBefore[@]} "-largs $i")
 #done
 
@@ -26,8 +26,8 @@ if [ -n "$NIX_DEBUG" ]; then
   done
 fi
 
-if [ -n "$NIX_GNAT_WRAPPER_EXEC_HOOK" ]; then
-    source "$NIX_GNAT_WRAPPER_EXEC_HOOK"
+if [ -n "$NIX_@infixSalt@_GNAT_WRAPPER_EXEC_HOOK" ]; then
+    source "$NIX_@infixSalt@_GNAT_WRAPPER_EXEC_HOOK"
 fi
 
 exec @prog@ ${extraBefore[@]} "$@" ${extraAfter[@]}

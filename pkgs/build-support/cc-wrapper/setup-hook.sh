@@ -1,22 +1,22 @@
-addCVars () {
+addCVars_@infixSalt@ () {
     if [ -d $1/include ]; then
-        export NIX_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
+        export NIX_@infixSalt@_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
     fi
 
     if [ -d $1/lib64 -a ! -L $1/lib64 ]; then
-        export NIX_LDFLAGS+=" -L$1/lib64"
+        export NIX_@infixSalt@_LDFLAGS+=" -L$1/lib64"
     fi
 
     if [ -d $1/lib ]; then
-        export NIX_LDFLAGS+=" -L$1/lib"
+        export NIX_@infixSalt@_LDFLAGS+=" -L$1/lib"
     fi
 
     if test -d $1/Library/Frameworks; then
-        export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F$1/Library/Frameworks"
+        export NIX_@infixSalt@_CFLAGS_COMPILE="$NIX_@infixSalt@_CFLAGS_COMPILE -F$1/Library/Frameworks"
     fi
 }
 
-envHooks+=(addCVars)
+envHooks+=(addCVars_@infixSalt@)
 
 # Note: these come *after* $out in the PATH (see setup.sh).
 

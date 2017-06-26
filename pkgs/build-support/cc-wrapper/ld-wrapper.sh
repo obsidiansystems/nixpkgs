@@ -4,11 +4,11 @@ if [ -n "@coreutils_bin@" ]; then
   PATH="@coreutils_bin@/bin"
 fi
 
-if [ -n "$NIX_LD_WRAPPER_START_HOOK" ]; then
-    source "$NIX_LD_WRAPPER_START_HOOK"
+if [ -n "$NIX_@infixSalt@_LD_WRAPPER_START_HOOK" ]; then
+    source "$NIX_@infixSalt@_LD_WRAPPER_START_HOOK"
 fi
 
-if [ -z "$NIX_CC_WRAPPER_FLAGS_SET" ]; then
+if [ -z "$NIX_@infixSalt@_CC_WRAPPER_FLAGS_SET" ]; then
     source @out@/nix-support/add-flags.sh
 fi
 
@@ -18,7 +18,7 @@ source @out@/nix-support/utils.sh
 # Optionally filter out paths not refering to the store.
 expandResponseParams "$@"
 if [ "$NIX_ENFORCE_PURITY" = 1 -a -n "$NIX_STORE" \
-        -a \( -z "$NIX_IGNORE_LD_THROUGH_GCC" -o -z "$NIX_LDFLAGS_SET" \) ]; then
+        -a \( -z "$NIX_IGNORE_LD_THROUGH_GCC" -o -z "$NIX_@infixSalt@_LDFLAGS_SET" \) ]; then
     rest=()
     n=0
     while [ $n -lt ${#params[*]} ]; do
@@ -53,16 +53,16 @@ source @out@/nix-support/add-hardening.sh
 extra=(${hardeningLDFlags[@]})
 extraBefore=()
 
-if [ -z "$NIX_LDFLAGS_SET" ]; then
-    extra+=($NIX_LDFLAGS)
-    extraBefore+=($NIX_LDFLAGS_BEFORE)
+if [ -z "$NIX_@infixSalt@_LDFLAGS_SET" ]; then
+    extra+=($NIX_@infixSalt@_LDFLAGS)
+    extraBefore+=($NIX_@infixSalt@_LDFLAGS_BEFORE)
 fi
 
-extra+=($NIX_LDFLAGS_AFTER $NIX_LDFLAGS_HARDEN)
+extra+=($NIX_@infixSalt@_LDFLAGS_AFTER $NIX_@infixSalt@_LDFLAGS_HARDEN)
 
 
 # Add all used dynamic libraries to the rpath.
-if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
+if [ "$NIX_@infixSalt@_DONT_SET_RPATH" != 1 ]; then
 
     declare -A libDirsSeen
     declare -a libDirs
@@ -153,7 +153,7 @@ fi
 
 # Only add --build-id if this is a final link. FIXME: should build gcc
 # with --enable-linker-build-id instead?
-if [ "$NIX_SET_BUILD_ID" = 1 ]; then
+if [ "$NIX_@infixSalt@_SET_BUILD_ID" = 1 ]; then
     for p in "${params[@]}"; do
         if [ "$p" = "-r" -o "$p" = "--relocatable" -o "$p" = "-i" ]; then
             relocatable=1
@@ -178,8 +178,8 @@ if [ -n "$NIX_DEBUG" ]; then
   done
 fi
 
-if [ -n "$NIX_LD_WRAPPER_EXEC_HOOK" ]; then
-    source "$NIX_LD_WRAPPER_EXEC_HOOK"
+if [ -n "$NIX_@infixSalt@_LD_WRAPPER_EXEC_HOOK" ]; then
+    source "$NIX_@infixSalt@_LD_WRAPPER_EXEC_HOOK"
 fi
 
 PATH="$path_backup"
