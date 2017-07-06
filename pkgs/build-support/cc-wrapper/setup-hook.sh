@@ -1,3 +1,29 @@
+if [ -z "$crossConfig" ]; then
+  ENV_PREFIX=""
+else
+  ENV_PREFIX="BUILD_"
+fi
+
+# We need to mangle names for hygiene, but also take parameters/overrides from
+# the environment
+slurpUnsalted () {
+    local varname="$1"
+    local inputVar="NIX_${ENV_PREFIX}${varname}"
+    appendDelimit ' ' "NIX_@infixSalt@_${varname}" "${!inputVar}"
+}
+
+slurpUnsalted CFLAGS_COMPILE
+slurpUnsalted CFLAGS_LINK
+slurpUnsalted GNATFLAGS_COMPILE
+slurpUnsalted LDFLAGS
+slurpUnsalted LDFLAGS_BEFORE
+slurpUnsalted LDFLAGS_AFTER
+slurpUnsalted LDFLAGS_HARDEN
+
+slurpUnsalted SET_BUILD_ID
+slurpUnsalted DONT_SET_RPATH
+slurpUnsalted ENFORCE_NO_NATIVE
+
 addCVars_@infixSalt@ () {
     if [ -d $1/include ]; then
         export NIX_@infixSalt@_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
@@ -34,12 +60,6 @@ fi
 
 if [ -n "@coreutils_bin@" ]; then
     addToSearchPath _PATH @coreutils_bin@/bin
-fi
-
-if [ -z "$crossConfig" ]; then
-  ENV_PREFIX=""
-else
-  ENV_PREFIX="BUILD_"
 fi
 
 export NIX_${ENV_PREFIX}CC=@out@

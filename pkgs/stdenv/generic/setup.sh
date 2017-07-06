@@ -141,13 +141,39 @@ trap "exitHandler" EXIT
 ######################################################################
 # Helper functions.
 
+# Adds the delimiter only if both the old value and new appendee are
+# non-empty, to avoid pointless or harmful leading or trailing
+# delimiters.
+concatDelimit() {
+    (( "$#" == 4 ))
+    local -r varName=$1
+    local -r value0=$3
+    local -r value1=$4
+    local delimiter=''
+    if [[ "$value0" && "$value1" ]]; then
+        delimiter=$2
+    fi
+    export "${varName}=${value0}${delimiter}${value1}"
+}
+
+prependDelimit() {
+    (( "$#" == 3 ));
+    # Only redefine if the original was, or the new bit is non-empty.
+    [[ -n ${!2+isDefined} || -n $3 ]] || return 0
+    concatDelimit "$2" "$1" "$3" "${!2}";
+}
+
+appendDelimit()  {
+    (( "$#" == 3 ));
+    # Only redefine if the original was, or the new bit is non-empty.
+    [[ -n ${!2+isDefined} || -n $3 ]] || return 0
+    concatDelimit "$2" "$1" "${!2}" "$3";
+}
 
 addToSearchPathWithCustomDelimiter() {
-    local delimiter="$1"
-    local varName="$2"
-    local dir="$3"
+    local dir=$3
     if [ -d "$dir" ]; then
-        export "${varName}=${!varName}${!varName:+$delimiter}${dir}"
+        appendDelimit "$@"
     fi
 }
 
@@ -380,7 +406,7 @@ if [ "$useTempPrefix" = 1 ]; then
 fi
 
 
-PATH=$_PATH${_PATH:+:}$PATH
+prependDelimit "$PATH_DELIMITER" PATH "$_PATH"
 if [ "$NIX_DEBUG" = 1 ]; then
     echo "final path: $PATH"
 fi
