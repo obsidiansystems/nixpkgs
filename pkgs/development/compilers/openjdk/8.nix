@@ -208,7 +208,7 @@ let
       # any package that depends on the JRE has $CLASSPATH set up
       # properly.
       mkdir -p $jre/nix-support
-      printWords ${setJavaClassPath} > $jre/nix-support/propagated-native-build-inputs
+      printWords ${setJavaClassPath} > $jre/nix-support/propagated-build-inputs
 
       # Set JAVA_HOME automatically.
       mkdir -p $out/nix-support
