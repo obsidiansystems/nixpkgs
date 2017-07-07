@@ -198,7 +198,8 @@ stdenv.mkDerivation {
       ln -s $ccPath/${prefix}ghdl $out/bin/${prefix}ghdl
     '';
 
-  propagatedBuildInputs = [ binutils ] ++ extraPackages;
+  propagatedBuildInputs = [ binutils ];
+  __depsTargetTarget = extraPackages;
 
   setupHook = ./setup-hook.sh;
 
