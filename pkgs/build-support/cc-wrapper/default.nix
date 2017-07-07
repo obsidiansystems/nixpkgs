@@ -232,7 +232,7 @@ stdenv.mkDerivation {
       # for binutils and Glibc).
       printWords ${cc} ${cc.man or ""} ${binutils_bin} ${if libc == null then "" else libc_bin} > $out/nix-support/propagated-user-env-packages
 
-      printWords ${toString extraPackages} > $out/nix-support/propagated-native-build-inputs
+      printWords ${toString extraPackages} > $out/nix-support/propagated-target-inputs
     ''
 
     + optionalString (targetPlatform.isSunOS && nativePrefix != "") ''
