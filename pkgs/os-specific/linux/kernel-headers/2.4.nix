@@ -1,16 +1,16 @@
-{stdenv, fetchurl, perl, cross ? null}:
+{ stdenvNoCC, lib, buildPackages
+, buildPlatform, hostPlatform
+, fetchurl, perl
+}:
 
-assert cross == null -> stdenv.isLinux;
+assert hostPlatform.isLinux;
 
 let
   version = "2.4.37.9";
-  kernelHeadersBaseConfig = if cross == null then
-      stdenv.platform.kernelHeadersBaseConfig
-    else
-      cross.platform.kernelHeadersBaseConfig;
+  inherit (hostPlatform.platform) kernelHeadersBaseConfig;
 in
 
-stdenv.mkDerivation {
+stdenvNoCC.mkDerivation {
   name = "linux-headers-${version}";
 
   src = fetchurl {
@@ -18,26 +18,23 @@ stdenv.mkDerivation {
     sha256 = "08rca9lcb5l5w483hgaqk8pi2njd7cmwpkifjqxwlb3g8liz4r5g";
   };
 
-  targetConfig = if cross != null then cross.config else null;
+  targetConfig = if hostPlatform != buildPlatform then hostPlatform.config else null;
 
-  platform =
-    if cross != null then cross.platform.kernelArch else
-    if stdenv.system == "i686-linux" then "i386" else
-    if stdenv.system == "x86_64-linux" then "x86_64" else
-    if stdenv.system == "powerpc-linux" then "powerpc" else
-    if stdenv.isArm then "arm" else
-    abort "don't know what the kernel include directory is called for this platform";
+  platform = hostPlatform.platform.kernelArch or (
+    if hostPlatform.system == "i686-linux" then "i386" else
+    if hostPlatform.system == "x86_64-linux" then "x86_64" else
+    if hostPlatform.system == "powerpc-linux" then "powerpc" else
+    if hostPlatform.isArm then "arm" else
+    abort "don't know what the kernel include directory is called for this platform");
 
-  buildInputs = [perl];
+  preNativeBuildInputs = [ buildPackages.stdenv.cc ];
+  nativeBuildInputs = [ perl ];
 
   patchPhase = ''
     sed -i s,/bin/pwd,pwd, Makefile
   '';
 
-  extraIncludeDirs =
-    if cross != null then
-      (if cross.arch == "powerpc" then ["ppc"] else [])
-    else if stdenv.system == "powerpc-linux" then ["ppc"] else [];
+  extraIncludeDirs = lib.optional hostPlatform.isPowerPC ["ppc"];
 
   buildPhase = ''
     cp arch/$platform/${kernelHeadersBaseConfig} .config
