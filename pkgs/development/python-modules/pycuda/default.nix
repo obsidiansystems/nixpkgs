@@ -32,10 +32,10 @@ buildPythonPackage rec {
   };
 
   preConfigure = ''
-    ${python.interpreter} configure.py --boost-inc-dir=${boost.dev}/include \
-                          --boost-lib-dir=${boost}/lib \
-                          --no-use-shipped-boost \
-                          --boost-python-libname=boost_python
+    ${python.interpreter} configure.py --boost-inc-dir=$BOOST_INCLUDEDIR \
+                            --boost-lib-dir=$BOOST_LIBRARYDIR \
+                            --no-use-shipped-boost \
+                            --boost-python-libname=boost_python
   '';
 
   postInstall = ''

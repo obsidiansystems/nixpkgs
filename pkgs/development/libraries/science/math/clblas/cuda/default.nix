@@ -29,11 +29,6 @@ stdenv.mkDerivation rec {
   '';
 
   configurePhase = ''
-    findInputs ${boost.dev} boost_dirs propagated-native-build-inputs
-
-    export BOOST_INCLUDEDIR=$(echo $boost_dirs | sed -e s/\ /\\n/g - | grep '\-dev')/include
-    export BOOST_LIBRARYDIR=$(echo $boost_dirs | sed -e s/\ /\\n/g - | grep -v '\-dev')/lib
-
     mkdir -p Build
     pushd Build
 

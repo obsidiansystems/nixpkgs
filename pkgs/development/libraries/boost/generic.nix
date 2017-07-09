@@ -10,7 +10,7 @@
 , enablePIC ? false
 , enableExceptions ? false
 , taggedLayout ? ((enableRelease && enableDebug) || (enableSingleThreaded && enableMultiThreaded) || (enableShared && enableStatic))
-, patches ? null
+, patches ? []
 , mpi ? null
 
 # Attributes inherit from specific versions
@@ -19,7 +19,7 @@
 }:
 
 # We must build at least one type of libraries
-assert !enableShared -> enableStatic;
+assert enableShared || enableStatic;
 
 with stdenv.lib;
 let
@@ -41,86 +41,57 @@ let
   # To avoid library name collisions
   layout = if taggedLayout then "tagged" else "system";
 
-  cflags = if enablePIC && enableExceptions then
-             "cflags=\"-fPIC -fexceptions\" cxxflags=-fPIC linkflags=-fPIC"
-           else if enablePIC then
-             "cflags=-fPIC cxxflags=-fPIC linkflags=-fPIC"
-           else if enableExceptions then
-             "cflags=-fexceptions"
-           else
-             "";
+  cflags = concatStringsSep " "
+    (optional (enablePIC) "-fPIC" ++
+     optional (enableExceptions) "-fexceptions");
+
+  cxxflags = optionalString (enablePIC) "-fPIC";
+
+  linkflags = optionalString (enablePIC) "-fPIC";
 
   withToolset = stdenv.lib.optionalString (toolset != null) "--with-toolset=${toolset}";
 
-  genericB2Flags = [
+  b2Args = concatStringsSep " " ([
     "--includedir=$dev/include"
     "--libdir=$out/lib"
     "-j$NIX_BUILD_CORES"
     "--layout=${layout}"
     "variant=${variant}"
     "threading=${threading}"
-  ] ++ optional (link != "static") "runtime-link=${runtime-link}" ++ [
+    "runtime-link=${runtime-link}"
     "link=${link}"
-    "${cflags}"
-  ] ++ optional (variant == "release") "debug-symbols=off";
-
-  nativeB2Flags = [
+    "cflags=\"${cflags}\""
+    "cxxflags=\"${cflags}\""
+    "linkflags=\"${cflags}\""
     "-sEXPAT_INCLUDE=${expat.dev}/include"
     "-sEXPAT_LIBPATH=${expat.out}/lib"
-  ] ++ optional (toolset != null) "toolset=${toolset}"
-    ++ optional (mpi != null) "--user-config=user-config.jam";
-  nativeB2Args = concatStringsSep " " (genericB2Flags ++ nativeB2Flags);
-
-  crossB2Flags = [
-    "-sEXPAT_INCLUDE=${expat.crossDrv}/include"
-    "-sEXPAT_LIBPATH=${expat.crossDrv}/lib"
-    "--user-config=user-config.jam"
-    "toolset=gcc-cross"
-    "--without-python"
-  ] ++ optionals (hostPlatform.libc == "msvcrt") [
+  ] ++ optional (variant == "release") "debug-symbols=off"
+    ++ optional (toolset != null) "toolset=${toolset}"
+    ++ optional (mpi != null) "--user-config=user-config.jam"
+    ++ optionals (hostPlatform.libc == "msvcrt") [
     "target-os=windows"
     "threadapi=win32"
     "binary-format=pe"
     "address-model=${toString hostPlatform.parsed.cpu.bits}"
     "architecture=x86"
-  ];
-  crossB2Args = concatStringsSep " " (genericB2Flags ++ crossB2Flags);
-
-  builder = b2Args: ''
-    ./b2 ${b2Args}
-  '';
-
-  installer = b2Args: ''
-    # boostbook is needed by some applications
-    mkdir -p $dev/share/boostbook
-    cp -a tools/boostbook/{xsl,dtd} $dev/share/boostbook/
-
-    # Let boost install everything else
-    ./b2 ${b2Args} install
-  '';
-
-  commonConfigureFlags = [
-    "--includedir=$(dev)/include"
-    "--libdir=$(out)/lib"
-  ];
-
-  fixup = ''
-    # Make boost header paths relative so that they are not runtime dependencies
-    (
-      cd "$dev"
-      find include \( -name '*.hpp' -or -name '*.h' -or -name '*.ipp' \) \
-        -exec sed '1i#line 1 "{}"' -i '{}' \;
-    )
-  '' + optionalString (hostPlatform.libc == "msvcrt") ''
-    ${stdenv.cc.prefix}ranlib "$out/lib/"*.a
-  '';
+  ] ++ optionals (hostPlatform != buildPlatform) [
+    "toolset=gcc-cross"
+    "--without-python"
+  ]);
 
 in
 
 stdenv.mkDerivation {
   name = "boost-${version}";
 
-  inherit src patches;
+  inherit src;
+
+  patchFlags = optionalString (hostPlatform.libc == "msvcrt") "-p0";
+  patches = patches ++ optional (hostPlatform.libc == "msvcrt") (fetchurl {
+    url = "https://svn.boost.org/trac/boost/raw-attachment/tickaet/7262/"
+        + "boost-mingw.patch";
+    sha256 = "0s32kwll66k50w6r5np1y5g907b7lcpsjhfgr7rsw7q5syhzddyj";
+  });
 
   meta = {
     homepage = http://boost.org/;
@@ -137,8 +108,12 @@ stdenv.mkDerivation {
           --replace '@rpath/$(<[1]:D=)' "$out/lib/\$(<[1]:D=)";
     fi;
   '' + optionalString (mpi != null) ''
-    cat << EOF > user-config.jam
+    cat << EOF >> user-config.jam
     using mpi : ${mpi}/bin/mpiCC ;
+    EOF
+  '' + optionalString (hostPlatform != buildPlatform) ''
+    cat << EOF > user-config.jam
+    using gcc : cross : ${stdenv.cc.prefix}c++ ;
     EOF
   '';
 
@@ -152,39 +127,42 @@ stdenv.mkDerivation {
     ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
   configureScript = "./bootstrap.sh";
-  configureFlags = commonConfigureFlags
-    ++ [ "--with-python=${python.interpreter}" ]
-    ++ optional (hostPlatform == buildPlatform) "--with-icu=${icu.dev}"
-    ++ optional (toolset != null) "--with-toolset=${toolset}";
+  configurePlatforms = [];
+  configureFlags = [
+    "--includedir=$(dev)/include"
+    "--libdir=$(out)/lib"
+  ] ++ optional (toolset != null) "--with-toolset=${toolset}"
+    ++ (if hostPlatform == buildPlatform then [
+      "--with-icu=${icu.dev}"
+      "--with-python=${python.interpreter}"
+    ] else [
+      "--without-icu"
+      "--without-python"
+    ]);
 
-  buildPhase = builder nativeB2Args;
+  buildPhase = ''
+    ./b2 ${b2Args}
+  '';
 
-  installPhase = installer nativeB2Args;
+  installPhase = ''
+    # boostbook is needed by some applications
+    mkdir -p $dev/share/boostbook
+    cp -a tools/boostbook/{xsl,dtd} $dev/share/boostbook/
 
-  postFixup = fixup;
+    # Let boost install everything else
+    ./b2 ${b2Args} install
+  '';
+
+  setupHook = ./setup-hook.sh;
+
+  postFixup = ''
+    # Make boost header paths relative so that they are not runtime dependencies
+    find "$dev/include" \( -name '*.hpp' -or -name '*.h' -or -name '*.ipp' \) \
+      -exec sed '1i#line 1 "{}"' -i '{}' \;
+  '' + optionalString (hostPlatform.libc == "msvcrt") ''
+    ${stdenv.cc.prefix}ranlib "$out/lib/"*.a
+  '';
 
   outputs = [ "out" "dev" ];
   setOutputFlags = false;
-
-  crossAttrs = rec {
-    # We want to substitute the contents of configureFlags, removing thus the
-    # usual --build and --host added on cross building.
-    preConfigure = ''
-      export configureFlags="--without-icu ${concatStringsSep " " commonConfigureFlags}"
-      cat << EOF > user-config.jam
-      using gcc : cross : $crossConfig-g++ ;
-      EOF
-    '';
-    buildPhase = builder crossB2Args;
-    installPhase = installer crossB2Args;
-    postFixup = fixup;
-  } // optionalAttrs (hostPlatform.libc == "msvcrt") {
-    patches = fetchurl {
-      url = "https://svn.boost.org/trac/boost/raw-attachment/ticket/7262/"
-          + "boost-mingw.patch";
-      sha256 = "0s32kwll66k50w6r5np1y5g907b7lcpsjhfgr7rsw7q5syhzddyj";
-    };
-
-    patchFlags = "-p0";
-  };
 }
