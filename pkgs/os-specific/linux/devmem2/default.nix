@@ -10,7 +10,7 @@ stdenv.mkDerivation rec {
 
   buildCommand = ''
     export hardeningDisable=format  # fix compile error
-    cc "$src" -o devmem2
+    $CC "$src" -o devmem2
     install -D devmem2 "$out/bin/devmem2"
   '';
 

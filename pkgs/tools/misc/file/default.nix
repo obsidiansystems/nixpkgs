@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, zlib }:
+{ stdenv, fetchurl, zlib, lib, buildPackages, buildPlatform, hostPlatform}:
 
 stdenv.mkDerivation rec {
   name = "file-${version}";
@@ -12,10 +12,9 @@ stdenv.mkDerivation rec {
     sha256 = "1vp4zihaxkhi85chkjgd4r4zdg4k2wa3c6pmajhbmx6gr7d8ii89";
   };
 
-  buildInputs = [ zlib ];
+  buildInputs = [ zlib ] ++ lib.optionals (buildPlatform != hostPlatform) [ buildPackages.file ];
 
-  doCheck = true;
-
+  doCheck = buildPlatform == hostPlatform;
 
   meta = with stdenv.lib; {
     homepage = "http://darwinsys.com/file";

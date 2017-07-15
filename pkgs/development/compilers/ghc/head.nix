@@ -69,6 +69,7 @@ in stdenv.mkDerivation (rec {
   preConfigure = stdenv.lib.optionalString (targetPlatform != hostPlatform)''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
     echo 'Stage1Only = YES' >> mk/build.mk
+    echo 'STRIP_CMD = ${binutils}/bin/${prefix}strip' >> mk/build.mk
   '' + stdenv.lib.optionalString (targetPlatform != hostPlatform && dynamic) ''
     echo 'DYNAMIC_GHC_PROGRAMS = YES' >> mk/build.mk
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
@@ -234,4 +235,9 @@ in stdenv.mkDerivation (rec {
   patches = [
     ./android-patches/enable-fPIC.patch
   ];
+} // stdenv.lib.optionalAttrs (buildPlatform != targetPlatform) {
+  # Nix uses the native strip on libraries, leading to error like this
+  # https://github.com/neurocyte/ghc-android/issues/29
+  dontStrip = true;
+  dontCrossStrip = true;
 })
