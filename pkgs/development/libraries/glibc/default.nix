@@ -21,7 +21,7 @@ callPackage ./common.nix { inherit stdenv; } {
       export NIX_CFLAGS_LINK=
       export NIX_LDFLAGS_BEFORE=
 
-      export NIX_DONT_SET_RPATH=1
+      export NIX_${stdenv.cc.infixSalt}_DONT_SET_RPATH=1
       unset CFLAGS
 
       # Apparently --bindir is not respected.
