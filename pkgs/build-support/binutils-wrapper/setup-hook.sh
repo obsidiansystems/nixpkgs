@@ -2,12 +2,17 @@
 #
 # See comments in cc-wrapper's setup hook. This works exactly the same way.
 
+set -u
+
+# Skip setup hook if we're not a build-time dep
+(( "$hostOffset" < 0 )) || return 0
+
 binutilsWrapper_addLDVars () {
-    case $depOffset in
+    case $depHostOffset in
         -1) local role='BUILD_' ;;
         0)  local role='' ;;
         1)  local role='TARGET_' ;;
-        *)  echo "binutils-wrapper: Error: Cannot be used with $depOffset-offset deps, " >2;
+        *)  echo "binutils-wrapper: Error: Cannot be used with $depHostOffset-offset deps" >2;
             return 1 ;;
     esac
 
@@ -20,15 +25,26 @@ binutilsWrapper_addLDVars () {
     fi
 }
 
-if [ -n "${crossConfig:-}" ]; then
-    export NIX_BINUTILS_WRAPPER_@infixSalt@_TARGET_BUILD=1
-    role="BUILD_"
-else
-    export NIX_BINUTILS_WRAPPER_@infixSalt@_TARGET_HOST=1
-    role=""
-fi
+case $targetOffset in
+    -1)
+        export NIX_BINUTILS_WRAPPER_@infixSalt@_TARGET_BUILD=1
+        role="BUILD_"
+        ;;
+    0)
+        export NIX_BINUTILS_WRAPPER_@infixSalt@_TARGET_HOST=1
+        role=""
+        ;;
+    1)
+        export NIX_BINUTILS_WRAPPER_@infixSalt@_TARGET_TARGET=1
+        role="TARGET_"
+        ;;
+    *)
+        echo "cc-wrapper: used as improper sort of dependency" >2;
+        return 1
+        ;;
+esac
 
-envHooks+=(binutilsWrapper_addLDVars)
+addEnvHooks "$targetOffset" binutilsWrapper_addLDVars
 
 # shellcheck disable=SC2157
 if [ -n "@binutils_bin@" ]; then
@@ -61,3 +77,4 @@ done
 
 # No local scope in sourced file
 unset role
+set +u

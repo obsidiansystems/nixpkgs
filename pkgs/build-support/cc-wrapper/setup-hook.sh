@@ -54,19 +54,23 @@
 # For more details, read the individual files where the mechanisms used to
 # accomplish this will be individually documented.
 
+set -u
+
+# Skip setup hook if we're not a build-time dep
+(( "$hostOffset" < 0 )) || return 0
 
 # It's fine that any other cc-wrapper will redefine this. Bash functions close
 # over no state, and there's no @-substitutions within, so any redefined
 # function is guaranteed to be exactly the same.
 ccWrapper_addCVars () {
-    # The `depOffset` describes how the platforms of the dependencies are slid
-    # relative to the depending package. It is brought into scope of the
-    # environment hook defined as the role of the dependency being applied.
-    case $depOffset in
+    # The `depHostOffset` describes how the host platform of the dependencies
+    # are slid relative to the depending package. It is brought into scope of
+    # the environment hook defined as the role of the dependency being applied.
+    case $depHostOffset in
         -1) local role='BUILD_' ;;
         0)  local role='' ;;
         1)  local role='TARGET_' ;;
-        *)  echo "cc-wrapper: Error: Cannot be used with $depOffset-offset deps, " >2;
+        *)  echo "cc-wrapper: Error: Cannot be used with $depHostOffset-offset deps" >2;
             return 1 ;;
     esac
 
@@ -87,18 +91,28 @@ ccWrapper_addCVars () {
 #
 # We also need to worry about what role is being added on *this* invocation of
 # setup-hook, which `role` tracks.
-if [ -n "${crossConfig:-}" ]; then
-    export NIX_CC_WRAPPER_@infixSalt@_TARGET_BUILD=1
-    role="BUILD_"
-else
-    export NIX_CC_WRAPPER_@infixSalt@_TARGET_HOST=1
-    role=""
-fi
+case $targetOffset in
+    -1)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_BUILD=1
+        role="BUILD_"
+        ;;
+    0)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_HOST=1
+        role=""
+        ;;
+    1)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_TARGET=1
+        role="TARGET_"
+        ;;
+    *)
+        echo "cc-wrapper: used as improper sort of dependency" >2;
+        return 1
+        ;;
+esac
 
-# Eventually the exact sort of env-hook we create will depend on the role. This
-# is because based on what relative platform we are targeting, we use different
-# dependencies.
-envHooks+=(ccWrapper_addCVars)
+# We use the `targetOffset` to choose the right env hook to accumulate the right
+# sort of deps (those with that offset).
+addEnvHooks "$targetOffset" ccWrapper_addCVars
 
 # Note 1: these come *after* $out in the PATH (see setup.sh).
 # Note 2: phase separation makes this look useless to shellcheck.
@@ -127,3 +141,4 @@ export ${role}CXX=@named_cxx@
 
 # No local scope in sourced file
 unset role
+set +u
