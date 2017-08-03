@@ -126,7 +126,7 @@ esac
 # details.
 eval "${pkgHookVars[$depOffset + 2]}s"'+=(addCVars_@infixSalt@)'
 
-
+# Only put on the path if we're a build-time dep
 if (( "$offset" < 0 )); then
     # Note 1: these come *after* $out in the PATH (see setup.sh).
     # Note 2: phase separation makes this look useless to shellcheck.
