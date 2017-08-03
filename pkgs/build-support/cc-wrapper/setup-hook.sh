@@ -87,6 +87,12 @@ ccWrapper_addCVars () {
     fi
 }
 
+# A cc-wrapper dependency with offset `n` will always pick up
+# depedencies with offset `n + 1`---the 3 platforms slid one slot
+# over. For symmetry with `ccWrapper_addCVars`, we do everything in
+# terms of these picked up dependencies' offset, not our own.
+declare -i depOffset="$offset + 1"
+
 # Since the same cc-wrapper derivation can be depend on in multiple ways, we
 # need to accumulate *each* role (i.e. target platform relative the depending
 # derivation) in which the cc-wrapper derivation is used.
@@ -95,40 +101,55 @@ ccWrapper_addCVars () {
 #
 # We also need to worry about what role is being added on *this* invocation of
 # setup-hook, which `role` tracks.
-if [ -n "${crossConfig:-}" ]; then
-    export NIX_CC_WRAPPER_@infixSalt@_TARGET_BUILD=1
-    role="BUILD_"
-else
-    export NIX_CC_WRAPPER_@infixSalt@_TARGET_HOST=1
-    role=""
-fi
+case $depOffset in
+    -1)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_BUILD=1
+        role="BUILD_"
+        ;;
+    0)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_HOST=1
+        role=""
+        ;;
+    1)
+        export NIX_CC_WRAPPER_@infixSalt@_TARGET_TARGET=1
+        role="TARGET_"
+        ;;
+    *)
+        echo "cc-wrapper: used as improper sort of dependency" >2;
+        return 1
+        ;;
+esac
 
-# Eventually the exact sort of env-hook we create will depend on the role. This
-# is because based on what relative platform we are targeting, we use different
-# dependencies.
-envHooks+=(ccWrapper_addCVars)
+# We use the depOffset to choose the right env hook to accumulate the right sort
+# of deps (those with that offset). The `+ 2` is because the index starts at 0
+# while the first offset is `- 2`. See `pkgs/stdenv/generic/setup.sh` for
+# details.
+eval "${pkgHookVars[$depOffset + 2]}s"'+=(addCVars_@infixSalt@)'
 
-# Note 1: these come *after* $out in the PATH (see setup.sh).
-# Note 2: phase separation makes this look useless to shellcheck.
 
-# shellcheck disable=SC2157
-if [ -n "@cc@" ]; then
-    addToSearchPath _PATH @cc@/bin
-fi
+if (( "$offset" < 0 )); then
+    # Note 1: these come *after* $out in the PATH (see setup.sh).
+    # Note 2: phase separation makes this look useless to shellcheck.
 
-# shellcheck disable=SC2157
-if [ -n "@binutils_bin@" ]; then
-    addToSearchPath _PATH @binutils_bin@/bin
-fi
+    # shellcheck disable=SC2157
+    if [ -n "@cc@" ]; then
+        addToSearchPath _PATH @cc@/bin
+    fi
 
-# shellcheck disable=SC2157
-if [ -n "@libc_bin@" ]; then
-    addToSearchPath _PATH @libc_bin@/bin
-fi
+    # shellcheck disable=SC2157
+    if [ -n "@binutils_bin@" ]; then
+        addToSearchPath _PATH @binutils_bin@/bin
+    fi
 
-# shellcheck disable=SC2157
-if [ -n "@coreutils_bin@" ]; then
-    addToSearchPath _PATH @coreutils_bin@/bin
+    # shellcheck disable=SC2157
+    if [ -n "@libc_bin@" ]; then
+        addToSearchPath _PATH @libc_bin@/bin
+    fi
+
+    # shellcheck disable=SC2157
+    if [ -n "@coreutils_bin@" ]; then
+        addToSearchPath _PATH @coreutils_bin@/bin
+    fi
 fi
 
 # Export tool environment variables so various build systems use the right ones.
