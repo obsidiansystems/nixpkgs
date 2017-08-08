@@ -25,6 +25,7 @@ if (( "$overflowCount" <= "$recurThreshold" )); then
 else
     declare -a childrenLookup=() childrenLink=()
 
+    prev=
     while (( $# )); do
         case "$1" in
             -L/*)
@@ -39,30 +40,32 @@ else
                 echo "cctools LD does not support '-L foo' or '-l foo'" >&2
                 exit 1
                 ;;
+            "$NIX_STORE"/*.dylib)
+                if [[ "$prev" = -* ]]; then
+                    # An argument to some other flag, e.g. -o
+                    allArgs+=("$1")
+                else
+                    # Not an argument, but raw library path
+                    childrenLink+=(-reexport_library "$1")
+                fi
+                ;;
             -lazy_library | -lazy_framework | -lto_library)
                 # We aren't linking any "azy_library", "to_library", etc.
                 allArgs+=("$1")
                 ;;
-            -lazy-l | -weak-l)    allArgs+=("$1") ;;
+            -lazy-l?* | -weak-l?*) allArgs+=("$1") ;;
                 # We can't so easily prevent header issues from these.
-            -lSystem)             allArgs+=("$1") ;;
+            -lSystem)              allArgs+=("$1") ;;
                 # Special case as indirection seems like a bad idea for something
                 # so fundamental. Can be removed for simplicity.
-            -l?* | -reexport-l?*) childrenLink+=("$1") ;;
-            *)                    allArgs+=("$1") ;;
+            -l?*)                  childrenLink+=("-reexport$1") ;;
+            -reexport-l?*)         childrenLink+=("$1") ;;
+            *)                     allArgs+=("$1") ;;
         esac
 
+        prev="$1"
         shift
     done
-
-    declare n=0
-    while (( $n < "${#childrenLink[@]}" )); do
-        if [[ "${childrenLink[n]}" = -l* ]]; then
-            childrenLink[n]="-reexport${childrenLink[n]}"
-        fi
-        let ++n
-    done
-    unset n
 
     declare -r outputNameLibless=$(basename $( \
         if [[ -z "${outputName:+isUndefined}" ]]; then
