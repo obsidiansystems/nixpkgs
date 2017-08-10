@@ -15,26 +15,14 @@ providesQtRuntime() {
 # package depending on the building package. (This is necessary in case
 # the building package does not provide runtime dependencies itself and so
 # would not be propagated to the user environment.)
-_qtCrossEnvHook() {
+_qtEnvHook() {
     if providesQtRuntime "$1"; then
         propagatedBuildInputs+=" $1"
         propagatedUserEnvPkgs+=" $1"
     fi
 }
 if [ -z "$NIX_QT5_TMP" ]; then
-    crossEnvHooks+=(_qtCrossEnvHook)
-fi
-
-_qtEnvHook() {
-    if providesQtRuntime "$1"; then
-        propagatedNativeBuildInputs+=" $1"
-        if [ -z "$crossConfig" ]; then
-        propagatedUserEnvPkgs+=" $1"
-        fi
-    fi
-}
-if [ -z "$NIX_QT5_TMP" ]; then
-    envHooks+=(_qtEnvHook)
+    envHostTargetHooks+=(_qtEnvHook)
 fi
 
 _qtPreFixupHook() {
