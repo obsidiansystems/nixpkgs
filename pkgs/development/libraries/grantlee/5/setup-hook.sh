@@ -10,14 +10,4 @@ _grantleeCrossEnvHook() {
         propagatedUserEnvPkgs+=" $1"
     fi
 }
-crossEnvHooks+=(_grantleeCrossEnvHook)
-
-_grantleeEnvHook() {
-    if providesGrantleeRuntime "$1"; then
-        propagatedNativeBuildInputs+=" $1"
-        if [ -z "$crossConfig" ]; then
-        propagatedUserEnvPkgs+=" $1"
-        fi
-    fi
-}
-envHooks+=(_grantleeEnvHook)
+addEnvHooks "$hostOffset" _grantleeCrossEnvHook

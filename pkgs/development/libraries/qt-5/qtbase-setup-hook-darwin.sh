@@ -39,22 +39,7 @@ _qtPropagate() {
     addToSearchPathOnce QML2_IMPORT_PATH "$1/$qtQmlPrefix"
 }
 
-crossEnvHooks+=(_qtPropagate)
-
-_qtPropagateNative() {
-    for dir in $qtPluginPrefix $qtQmlPrefix; do
-        if [ -d "$1/$dir" ]; then
-            propagateOnce propagatedNativeBuildInputs "$1"
-            break
-        fi
-    done
-    if [ -z "$crossConfig" ]; then
-    addToSearchPathOnce QT_PLUGIN_PATH "$1/$qtPluginPrefix"
-    addToSearchPathOnce QML2_IMPORT_PATH "$1/$qtQmlPrefix"
-    fi
-}
-
-envHooks+=(_qtPropagateNative)
+envHostTargetHooks+=(_qtPropagate)
 
 _qtMultioutDevs() {
     # This is necessary whether the package is a Qt module or not
@@ -123,7 +108,7 @@ EOF
     export QMAKE="$NIX_QT5_TMP/bin/qmake"
 
     # Set PATH to find qmake first in a preConfigure hook
-    # It must run after all the envHooks!
+    # It must run after all the environment hooks!
     preConfigureHooks+=(_qtSetQmakePath)
 fi
 
