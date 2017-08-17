@@ -19248,5 +19248,6 @@ with pkgs;
   # `recurseIntoAttrs` for sake of hydra, not nix-env
   tests = recurseIntoAttrs {
     macOSSierraShared = callPackage ../test/macos-sierra-shared {};
+    macOSSierraSharedHaskell = callPackage ../test/macos-sierra-shared-haskell {};
   };
 }
