@@ -282,17 +282,6 @@ stdenv.mkDerivation ({
   targetConfig = if targetPlatform != hostPlatform then targetPlatform.config else null;
 
   crossAttrs = {
-    AR = "${targetPlatform.config}-ar";
-    LD = "${targetPlatform.config}-ld";
-    CC = "${targetPlatform.config}-gcc";
-    CXX = "${targetPlatform.config}-gcc";
-    AR_FOR_TARGET = "${targetPlatform.config}-ar";
-    LD_FOR_TARGET = "${targetPlatform.config}-ld";
-    CC_FOR_TARGET = "${targetPlatform.config}-gcc";
-    NM_FOR_TARGET = "${targetPlatform.config}-nm";
-    CXX_FOR_TARGET = "${targetPlatform.config}-g++";
-    # If we are making a cross compiler, cross != null
-    NIX_CC_CROSS = optionalString (targetPlatform == hostPlatform) builtins.toString stdenv.cc;
     dontStrip = true;
     configureFlags = ''
       ${if enableMultilib then "" else "--disable-multilib"}
@@ -325,11 +314,6 @@ stdenv.mkDerivation ({
     '';
   };
  
-
-  # Needed for the cross compilation to work
-  AR = "ar";
-  LD = "ld";
-  CC = "gcc";
 
   # Setting $CPATH and $LIBRARY_PATH to make sure both `gcc' and `xgcc' find
   # the library headers and binaries, regarless of the language being

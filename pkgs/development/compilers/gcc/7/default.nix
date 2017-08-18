@@ -416,17 +416,6 @@ stdenv.mkDerivation ({
     xwithFpu = if xgccFpu != null then " --with-fpu=${xgccFpu}" else "";
     xwithFloat = if xgccFloat != null then " --with-float=${xgccFloat}" else "";
   in {
-    AR = "${targetPlatform.config}-ar";
-    LD = "${targetPlatform.config}-ld";
-    CC = "${targetPlatform.config}-gcc";
-    CXX = "${targetPlatform.config}-gcc";
-    AR_FOR_TARGET = "${targetPlatform.config}-ar";
-    LD_FOR_TARGET = "${targetPlatform.config}-ld";
-    CC_FOR_TARGET = "${targetPlatform.config}-gcc";
-    NM_FOR_TARGET = "${targetPlatform.config}-nm";
-    CXX_FOR_TARGET = "${targetPlatform.config}-g++";
-    # If we are making a cross compiler, targetPlatform != hostPlatform
-    NIX_CC_CROSS = if targetPlatform == hostPlatform then "${stdenv.ccCross}" else "";
     dontStrip = true;
     configureFlags = ''
       ${if enableMultilib then "" else "--disable-multilib"}
@@ -463,11 +452,8 @@ stdenv.mkDerivation ({
   };
 
 
-  # Needed for the cross compilation to work
-  AR = "ar";
-  LD = "ld";
   # http://gcc.gnu.org/install/specific.html#x86-64-x-solaris210
-  CC = if stdenv.system == "x86_64-solaris" then "gcc -m64" else "gcc";
+  CC = if hostPlatform.system == "x86_64-solaris" then "gcc -m64" else "gcc";
 
   # Setting $CPATH and $LIBRARY_PATH to make sure both `gcc' and `xgcc' find
   # the library headers and binaries, regarless of the language being
