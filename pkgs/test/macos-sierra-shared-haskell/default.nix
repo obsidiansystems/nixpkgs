@@ -44,10 +44,9 @@ let
     }) count);
   in {
     mkDerivation = attrs: super.mkDerivation (attrs // {
-      #configureFlags = attrs.configureFlags or [] ++ [
-      #  "--ghc-options=-pgmccc"
-      #  "--ghc-options=-pgmlcc"
-      #];
+      configureFlags = attrs.configureFlags or [] ++ [
+        "--ghc-options=-pgml${(self.callPackage ({ stdenv }: stdenv) {}).cc}/bin/cc"
+      ];
     });
   } // lib.mapAttrs (_: p: self.callPackage (src2nix self p) {}) (sillyLibs // {
     finalExe = stdenvNoCC.mkDerivation rec {
@@ -65,7 +64,6 @@ let
         Executable ${name}
           main-is:         Main.hs
           build-depends:   base ${toString (map (x: ", " + x) (lib.genList (libName prefix) count))}
-          ghc-options:     -pgml${(self.callPackage ({ stdenv }: stdenv) {}).cc}/bin/cc
         EOF
 
 
