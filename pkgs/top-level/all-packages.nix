@@ -5294,7 +5294,9 @@ with pkgs;
 
   clang-sierraHack = clang.override {
     name = "clang-wrapper-with-reexport-hack";
-    useMacosReexportHack = true;
+    binutils = clang.binutils.override {
+      useMacosReexportHack = true;
+    };
   };
 
   clang_4  = llvmPackages_4.clang;
@@ -5389,18 +5391,23 @@ with pkgs;
   };
 
   wrapCCMulti = cc:
-    if system == "x86_64-linux" then lowPrio (wrapCCWith {
+    if system == "x86_64-linux" then let
+      # Binutils with glibc multi
+      binutils = cc.binutils.override {
+        libc = glibc_multi;
+      };
+    in lowPrio (wrapCCWith {
       cc = cc.cc.override {
         stdenv = overrideCC stdenv (wrapCCWith {
           cc = cc.cc;
           libc = glibc_multi;
+          inherit binutils;
         });
         profiledCompiler = false;
         enableMultilib = true;
       };
-
       libc = glibc_multi;
-
+      inherit binutils;
       extraBuildCommands = ''
         echo "dontMoveLib64=1" >> $out/nix-support/setup-hook
       '';
@@ -5433,6 +5440,10 @@ with pkgs;
       if targetPlatform.libc == "msvcrt" then __targetPackages.windows.mingw_w64_headers
       else if targetPlatform.libc == "libSystem" then darwin.xcode
       else null;
+    binutils1 = wrapBinutilsWith {
+      binutils = binutils-unwrapped;
+      libc = libcCross1;
+    };
     in wrapCCWith {
       name = "gcc-cross-wrapper";
       cc = gccFun {
@@ -5446,9 +5457,11 @@ with pkgs;
         crossStageStatic = true;
         langCC = false;
         libcCross = libcCross1;
+        binutils = binutils1;
         enableShared = false;
       };
       libc = libcCross1;
+      binutils = binutils1;
   };
 
   # Only needed for mingw builds
@@ -5456,6 +5469,7 @@ with pkgs;
     name = "gcc-cross-wrapper";
     cc = gccCrossStageStatic.gcc;
     libc = windows.mingw_headers2;
+    inherit binutils;
   };
 
   gcc45 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/4.5 {
@@ -6207,7 +6221,8 @@ with pkgs;
 
   wla-dx = callPackage ../development/compilers/wla-dx { };
 
-  wrapCCWith = { name ? "", cc, libc, extraBuildCommands ? "" }: ccWrapperFun rec {
+  wrapCCWith = { name ? "", cc, binutils, libc, extraBuildCommands ? "" }:
+      ccWrapperFun rec {
     nativeTools = targetPlatform == hostPlatform && stdenv.cc.nativeTools or false;
     nativeLibc = targetPlatform == hostPlatform && stdenv.cc.nativeLibc or false;
     nativePrefix = stdenv.cc.nativePrefix or "";
@@ -6216,14 +6231,15 @@ with pkgs;
     isGNU = cc.isGNU or false;
     isClang = cc.isClang or false;
 
-    inherit name cc libc extraBuildCommands;
+    inherit name cc binutils libc extraBuildCommands;
   };
 
   ccWrapperFun = callPackage ../build-support/cc-wrapper;
+  binutilsWrapperFun = callPackage ../build-support/binutils-wrapper;
 
   wrapCC = cc: wrapCCWith {
     name = lib.optionalString (targetPlatform != hostPlatform) "gcc-cross-wrapper";
-    inherit cc;
+    inherit cc binutils;
     libc = if targetPlatform != hostPlatform then libcCross else stdenv.cc.libc;
   };
   # legacy version, used for gnat bootstrapping
@@ -6233,6 +6249,17 @@ with pkgs;
     nativePrefix = stdenv.cc.nativePrefix or "";
     gcc = baseGCC;
     libc = glibc;
+  };
+
+  wrapBinutilsWith = { binutils, libc }: binutilsWrapperFun {
+    nativeTools = targetPlatform == hostPlatform && stdenv.cc.nativeTools or false;
+    nativeLibc = targetPlatform == hostPlatform && stdenv.cc.nativeLibc or false;
+    nativePrefix = stdenv.cc.nativePrefix or "";
+
+    noLibc = (libc == null);
+
+    inherit binutils libc;
+    extraBuildCommands = "";
   };
 
   # prolog
@@ -6801,13 +6828,19 @@ with pkgs;
     then darwin.binutils
     else binutils-raw;
 
-  binutils-raw = callPackage ../development/tools/misc/binutils {
+  binutils-unwrapped = callPackage ../development/tools/misc/binutils {
     # FHS sys dirs presumably only have stuff for the build platform
     noSysDirs = (targetPlatform != buildPlatform) || noSysDirs;
   };
+  binutils-raw = wrapBinutilsWith {
+    libc = if targetPlatform != hostPlatform then libcCross else stdenv.cc.libc;
+    binutils = binutils-unwrapped;
+  };
 
   binutils_nogold = lowPrio (binutils-raw.override {
-    gold = false;
+    binutils = binutils-raw.binutils.override {
+      gold = false;
+    };
   });
 
   bison2 = callPackage ../development/tools/parsing/bison/2.x.nix { };
