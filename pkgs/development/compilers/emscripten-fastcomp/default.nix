@@ -4,7 +4,7 @@ let
 
   self = {
     emscriptenfastcomp-unwrapped = callPackage ./emscripten-fastcomp.nix {};
-    emscriptenfastcomp-wrapped = wrapCCWith stdenv.cc.libc ''
+    emscriptenfastcomp-wrapped = wrapCCWith stdenv.cc.libc stdenv.cc.binutils ''
       # hardening flags break WASM support
       cat > $out/nix-support/add-hardening.sh
     '' self.emscriptenfastcomp-unwrapped;
