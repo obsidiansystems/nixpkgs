@@ -14,8 +14,13 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ autoreconfHook pkgconfig ];
   buildInputs = [ cpio zlib bzip2 file libarchive nspr nss db xz python lua ];
 
-  # rpm/rpmlib.h includes popt.h, and then the pkg-config file mentions these as linkage requirements
-  propagatedBuildInputs = [ popt elfutils nss db bzip2 libarchive binutils ];
+  # rpm/rpmlib.h includes popt.h, and then the pkg-config file mentions these as
+  # linkage requirements
+  #
+  # Binutils.binutils for headers
+  propagatedBuildInputs = [
+    popt elfutils nss db bzip2 libarchive binutils binutils.binutils
+  ];
 
   NIX_CFLAGS_COMPILE = "-I${nspr.dev}/include/nspr -I${nss.dev}/include/nss";
 
