@@ -31,6 +31,7 @@
 , libpthread ? null, libpthreadCross ? null  # required for GNU/Hurd
 , stripped ? true
 , gnused ? null
+, binutils
 , darwin ? null
 , buildPlatform, hostPlatform, targetPlatform
 , buildPackages
@@ -291,8 +292,18 @@ stdenv.mkDerivation ({
     ++ (optional (perl != null) perl)
     ++ (optional javaAwtGtk pkgconfig);
 
-  buildInputs = [ gmp mpfr libmpc libelf ]
-    ++ (optional (cloog != null) cloog)
+  # For building runtime libs
+  __depsBuildTarget =
+    if hostPlatform == buildPlatform then [
+      binutils # newly-built gcc will be used
+    ] else assert targetPlatform == hostPlatform; [ # build != host == target
+      stdenv.cc
+    ];
+
+  buildInputs = [
+    gmp mpfr libmpc libelf
+    binutils # For linking code at run-time
+  ] ++ (optional (cloog != null) cloog)
     ++ (optional (isl != null) isl)
     ++ (optional (zlib != null) zlib)
     ++ (optionals langJava [ boehmgc zip unzip ])

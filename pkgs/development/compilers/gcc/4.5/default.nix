@@ -24,6 +24,7 @@
 , gnat ? null
 , libpthread ? null, libpthreadCross ? null  # required for GNU/Hurd
 , stripped ? true
+, binutils
 , buildPlatform, hostPlatform, targetPlatform
 , buildPackages
 }:
@@ -223,8 +224,18 @@ stdenv.mkDerivation ({
   nativeBuildInputs = [ texinfo which gettext ]
     ++ optional (perl != null) perl;
 
-  buildInputs = [ gmp mpfr libmpc libelf ]
-    ++ (optional (ppl != null) ppl)
+  # For building runtime libs
+  __depsBuildTarget =
+    if hostPlatform == buildPlatform then [
+      binutils # newly-built gcc will be used
+    ] else assert targetPlatform == hostPlatform; [ # build != host == target
+      stdenv.cc
+    ];
+
+  buildInputs = [
+    gmp mpfr libmpc libelf
+    binutils # For linking code at run-time
+  ] ++ (optional (ppl != null) ppl)
     ++ (optional (cloogppl != null) cloogppl)
     ++ (optional (zlib != null) zlib)
     ++ (optional langJava boehmgc)
