@@ -31,7 +31,7 @@
 , libpthread ? null, libpthreadCross ? null  # required for GNU/Hurd
 , stripped ? true
 , gnused ? null
-, binutils ? null
+, binutils
 , cloog # unused; just for compat with gcc4, as we override the parameter on some places
 , darwin ? null
 , flex ? null
@@ -50,9 +50,6 @@ assert libelf != null -> zlib != null;
 
 # Make sure we get GNU sed.
 assert hostPlatform.isDarwin -> gnused != null;
-
-# Need c++filt on darwin
-assert hostPlatform.isDarwin -> binutils != null;
 
 # The go frontend is written in c++
 assert langGo -> langCC;
@@ -290,8 +287,18 @@ stdenv.mkDerivation ({
     ++ (optional (perl != null) perl)
     ++ (optional javaAwtGtk pkgconfig);
 
-  buildInputs = [ gmp mpfr libmpc libelf flex ]
-    ++ (optional (isl != null) isl)
+  # For building runtime libs
+  __depsBuildTarget =
+    if hostPlatform == buildPlatform then [
+      binutils # newly-built gcc will be used
+    ] else assert targetPlatform == hostPlatform; [ # build != host == target
+      stdenv.cc
+    ];
+
+  buildInputs = [
+    gmp mpfr libmpc libelf flex
+    binutils # For linking code at run-time
+  ] ++ (optional (isl != null) isl)
     ++ (optional (zlib != null) zlib)
     ++ (optionals langJava [ boehmgc zip unzip ])
     ++ (optionals javaAwtGtk ([ gtk2 libart_lgpl ] ++ xlibs))
