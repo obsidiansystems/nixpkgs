@@ -18,7 +18,8 @@ stdenv.mkDerivation rec {
 
   inherit (common) version src postPatch hardeningDisable enableParallelBuilding meta;
 
-  buildInputs = [ ncurses pkgconfig ]
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ ncurses ]
     ++ stdenv.lib.optionals hostPlatform.isDarwin [ Carbon Cocoa ];
   nativeBuildInputs = [ gettext ];
 
