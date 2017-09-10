@@ -18,26 +18,13 @@ assert !enableIntegerSimple -> gmp != null;
 let
   inherit (bootPkgs) ghc;
 
-  version = "8.2.1";
-
   # TODO(@Ericson2314) Make unconditional
   prefix = stdenv.lib.optionalString
     (targetPlatform != hostPlatform)
     "${targetPlatform.config}-";
-  
-  commonBuildInputs = [ alex autoconf automake ghc happy hscolour perl python3 sphinx ];
-  commonPreConfigure =  ''
-    sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
-  '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
-    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/ghc-${version}"
-  '' + stdenv.lib.optionalString stdenv.isDarwin ''
-    export NIX_LDFLAGS+=" -no_dtrace_dof"
-  '' + stdenv.lib.optionalString enableIntegerSimple ''
-    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '';
 in
 stdenv.mkDerivation (rec {
-  inherit version;
+  version = "8.2.1";
   name = "${prefix}ghc-${version}";
 
   src = fetchurl {
@@ -49,9 +36,19 @@ stdenv.mkDerivation (rec {
 
   patches = [ ./ghc-gold-linker.patch ];
 
-  preConfigure = commonPreConfigure;
+  preConfigure = ''
+    sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
+  '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
+    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/${preReleaseName}"
+  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+    export NIX_LDFLAGS+=" -no_dtrace_dof"
+  '' + stdenv.lib.optionalString enableIntegerSimple ''
+    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
+  '' + stdenv.lib.optionalString (targetPlatform != hostPlatform) ''
+    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
+  '';
 
-  buildInputs = commonBuildInputs;
+  buildInputs = [ alex autoconf automake ghc happy hscolour perl python3 sphinx ];
 
   enableParallelBuilding = true;
 
@@ -108,7 +105,7 @@ stdenv.mkDerivation (rec {
 } // stdenv.lib.optionalAttrs (cross != null) {
   name = "${cross.config}-ghc-${version}";
 
-  preConfigure = commonPreConfigure + ''
+  preConfigure = ''
     sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
   '';
 
@@ -123,8 +120,6 @@ stdenv.mkDerivation (rec {
   ] ++
     # fix for iOS: https://www.reddit.com/r/haskell/comments/4ttdz1/building_an_osxi386_to_iosarm64_cross_compiler/d5qvd67/
     stdenv.lib.optional (cross.config or null == "aarch64-apple-darwin14") "--disable-large-address-space";
-
-  buildInputs = commonBuildInputs ++ [ stdenv.ccCross stdenv.binutils ];
 
   dontSetConfigureCross = true;
 
