@@ -22,6 +22,12 @@ let
   prefix = stdenv.lib.optionalString
     (targetPlatform != hostPlatform)
     "${targetPlatform.config}-";
+
+  buildMK = stdenv.lib.optionalString enableIntegerSimple ''
+    INTEGER_LIBRARY = integer-simple
+  '' + stdenv.lib.optionalString (targetPlatform != hostPlatform) ''
+    BuildFlavour = perf-cross
+  '';
 in
 stdenv.mkDerivation (rec {
   version = "8.2.1";
@@ -37,15 +43,12 @@ stdenv.mkDerivation (rec {
   patches = [ ./ghc-gold-linker.patch ];
 
   preConfigure = ''
+    echo "${buildMK}" > mk/build.mk
     sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
   '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
-    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib/${preReleaseName}"
+    export NIX_LDFLAGS+=" -rpath $out/lib/ghc-${version}"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
     export NIX_LDFLAGS+=" -no_dtrace_dof"
-  '' + stdenv.lib.optionalString enableIntegerSimple ''
-    echo "INTEGER_LIBRARY=integer-simple" > mk/build.mk
-  '' + stdenv.lib.optionalString (targetPlatform != hostPlatform) ''
-    sed 's|#BuildFlavour  = quick-cross|BuildFlavour  = perf-cross|' mk/build.mk.sample > mk/build.mk
   '';
 
   buildInputs = [ alex autoconf automake ghc happy hscolour perl python3 sphinx ];
