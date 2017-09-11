@@ -14,11 +14,22 @@ rec {
   mkDerivation =
     { name ? ""
 
-    , nativeBuildInputs ? []
-    , buildInputs ? []
+    # TODO(@Ericson2314): Stop using legacy dep attribute names
+    #                               host offset -> target offset
+    , depsBuildBuild               ? []    # -1 -> -1
+    , depsBuildBuildPropagated     ? []    # -1 -> -1
+    , nativeBuildInputs            ? []    # -1 -> 0  N.B. Legacy name
+    , propagatedNativeBuildInputs  ? []    # -1 -> 0  N.B. Legacy name
+    , __depsBuildTarget            ? []    # -1 -> 1
+    , __depsBuildTargetPropagated  ? []    # -1 -> 1
 
-    , propagatedNativeBuildInputs ? []
-    , propagatedBuildInputs ? []
+    , __depsHostHost               ? []    #  0 -> 0
+    , __depsHostHostPropagated     ? []    #  0 -> 0
+    , buildInputs                  ? []    #  0 -> 1  N.B. Legacy name
+    , propagatedBuildInputs        ? []    #  0 -> 1  N.B. Legacy name
+
+    , __depsTargetTarget           ? []    #  1 -> 1
+    , __depsTargetTargetPropagated ? []    #  1 -> 1
 
     , configureFlags ? []
     , # Target is not included by default because most programs don't care.
@@ -56,15 +67,35 @@ rec {
       inherit erroneousHardeningFlags hardeningDisable hardeningEnable supportedHardeningFlags;
     })
     else let
-      dependencies = map lib.chooseDevOutputs [
-        (map (drv: drv.nativeDrv or drv) nativeBuildInputs
-           ++ lib.optional separateDebugInfo ../../build-support/setup-hooks/separate-debug-info.sh
-           ++ lib.optional stdenv.hostPlatform.isWindows ../../build-support/setup-hooks/win-dll-link.sh)
-        (map (drv: drv.crossDrv or drv) buildInputs)
+      dependencies = map (map lib.chooseDevOutputs) [
+        [
+          (map (drv: drv.__spliced.buildBuild or drv) depsBuildBuild)
+          (map (drv: drv.nativeDrv or drv) nativeBuildInputs
+             ++ lib.optional separateDebugInfo ../../build-support/setup-hooks/separate-debug-info.sh
+             ++ lib.optional stdenv.hostPlatform.isWindows ../../build-support/setup-hooks/win-dll-link.sh)
+          (map (drv: drv.__spliced.__buildTarget or drv) __depsBuildTarget)
+        ]
+        [
+          (map (drv: drv.__spliced.__hostHost or drv) __depsHostHost)
+          (map (drv: drv.crossDrv or drv) buildInputs)
+        ]
+        [
+          (map (drv: drv.__spliced.__targetTarget or drv) __depsTargetTarget)
+        ]
       ];
-      propagatedDependencies = map lib.chooseDevOutputs [
-        (map (drv: drv.nativeDrv or drv) propagatedNativeBuildInputs)
-        (map (drv: drv.crossDrv or drv) propagatedBuildInputs)
+      propagatedDependencies = map (map lib.chooseDevOutputs) [
+        [
+          (map (drv: drv.__spliced.buildBuild or drv) depsBuildBuildPropagated)
+          (map (drv: drv.nativeDrv or drv) propagatedNativeBuildInputs)
+          (map (drv: drv.__spliced.__buildTarget or drv) __depsBuildTargetPropagated)
+        ]
+        [
+          (map (drv: drv.__spliced.__hostHost or drv) __depsHostHostPropagated)
+          (map (drv: drv.crossDrv or drv) propagatedBuildInputs)
+        ]
+        [
+          (map (drv: drv.__spliced.__targetTarget or drv) __depsTargetTargetPropagated)
+        ]
       ];
 
       outputs' =
@@ -105,11 +136,19 @@ rec {
           userHook = config.stdenv.userHook or null;
           __ignoreNulls = true;
 
-          nativeBuildInputs = lib.elemAt dependencies 0;
-          buildInputs = lib.elemAt dependencies 1;
+          depsBuildBuild               = lib.elemAt (lib.elemAt dependencies 0) 0;
+          nativeBuildInputs            = lib.elemAt (lib.elemAt dependencies 0) 1;
+          __depsBuildTarget            = lib.elemAt (lib.elemAt dependencies 0) 2;
+          __depsHostBuild              = lib.elemAt (lib.elemAt dependencies 1) 0;
+          buildInputs                  = lib.elemAt (lib.elemAt dependencies 1) 1;
+          __depsTargetTarget           = lib.elemAt (lib.elemAt dependencies 2) 0;
 
-          propagatedNativeBuildInputs = lib.elemAt propagatedDependencies 0;
-          propagatedBuildInputs = lib.elemAt propagatedDependencies 1;
+          depsBuildBuildPropagated     = lib.elemAt (lib.elemAt propagatedDependencies 0) 0;
+          propagatedNativeBuildInputs  = lib.elemAt (lib.elemAt propagatedDependencies 0) 1;
+          __depsBuildTargetPropagated  = lib.elemAt (lib.elemAt propagatedDependencies 0) 2;
+          __depsHostBuildPropagated    = lib.elemAt (lib.elemAt propagatedDependencies 1) 0;
+          propagatedBuildInputs        = lib.elemAt (lib.elemAt propagatedDependencies 1) 1;
+          __depsTargetTargetPropagated = lib.elemAt (lib.elemAt propagatedDependencies 2) 0;
 
           # This parameter is sometimes a string, sometimes null, and sometimes a list, yuck
           configureFlags = let inherit (lib) optional elem; in
