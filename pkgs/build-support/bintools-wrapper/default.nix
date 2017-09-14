@@ -26,7 +26,9 @@ let
   stdenv = stdenvNoCC;
   inherit (stdenv) hostPlatform targetPlatform;
 
-  # Prefix for binaries. Customarily ends with a dash separator.
+  # Prefix for binaries. Customarily ends with a dash separator. The underlying
+  # binaries are assumed to not be prefixed (as they are mult-iplatform). Just
+  # the wrapped binaries are prefixed.
   #
   # TODO(@Ericson2314) Make unconditional, or optional but always true by
   # default.
@@ -138,27 +140,27 @@ stdenv.mkDerivation {
     + optionalString (targetPlatform.isSunOS && nativePrefix != "") ''
       # Solaris needs an additional ld wrapper.
       ldPath="${nativePrefix}/bin"
-      exec="$ldPath/${targetPrefix}ld"
+      exec="$ldPath/ld"
       wrap ld-solaris ${./ld-solaris-wrapper.sh}
     '')
 
     + ''
       # Create a symlink to as (the assembler).
-      if [ -e $ldPath/${targetPrefix}as ]; then
-        ln -s $ldPath/${targetPrefix}as $out/bin/${targetPrefix}as
+      if [ -e $ldPath/as ]; then
+        ln -s $ldPath/as $out/bin/${targetPrefix}as
       fi
 
     '' + (if !useMacosReexportHack then ''
-      wrap ${targetPrefix}ld ${./ld-wrapper.sh} ''${ld:-$ldPath/${targetPrefix}ld}
+      wrap ${targetPrefix}ld ${./ld-wrapper.sh} $ldPath/ld
     '' else ''
       ldInner="${targetPrefix}ld-reexport-delegate"
-      wrap "$ldInner" ${./macos-sierra-reexport-hack.bash} ''${ld:-$ldPath/${targetPrefix}ld}
+      wrap "$ldInner" ${./macos-sierra-reexport-hack.bash} $ldPath/ld
       wrap "${targetPrefix}ld" ${./ld-wrapper.sh} "$out/bin/$ldInner"
       unset ldInner
     '') + ''
 
       for variant in ld.gold ld.bfd ld.lld; do
-        local underlying=$ldPath/${targetPrefix}$variant
+        local underlying=$ldPath/$variant
         [[ -e "$underlying" ]] || continue
         wrap ${targetPrefix}$variant ${./ld-wrapper.sh} $underlying
       done

@@ -4,14 +4,6 @@
 , hostPlatform, targetPlatform
 }:
 
-let
-  # The targetPrefix prepended to binary names to allow multiple binuntils on the
-  # PATH to both be usable.
-  targetPrefix = stdenv.lib.optionalString
-    (targetPlatform != hostPlatform)
-    "${targetPlatform.config}-";
-in
-
 assert targetPlatform.isDarwin;
 
 # Non-Darwin alternatives
@@ -19,7 +11,7 @@ assert (!hostPlatform.isDarwin) -> (maloader != null && xctoolchain != null);
 
 let
   baseParams = rec {
-    name = "${targetPrefix}cctools-port-${version}";
+    name = "cctools-port-${version}";
     version = "895";
 
     src = fetchFromGitHub {
@@ -49,8 +41,7 @@ let
 
     enableParallelBuilding = true;
 
-    # TODO(@Ericson2314): Always pass "--target" and always targetPrefix.
-    configurePlatforms = [ "build" "host" ] ++ stdenv.lib.optional (targetPlatform != hostPlatform) "target";
+    configurePlatforms = [ "build" "host" ];
     configureFlags = stdenv.lib.optionals (!stdenv.isDarwin) [
       "CXXFLAGS=-I${libcxx}/include/c++/v1"
     ];
@@ -111,10 +102,6 @@ let
           ln -s "$out/bin/${targetPlatform.config}-$tool" "$out/bin/$tool"
         done
       '';
-
-    passthru = {
-      inherit targetPrefix;
-    };
 
     meta = {
       homepage = http://www.opensource.apple.com/source/cctools/;

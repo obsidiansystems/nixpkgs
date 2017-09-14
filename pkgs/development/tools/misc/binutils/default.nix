@@ -1,26 +1,20 @@
 { stdenv, buildPackages
-, fetchurl, zlib
-, buildPlatform, hostPlatform, targetPlatform
-, noSysDirs, gold ? true, bison ? null
+, hostPlatform, targetPlatform
+, fetchurl, bison ? null
+, zlib
+, noSysDirs
+, gold ? true
 }:
 
-let
+stdenv.mkDerivation rec {
+  name = "binutils-${version}";
   # Note to whoever is upgrading this: 2.29 is broken.
   # ('nix-build pkgs/stdenv/linux/make-bootstrap-tools.nix -A test' segfaults on aarch64)
   # Also glibc might need patching, see commit 733e20fee4a6700510f71fbe1a58ac23ea202f6a.
   version = "2.28.1";
-  basename = "binutils-${version}";
-  inherit (stdenv.lib) optional optionals optionalString;
-  # The targetPrefix prepended to binary names to allow multiple binuntils on the
-  # PATH to both be usable.
-  targetPrefix = optionalString (targetPlatform != hostPlatform) "${targetPlatform.config}-";
-in
-
-stdenv.mkDerivation rec {
-  name = targetPrefix + basename;
 
   src = fetchurl {
-    url = "mirror://gnu/binutils/${basename}.tar.bz2";
+    url = "mirror://gnu/binutils/${name}.tar.bz2";
     sha256 = "1sj234nd05cdgga1r36zalvvdkvpfbr12g5mir2n8i1dwsdrj939";
   };
 
@@ -90,13 +84,7 @@ stdenv.mkDerivation rec {
     then "-Wno-string-plus-int -Wno-deprecated-declarations"
     else "-static-libgcc";
 
-  # TODO(@Ericson2314): Always pass "--target" and always targetPrefix.
-  configurePlatforms =
-    # TODO(@Ericson2314): Figure out what's going wrong with Arm
-    if buildPlatform == hostPlatform && hostPlatform == targetPlatform && targetPlatform.isArm
-    then []
-    else [ "build" "host" ] ++ stdenv.lib.optional (targetPlatform != hostPlatform) "target";
-
+  configurePlatforms = [ "build" "host" ];
   configureFlags = [
     "--enable-targets=all" "--enable-64-bit-bfd"
     "--disable-install-libbfd"
@@ -106,12 +94,13 @@ stdenv.mkDerivation rec {
     "--enable-deterministic-archives"
     "--disable-werror"
     "--enable-fix-loongson2f-nop"
-  ] ++ optionals gold [ "--enable-gold" "--enable-plugins" ];
+  ] ++ stdenv.lib.optionals gold [ "--enable-gold" "--enable-plugins" ];
 
   enableParallelBuilding = true;
 
   passthru = {
-    inherit targetPrefix version;
+    inherit version;
+    isGNU = true;
   };
 
   meta = with stdenv.lib; {

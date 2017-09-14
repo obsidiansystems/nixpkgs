@@ -2,26 +2,20 @@
 , hostPlatform, targetPlatform
 }:
 
-# Make sure both underlying packages claim to have prepended their binaries
-# with the same targetPrefix.
-assert binutils-raw.targetPrefix == cctools.targetPrefix;
-
 let
-  inherit (binutils-raw) targetPrefix;
   cmds = [
     "ar" "ranlib" "as" "dsymutil" "install_name_tool"
     "ld" "strip" "otool" "lipo" "nm" "strings" "size"
   ];
 in
 
-# TODO loop over targetPrefixed binaries too
 stdenv.mkDerivation {
-  name = "${targetPrefix}cctools-binutils-darwin";
+  name = "cctools-binutils-darwin";
   outputs = [ "out" "info" "man" ];
   buildCommand = ''
     mkdir -p $out/bin $out/include
 
-    ln -s ${binutils-raw.bintools.out}/bin/${targetPrefix}c++filt $out/bin/${targetPrefix}c++filt
+    ln -s ${binutils-raw.out}/bin/c++filt $out/bin/c++filt
 
     # We specifically need:
     # - ld: binutils doesn't provide it on darwin
@@ -34,7 +28,7 @@ stdenv.mkDerivation {
     # - strip: the binutils one seems to break mach-o files
     # - lipo: gcc build assumes it exists
     # - nm: the gnu one doesn't understand many new load commands
-    for i in ${stdenv.lib.concatStringsSep " " (builtins.map (e: targetPrefix + e) cmds)}; do
+    for i in ${stdenv.lib.concatStringsSep " " cmds}; do
       ln -sf "${cctools}/bin/$i" "$out/bin/$i"
     done
 
@@ -50,7 +44,7 @@ stdenv.mkDerivation {
       >> $man/nix-support/propagated-build-inputs
   '';
 
-  passthru = {
-    inherit targetPrefix;
+  passthu = {
+    isCCTools = true;
   };
 }
