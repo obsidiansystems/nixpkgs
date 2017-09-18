@@ -94,8 +94,7 @@ stdenv.mkDerivation rec {
 
     ./android-patches/extra-modules-temp.patch
     ./android-patches/pthread-die-temp.patch
-  ] ++ stdenv.lib.optional enableRelocatedStaticLibs
-      ./android-patches/enable-fPIC.patch;
+  ];
 
   postPatch = "patchShebangs .";
 
