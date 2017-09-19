@@ -81,7 +81,7 @@ in rec {
 
       # TODO: redundancy betweeen the configuration files and this in
       # picking the appropriate LLVM version.
-      llvmPackages = pkgs.llvmPackges_49;
+      llvmPackages = pkgs.llvmPackages_39;
     };
     ghcHEAD = callPackage ../development/compilers/ghc/head.nix rec {
       bootPkgs = if buildPlatform != targetPlatform then packages.ghcHEAD else packages.ghc802;
