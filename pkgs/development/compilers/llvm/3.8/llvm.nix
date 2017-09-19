@@ -61,7 +61,7 @@ in stdenv.mkDerivation rec {
     "-DLLVM_ENABLE_RTTI=ON"
   ] ++ stdenv.lib.optional enableSharedLibraries [
     "-DLLVM_LINK_LLVM_DYLIB=ON"
-  ] ++ stdenv.lib.optional (!isDarwin)
+  ] ++ stdenv.lib.optional (!isDarwin && stdenv.targetPlatform == stdenv.hostPlatform)
     "-DLLVM_BINUTILS_INCDIR=${stdenv.lib.getDev binutils.binutils}/include"
     ++ stdenv.lib.optionals ( isDarwin) [
     "-DLLVM_ENABLE_LIBCXX=ON"

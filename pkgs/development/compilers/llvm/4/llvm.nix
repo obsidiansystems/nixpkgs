@@ -88,7 +88,7 @@ in stdenv.mkDerivation rec {
     "-DSPHINX_OUTPUT_HTML=OFF"
     "-DSPHINX_WARNINGS_AS_ERRORS=OFF"
   ]
-  ++ stdenv.lib.optional (!isDarwin)
+  ++ stdenv.lib.optional (!isDarwin && stdenv.targetPlatform == stdenv.hostPlatform)
     "-DLLVM_BINUTILS_INCDIR=${stdenv.lib.getDev binutils.binutils}/include"
   ++ stdenv.lib.optionals (isDarwin) [
     "-DLLVM_ENABLE_LIBCXX=ON"

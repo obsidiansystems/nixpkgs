@@ -46,7 +46,7 @@ in stdenv.mkDerivation rec {
     "-DLLVM_REQUIRES_RTTI=1"
   ] ++ stdenv.lib.optional enableSharedLibraries
     "-DBUILD_SHARED_LIBS=ON"
-    ++ stdenv.lib.optional (!isDarwin)
+    ++ stdenv.lib.optional (!isDarwin && stdenv.targetPlatform == stdenv.hostPlatform)
     "-DLLVM_BINUTILS_INCDIR=${stdenv.lib.getDev binutils.binutils}/include"
     ++ stdenv.lib.optionals ( isDarwin) [
     "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
