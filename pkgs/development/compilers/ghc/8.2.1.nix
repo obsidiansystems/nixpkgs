@@ -53,6 +53,8 @@ let
     GhcRtsHcOpts += -fPIC
   '';
 
+  prebuiltAndroidTarget = targetPlatform.useAndroidPrebuilt or false;
+
   # Splicer will pull out correct variations
   libDeps = platform: [ ncurses libffi ]
     ++ stdenv.lib.optional (!enableIntegerSimple) gmp
@@ -71,7 +73,24 @@ stdenv.mkDerivation rec {
 
   outputs = [ "out" "doc" ];
 
-  patches = [ ./ghc-gold-linker.patch ];
+  patches = [
+    ./ghc-gold-linker.patch
+  ] ++ stdenv.lib.optionals prebuiltAndroidTarget [
+    ./android-patches/add-llvm-target-data-layout.patch
+    #./android-patches/build-deps-extra-cc-opts.patch
+    ./android-patches/unix-posix_vdisable.patch
+    #./android-patches/unix-posix-files-imports.patch
+    #./android-patches/no-pthread-android.patch                              # MERGED
+    ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
+    ./android-patches/undefine_MYTASK_USE_TLV_for_CC_SUPPORTS_TLS_zero.patch
+    ./android-patches/force-relocation-equal-pic.patch
+    ./android-patches/rts_android_log_write.patch
+    #./android-patches/patch_rts_elf.patch                                   # MERGED
+
+    #./android-patches/extra-modules-temp.patch                              # MERGED
+    #./android-patches/pthread-die-temp.patch                                # MERGED
+  ] ++ stdenv.lib.optional enableRelocatedStaticLibs
+      ./android-patches/enable-fPIC.patch;
 
   postPatch = "patchShebangs .";
 
