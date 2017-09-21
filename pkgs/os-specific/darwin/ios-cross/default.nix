@@ -1,62 +1,74 @@
-{ runCommand
-, lib
-, llvm
+{ lib, hostPlatform, targetPlatform
 , clang
 , binutils
+, runCommand
 , stdenv
-, coreutils
-, gnugrep
-, buildPackages
-, targetPlatform
+, buildIosSdk, targetIosSdkPkgs
 }:
 
-/* As of this writing, known-good prefix/arch/simulator triples:
- * aarch64-apple-darwin14 | arm64  | false
- * arm-apple-darwin10     | armv7  | false
- * i386-apple-darwin11    | i386   | true
- * x86_64-apple-darwin14  | x86_64 | true
- */
-
-# Apple uses somewhat non-standard names for this. We could fall back on
-# `targetPlatform.parsed.cpu.name`, but that would be a more standard one and
-# likely to fail. Better just to require something manual.
-assert targetPlatform ? arch;
-
 let
+  # As of 12cc39514, according to @shlevy:
+  iosPlatformCheck = { config, arch, isIphoneSimulator, ... }:
+    (config == "aarch64-apple-darwin14"
+     && arch == "arm64"
+     && !(isiPhoneSimulator or false))
+    ||
+    (config == "arm-apple-darwin10"
+     && arch == "armv7"
+     && !(isiPhoneSimulator or false))
+    ||
+    (config == "i386-apple-darwin11"
+     && arch == "i386"
+     && isiPhoneSimulator)
+    ||
+    (config == "x86_64-apple-darwin14"
+     && arch == "x86_64"
+     && isiPhoneSimulator);
 
-  prefix = targetPlatform.config;
-  inherit (targetPlatform) arch;
-  simulator = targetPlatform.isiPhoneSimulator or false;
+in
 
-  sdkType = if simulator then "Simulator" else "OS";
+rec {
+  sdk = rec {
+    name = "ios-sdk";
+    type = "derivation";
+    outPath = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${version}.sdk";
 
-  sdkVer = targetPlatform.sdkVer;
+    sdkType = if simulator then "Simulator" else "OS";
+    version = targetPlatform.sdkVer;
+  };
 
-  sdk = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${sdkVer}.sdk";
+  binutils = darwin.binutils.override {
+    libc = targetIosSdkPkgs.libraries;
+  };
 
-  libc = runCommand "empty-libc" {} "mkdir -p $out/{lib,include}";
-
-in (import ../../../build-support/cc-wrapper {
-    inherit stdenv coreutils gnugrep buildPackages;
-    nativeTools = false;
-    nativeLibc = false;
-    binutils = binutils.override {
-      inherit libc;
-    };
-    inherit libc;
+  clang = (wrapCCWith {
     inherit (clang) cc;
+    bintools = binutils;
+    libc = targetIosSdkPkgs.libraries;
     extraBuildCommands = ''
-      if ! [ -d ${sdk} ]; then
-          echo "You must have ${sdkVer} of the iPhone${sdkType} sdk installed at ${sdk}" >&2
-          exit 1
-      fi
-      # ugh
       tr '\n' ' ' < $out/nix-support/cc-cflags > cc-cflags.tmp
       mv cc-cflags.tmp $out/nix-support/cc-cflags
-      echo "-target ${prefix} -arch ${arch} -idirafter ${sdk}/usr/include ${if simulator then "-mios-simulator-version-min=9.0" else "-miphoneos-version-min=9.0"}" >> $out/nix-support/cc-cflags
+      echo "-target ${targetPlatform.config} -arch ${arch}" >> $out/nix-support/cc-cflags
+      echo "-isystem ${sdk}/usr/include -isystem ${sdk}/usr/include/c++/4.2.1/ -stdlib=libstdc++" >> $out/nix-support/cc-cflags
+      echo "${if simulator then "-mios-simulator-version-min=9.0" else "-miphoneos-version-min=9.0"}" >> $out/nix-support/cc-cflags
 
-      echo "-arch ${arch} -L${sdk}/usr/lib ${lib.optionalString simulator "-L${sdk}/usr/lib/system "}-i${if simulator then "os_simulator" else "phoneos"}_version_min 9.0.0" >> $out/nix-support/libc-ldflags-before
+      echo "-arch ${arch} -L${sdk}/usr/lib" >> $out/nix-support/libc-ldflags-before
+      ${lib.optionalString simulator "echo '-L${sdk}/usr/lib/system' >> $out/nix-support/libc-ldflags-before"}
+      echo "-i${if simulator then "os_simulator" else "phoneos"}_version_min 9.0.0" >> $out/nix-support/libc-ldflags-before
     '';
   }) // {
-    inherit sdkType sdkVer sdk;
-  }
+    inherit sdk;
+  };
+
+  libraries = assert iosPlatformCheck hostPlatform; runCommand "libSystem-prebuilt" {
+    passthru = {
+      sdk = buildIosSdk;
+    };
+  } ''
+    if ! [ -d ${sdk} ]; then
+        echo "You must have version ${sdk.version} of the iPhone${sdk.sdkType} sdk installed at ${sdk}" >&2
+        exit 1
+    fi
+    ln -s ${sdk} $out
+  '';
+}

@@ -1,4 +1,6 @@
-{ pkgs, darwin, stdenv, callPackage, callPackages, newScope }:
+{ buildPackages, pkgs, targetPackages
+, darwin, stdenv, callPackage, callPackages, newScope
+}:
 
 let
   apple-source-releases = callPackage ../os-specific/darwin/apple-source-releases { };
@@ -39,8 +41,9 @@ in
 
   insert_dylib = callPackage ../os-specific/darwin/insert_dylib { };
 
-  ios-cross = callPackage ../os-specific/darwin/ios-cross {
-    inherit (darwin) binutils;
+  iosSdkPkgs = callPackage ../os-specific/darwin/ios-cross {
+    buildIosSdk = buildPackages.darwin.iosSdkPkgs.sdk;
+    targetIosSdkPkgs = targetPackages.darwin.iosSdkPkgs;
   };
 
   libobjc = apple-source-releases.objc4;
