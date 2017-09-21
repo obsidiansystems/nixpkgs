@@ -34,14 +34,16 @@ let
 
   stagesAndroidPrebuilt = import ./android-prebuilt args;
 
+  stagesIosPrebuilt = import ./ios-prebuilt args;
+
   stagesCustom = import ./custom args;
 
   # Select the appropriate stages for the platform `system'.
 in
   if crossSystem != null then
-    if crossSystem.useAndroidPrebuilt or false
-    then stagesAndroidPrebuilt
-    else stagesCross
+    /**/ if crossSystem.useAndroidPrebuilt or false then stagesAndroidPrebuilt
+    else if crossSystem.useIosPrebuilt     or false then stagesIosPrebuilt
+    else                                                 stagesCross
   else if config ? replaceStdenv then stagesCustom
   else { # switch
     "i686-linux" = stagesLinux;
