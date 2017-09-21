@@ -15,7 +15,9 @@
 
 , # If enabled, GHC will be built with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-  enableIntegerSimple ? targetPlatform.useAndroidPrebuilt or false, gmp ? null
+  enableIntegerSimple ? targetPlatform.useAndroidPrebuilt or false
+                     || targetPlatform.useIosPrebuilt or false
+, gmp ? null
 
 , # If enabled, use -fPIC when compiling static libs.
   enableRelocatedStaticLibs ? targetPlatform != hostPlatform
