@@ -87,7 +87,11 @@ in bootStages ++ [
       targetPlatform = crossSystem;
       cc = toolPackages.iosClang;
       overrides = self: super: {
-        iosLibSystem = sdk + "/usr";
+        iosLibSystem = rec {
+          type = "derivation";
+          outPath = sdk + "/usr";
+          drvPath = outPath;
+        };
       };
     };
   })
