@@ -50,7 +50,7 @@ fi
 export NIX_${role}BINUTILS=@out@
 
 for CMD in \
-    ar as nm objcopy ranlib strip strings size ld windres
+    ar as nm objcopy objdump readelf ranlib strip strings size ld windres
 do
     if
         PATH=$_PATH type -p "@binPrefix@$CMD" > /dev/null
