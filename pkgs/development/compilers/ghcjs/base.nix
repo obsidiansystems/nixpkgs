@@ -143,6 +143,7 @@ in let this = mkDerivation (rec {
     inherit bootPkgs;
     isCross = true;
     isGhcjs = true;
+    prefix = "";
     inherit nodejs ghcjsBoot;
     socket-io = pkgs.nodePackages."socket.io";
 
