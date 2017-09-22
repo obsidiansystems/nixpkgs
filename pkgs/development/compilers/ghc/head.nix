@@ -111,6 +111,7 @@ stdenv.mkDerivation rec {
     sed -i -e 's|-isysroot /Developer/SDKs/MacOSX10.5.sdk||' configure
   '' + stdenv.lib.optionalString (targetPlatform != hostPlatform) ''
     export CC="$TARGET_CC"
+    export STRIP="$TARGET_STRIP"
   '' + stdenv.lib.optionalString (!stdenv.isDarwin) ''
     export NIX_LDFLAGS+=" -rpath $out/lib/ghc-${version}"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
