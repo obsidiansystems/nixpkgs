@@ -89,7 +89,9 @@ stdenv.mkDerivation rec {
 
   outputs = [ "out" "doc" ];
 
-  patches = stdenv.lib.optionals prebuiltAndroidTarget [
+  patches = stdenv.lib.optionals (targetPlatform != hostPlatform) [
+    ./D4008.diff
+  ] ++ stdenv.lib.optionals prebuiltAndroidTarget [
     ./android-patches/add-llvm-target-data-layout.patch
     ./android-patches/unix-posix_vdisable.patch
     ./android-patches/force_CC_SUPPORTS_TLS_equal_zero.patch
