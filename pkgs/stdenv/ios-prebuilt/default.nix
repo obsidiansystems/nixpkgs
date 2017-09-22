@@ -81,7 +81,12 @@ in bootStages ++ [
     inherit config overlays;
     selfBuild = false;
     stdenv = toolPackages.makeStdenvCross {
-      inherit (toolPackages) stdenv;
+      stdenv = toolPackages.stdenv.override {
+        preHook=''
+          ${toolPackages.stdenv.preHook}
+          NIX_ENFORCE_PURITY=""
+        '';
+      };
       buildPlatform = localSystem;
       hostPlatform = crossSystem;
       targetPlatform = crossSystem;
