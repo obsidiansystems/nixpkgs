@@ -1,0 +1,155 @@
+diff --git a/configure b/configure
+--- a/configure
++++ b/configure
+@@ -727,6 +727,9 @@ OPT
+ LlcCmd
+ LLC
+ LlvmVersion
++StripCmd
++STRIP
++RanlibCmd
+ RANLIB
+ ArCmd
+ AR
+@@ -885,6 +887,7 @@ with_nm
+ with_objdump
+ with_ar
+ with_ranlib
++with_strip
+ with_llc
+ with_opt
+ enable_largefile
+@@ -1574,6 +1566,7 @@ Optional Packages:
+   --with-objdump=ARG      Use ARG as the path to objdump [default=autodetect]
+   --with-ar=ARG           Use ARG as the path to ar [default=autodetect]
+   --with-ranlib=ARG       Use ARG as the path to ranlib [default=autodetect]
++  --with-strip=ARG        Use ARG as the path to strip [default=autodetect]
+   --with-llc=ARG          Use ARG as the path to llc [default=autodetect]
+   --with-opt=ARG          Use ARG as the path to opt [default=autodetect]
+   --with-system-libffi    Use system provided libffi for RTS [default=no]
+@@ -7667,6 +7660,125 @@ RanlibCmd="$RANLIB"
+ RANLIB="$RanlibCmd"
+ 
+ 
++
++
++# Check whether --with-strip was given.
++if test "${with_strip+set}" = set; then :
++  withval=$with_strip;
++    if test "$HostOS" = "mingw32"
++    then
++        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Request to use $withval will be ignored" >&5
++$as_echo "$as_me: WARNING: Request to use $withval will be ignored" >&2;}
++    else
++        STRIP=$withval
++    fi
++
++    # Remember that we set this manually.  Used to override CC_STAGE0
++    # and friends later, if we are not cross-compiling.
++    With_strip=$withval
++
++else
++
++    if test "$HostOS" != "mingw32"
++    then
++        if test "yes" = "no" -o "$target_alias" = "" ; then
++            # Extract the first word of "strip", so it can be a program name with args.
++set dummy strip; ac_word=$2
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
++$as_echo_n "checking for $ac_word... " >&6; }
++if ${ac_cv_path_STRIP+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++  case $STRIP in
++  [\\/]* | ?:[\\/]*)
++  ac_cv_path_STRIP="$STRIP" # Let the user override the test with a path.
++  ;;
++  *)
++  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++    for ac_exec_ext in '' $ac_executable_extensions; do
++  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
++    ac_cv_path_STRIP="$as_dir/$ac_word$ac_exec_ext"
++    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
++    break 2
++  fi
++done
++  done
++IFS=$as_save_IFS
++
++  ;;
++esac
++fi
++STRIP=$ac_cv_path_STRIP
++if test -n "$STRIP"; then
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $STRIP" >&5
++$as_echo "$STRIP" >&6; }
++else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++fi
++
++
++        else
++            # Extract the first word of "$target_alias-strip", so it can be a program name with args.
++set dummy $target_alias-strip; ac_word=$2
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
++$as_echo_n "checking for $ac_word... " >&6; }
++if ${ac_cv_path_STRIP+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++  case $STRIP in
++  [\\/]* | ?:[\\/]*)
++  ac_cv_path_STRIP="$STRIP" # Let the user override the test with a path.
++  ;;
++  *)
++  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++    for ac_exec_ext in '' $ac_executable_extensions; do
++  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
++    ac_cv_path_STRIP="$as_dir/$ac_word$ac_exec_ext"
++    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
++    break 2
++  fi
++done
++  done
++IFS=$as_save_IFS
++
++  ;;
++esac
++fi
++STRIP=$ac_cv_path_STRIP
++if test -n "$STRIP"; then
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $STRIP" >&5
++$as_echo "$STRIP" >&6; }
++else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++fi
++
++
++        fi
++        if test "no" = "no" -a -z "$STRIP"
++        then
++            as_fn_error $? "cannot find strip in your PATH" "$LINENO" 5
++        fi
++    fi
++
++
++fi
++
++
++StripCmd="$STRIP"
++STRIP="$StripCmd"
++
++
++
+ # Note: we may not have objdump on OS X, and we only need it on Windows (for DLL checks)
+ case $HostOS_CPP in
+ cygwin32|mingw32)
