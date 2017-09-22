@@ -127,6 +127,9 @@ stdenv.mkDerivation rec {
     export NIX_LDFLAGS+=" -rpath $out/lib/ghc-${version}"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
     export NIX_LDFLAGS+=" -no_dtrace_dof"
+  '' # For accessing XCode
+     + stdenv.lib.optionalString (targetPlatform.useIosPrebuilt or false) ''
+     export NIX_ENFORCE_PURITY=0
   '';
 
   # TODO(@Ericson2314): Always pass "--target" and always prefix.
