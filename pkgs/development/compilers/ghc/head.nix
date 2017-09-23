@@ -100,7 +100,10 @@ stdenv.mkDerivation rec {
     ./android-patches/force-relocation-equal-pic.patch
     ./android-patches/rts_android_log_write.patch
   ] ++ stdenv.lib.optional enableRelocatedStaticLibs
-      ./android-patches/enable-fPIC.patch;
+      ./android-patches/enable-fPIC.patch
+    ++ stdenv.lib.optional (with targetPlatform; (isDarwin && (isAarch64 || isArm)))
+      ./ios-rump-linker.patch
+  ;
 
   postPatch = "patchShebangs .";
 
