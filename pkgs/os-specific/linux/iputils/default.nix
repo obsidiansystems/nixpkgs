@@ -25,8 +25,14 @@ stdenv.mkDerivation rec {
 
   makeFlags = "USE_GNUTLS=no";
 
+  nativeBuildInputs = [
+    libsysfs opensp openssl libcap SGMLSpm libgcrypt libidn nettle
+    docbook_sgml_dtd_31
+  ];
+
   buildInputs = [
-    libsysfs opensp openssl libcap docbook_sgml_dtd_31 SGMLSpm libgcrypt libidn nettle
+    libsysfs opensp openssl libcap SGMLSpm libgcrypt libidn nettle
+    docbook_sgml_dtd_31
   ];
 
   buildFlags = "man all ninfod";
