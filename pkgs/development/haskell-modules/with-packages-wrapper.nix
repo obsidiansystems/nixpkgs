@@ -57,7 +57,7 @@ symlinkJoin {
   # as a dedicated drv attribute, like `compiler-name`
   name = ghc.name + "-with-packages";
   paths = paths ++ [ghc];
-  propagatedNativeBuildInputs = packages;
+  propagatedBuildInputs = packages;
   extraOutputsToInstall = [ "out" "doc" ];
   inherit ignoreCollisions;
   postBuild = ''
@@ -68,7 +68,7 @@ symlinkJoin {
     WRAPPER_NIX_CFLAGS_LINK=""
     ${lib.optionalString stdenv.isDarwin ''
       # Find all the Framework paths that must be available at link time
-      allPkgs="$nativePkgs[@]"
+      allPkgs="''${__depsHostHost[@]} ''${depsHostTarget[@]}"
       for x in ${toString packages} ; do
         findInputs "$x" allPkgs propagated-native-build-inputs
       done
