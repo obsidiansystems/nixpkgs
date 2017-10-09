@@ -12367,6 +12367,19 @@ in {
     };
   });
 
+  maps = buildPythonPackage rec {
+    pname = "maps";
+    version = "4.2.0";
+    name = "${pname}-${version}";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/m/maps/${name}.tar.gz";
+      sha256 = "1ydc4wfr5hwq33z7a5wsy71hxpq3j7kvpc6b7xgqgxpaf1s5zfr9";
+    };
+
+    doCheck = false;
+  };
+
 
   nameparser = buildPythonPackage rec {
     name = "nameparser-${version}";
@@ -24229,8 +24242,6 @@ EOF
       license = licenses.gpl2;
     };
   };
-
-  torchvision = callPackage ../development/python-modules/torchvision { };
 
   jenkinsapi = buildPythonPackage rec {
     name = "jenkinsapi-${version}";
