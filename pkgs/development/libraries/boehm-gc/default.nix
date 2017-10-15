@@ -1,4 +1,8 @@
-{ lib, stdenv, fetchurl, pkgconfig, libatomic_ops, enableLargeConfig ? false }:
+{ stdenv, buildPlatform, hostPlatform
+, fetchurl, pkgconfig
+, libatomic_ops
+, enableLargeConfig ? false
+}:
 
 stdenv.mkDerivation rec {
   name = "boehm-gc-7.6.0";
@@ -15,9 +19,9 @@ stdenv.mkDerivation rec {
 
   configureFlags =
     [ "--enable-cplusplus" ]
-    ++ lib.optional enableLargeConfig "--enable-large-config";
+    ++ stdenv.lib.optional enableLargeConfig "--enable-large-config";
 
-  doCheck = true;
+  doCheck = buildPlatform == hostPlatform;
 
   # Don't run the native `strip' when cross-compiling.
   dontStrip = stdenv ? cross;
