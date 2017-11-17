@@ -3375,6 +3375,23 @@ in {
     };
   };
 
+  openai-gym = buildPythonPackage rec {
+    version = "v0.7.4";
+    name = "openai-gym-${version}";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "openai";
+      repo = "gym";
+      rev = "0eccce8146d011f7691f4aff5766be7c5a4d8cbd";
+      sha256 = "0q0b2rf67b0yy3yq560f4cxx14v7wc1bd1qd85vi4as9qjhmxwf8";
+    };
+
+    doCheck = false;
+
+    propagatedBuildInputs = with self; [ pyglet numpy scipy six requests ];
+    checkInputs = with self; [ pytest mock ];
+  };
+
   openant = buildPythonPackage rec {
     name = "openant-unstable-2017-02-11";
 
