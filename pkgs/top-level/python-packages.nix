@@ -20721,14 +20721,14 @@ in {
     cudaSupport = true;
     cudaVersion = "cu75";
     cudatoolkit = pkgs.cudatoolkit75;
-    cudnn = pkgs.cudnn5_cudatoolkit75;
+    cudnn = pkgs.cudnn_cudatoolkit75;
   };
 
-  torchWithCuda80 = callPackage ../development/python-modules/torch {
+  torchWithCuda8 = callPackage ../development/python-modules/torch {
     cudaSupport = true;
     cudaVersion = "cu75";
     cudatoolkit = pkgs.cudatoolkit8;
-    cudnn = pkgs.cudnn51_cudatoolkit80;
+    cudnn = pkgs.cudnn_cudatoolkit8;
   };
 
   torchvision = callPackage ../development/python-modules/torchvision {
