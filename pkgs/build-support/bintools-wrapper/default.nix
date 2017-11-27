@@ -145,10 +145,20 @@ stdenv.mkDerivation {
     '')
 
     + ''
-      # Create a symlink to as (the assembler).
-      if [ -e $ldPath/as ]; then
-        ln -s $ldPath/as $out/bin/${targetPrefix}as
-      fi
+      for exe in "$ldPath"/*; do
+        local name=$(basename "$exe")
+        case "$name" in
+          ld.*)
+            wrap ${targetPrefix}$variant ${./ld-wrapper.sh} $underlying
+            ;;
+          ld | as)
+            # handled manually below
+            ;;
+          *)
+            ln -s "$ldPath/$name" "$out/bin/${targetPrefix}$name"
+            ;;
+        esac
+      done
 
     '' + (if !useMacosReexportHack then ''
       wrap ${targetPrefix}ld ${./ld-wrapper.sh} $ldPath/ld
@@ -158,12 +168,6 @@ stdenv.mkDerivation {
       wrap "${targetPrefix}ld" ${./ld-wrapper.sh} "$out/bin/$ldInner"
       unset ldInner
     '') + ''
-
-      for variant in ld.gold ld.bfd ld.lld; do
-        local underlying=$ldPath/$variant
-        [[ -e "$underlying" ]] || continue
-        wrap ${targetPrefix}$variant ${./ld-wrapper.sh} $underlying
-      done
 
       set +u
     '';
