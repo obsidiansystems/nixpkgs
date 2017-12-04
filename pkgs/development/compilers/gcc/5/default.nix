@@ -356,7 +356,7 @@ stdenv.mkDerivation ({
       )
     }
     ${optionalString (!(crossMingw && crossStageStatic))
-      "--with-native-system-header-dir=${getDev (stdenv.ccCross or stdenv.cc).libc}/include"}
+      "--with-native-system-header-dir=${(stdenv.ccCross or stdenv.cc).libc.dev}/include"}
     ${if langAda then " --enable-libada" else ""}
     ${if targetPlatform == hostPlatform && targetPlatform.isi686 then "--with-arch=i686" else ""}
     ${if targetPlatform != hostPlatform then crossConfigureFlags else ""}
