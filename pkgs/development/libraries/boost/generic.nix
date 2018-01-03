@@ -2,7 +2,6 @@
 , which
 , buildPackages, buildPlatform, hostPlatform
 , toolset ? /**/ if stdenv.cc.isClang                                then "clang"
-            else if stdenv.cc.isGNU && hostPlatform != buildPlatform then "gcc-cross"
             else null
 , enableRelease ? true
 , enableDebug ? false
