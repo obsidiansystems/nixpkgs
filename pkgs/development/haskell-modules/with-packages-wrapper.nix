@@ -79,6 +79,16 @@ let this = buildPackages.symlinkJoin {
       done
     ''}
 
+    WRAPPER_NIX_CFLAGS_LINK_RUN=""
+    ${lib.optionalString stdenv.isDarwin ''
+      # Find all the Framework paths that must be available at link time
+      for x in "''${__pkgsTargetTarget[@]}" ; do
+        if [ -d "$x/Library/Frameworks" ] ; then
+          WRAPPER_NIX_CFLAGS_LINK_RUN+=" --ghc-arg=-framework-path$x/Library/Frameworks"
+        fi
+      done
+    ''}
+
     for prg in ${ghcCommand} ${ghcCommand}i ${ghcCommand}-${ghc.version} ${ghcCommand}i-${ghc.version}; do
       if [[ -x "${ghc}/bin/$prg" ]]; then
         rm -f $out/bin/$prg
@@ -102,7 +112,7 @@ let this = buildPackages.symlinkJoin {
           --set "NIX_${ghcCommandCaps}PKG"     "$out/bin/${ghcCommand}-pkg" \
           --set "NIX_${ghcCommandCaps}_DOCDIR" "${docDir}"                  \
           --set "NIX_${ghcCommandCaps}_LIBDIR" "${libDir}"                  \
-          --add-flags                          "$WRAPPER_NIX_CFLAGS_LINK"
+          --add-flags                          "$WRAPPER_NIX_CFLAGS_LINK_RUN"
       fi
     done
 
