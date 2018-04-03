@@ -39,7 +39,7 @@ in lib.init bootStages ++ [
       buildPlatform = localSystem;
       hostPlatform = crossSystem;
       targetPlatform = crossSystem;
-      cc = if crossSystem.useiOSCross or false
+      cc = if crossSystem.useiOSPrebuilt or false
              then buildPackages.darwin.iosSdkPkgs.clang
            else if crossSystem.useAndroidPrebuilt
              then buildPackages.androidenv.androidndkPkgs.gcc
