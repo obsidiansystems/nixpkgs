@@ -1,0 +1,139 @@
+diff --git a/bfd/config.bfd b/bfd/config.bfd
+index f04a993f06..3357022f35 100644
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -238,7 +238,7 @@ case "${targ}" in
+ 
+ # START OF targmatch.h
+ #ifdef BFD64
+-  aarch64-*-darwin*)
++  aarch64-*-darwin* | aarch64-*-ios*)
+     targ_defvec=aarch64_mach_o_vec
+     targ_selvecs="arm_mach_o_vec mach_o_le_vec mach_o_be_vec mach_o_fat_vec"
+     targ_archs="$targ_archs bfd_i386_arch bfd_powerpc_arch bfd_rs6000_arch"
+@@ -358,7 +358,7 @@ case "${targ}" in
+     targ_selvecs=arc_elf32_be_vec
+     ;;
+ 
+-  arm-*-darwin*)
++  arm-*-darwin* | arm-*-ios*)
+     targ_defvec=arm_mach_o_vec
+     targ_selvecs="mach_o_le_vec mach_o_be_vec mach_o_fat_vec"
+     targ_archs="$targ_archs bfd_i386_arch bfd_powerpc_arch bfd_rs6000_arch"
+diff --git a/configure b/configure
+index 2d615a9996..fd1739a640 100755
+--- a/configure
++++ b/configure
+@@ -3158,7 +3158,7 @@ if test x$enable_libgomp = x ; then
+ 	;;
+     *-*-solaris2* | *-*-hpux11*)
+ 	;;
+-    *-*-darwin* | *-*-aix*)
++    *-*-darwin* | *-*-ios* | *-*-aix*)
+ 	;;
+     nvptx*-*-*)
+ 	;;
+@@ -3375,7 +3375,7 @@ case "${target}" in
+     ;;
+   x86_64-*-darwin[912]*)
+     ;;
+-  *-*-darwin*)
++  *-*-darwin* | *-*-ios*)
+     noconfigdirs="$noconfigdirs target-libffi"
+     ;;
+   *-*-netware*)
+@@ -3457,7 +3457,7 @@ esac
+ # Disable the go frontend on systems where it is known to not work. Please keep
+ # this in sync with contrib/config-list.mk.
+ case "${target}" in
+-*-*-darwin* | *-*-cygwin* | *-*-mingw*)
++*-*-darwin* | *-*-ios* | *-*-cygwin* | *-*-mingw*)
+     unsupported_languages="$unsupported_languages go"
+     ;;
+ esac
+@@ -3466,7 +3466,7 @@ esac
+ # For testing, you can easily override this with --enable-libgo.
+ if test x$enable_libgo = x; then
+     case "${target}" in
+-    *-*-darwin*)
++    *-*-darwin* | *-*-ios*)
+ 	# PR 46986
+ 	noconfigdirs="$noconfigdirs target-libgo"
+ 	;;
+@@ -3585,11 +3585,11 @@ esac
+ case "${target}" in
+   *-*-chorusos)
+     ;;
+-  aarch64-*-darwin*)
++  aarch64-*-darwin* | aarch64-*-ios*)
+     noconfigdirs="$noconfigdirs ld gas gdb gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;
+-  arm-*-darwin*)
++  arm-*-darwin* | aarch64-*-ios*)
+     noconfigdirs="$noconfigdirs ld gas gdb gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;
+@@ -3605,7 +3605,7 @@ case "${target}" in
+     noconfigdirs="$noconfigdirs ld gas gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;
+-  *-*-darwin*)
++  *-*-darwin* | *-*-ios*)
+     noconfigdirs="$noconfigdirs ld gas gdb gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;
+@@ -3914,7 +3914,7 @@ fi
+   hppa*-*)
+     host_makefile_frag="config/mh-pa"
+     ;;
+-  *-*-darwin*)
++  *-*-darwin* | *-*-ios*)
+     host_makefile_frag="config/mh-darwin"
+     ;;
+   powerpc-*-aix*)
+@@ -5994,7 +5994,7 @@ fi
+ 
+ target_elf=no
+ case $target in
+-  *-darwin* | *-aix* | *-cygwin* | *-mingw* | *-aout* | *-*coff* | \
++  *-darwin* | *-*-ios* | *-aix* | *-cygwin* | *-mingw* | *-aout* | *-*coff* | \
+   *-msdosdjgpp* | *-vms* | *-wince* | *-*-pe* | \
+   alpha*-dec-osf* | *-interix* | hppa[12]*-*-hpux* | \
+   nvptx-*-none)
+@@ -6023,7 +6023,7 @@ else
+   # warn during gcc/ subconfigure; unless you're bootstrapping with
+   # -flto it won't be needed until after installation anyway.
+     case $target in
+-      *-cygwin* | *-mingw* | *-apple-darwin* | *djgpp*) ;;
++      *-cygwin* | *-mingw* | *-apple-darwin* | *-apple-ios* | *djgpp*) ;;
+       *) if test x"$enable_lto" = x"yes"; then
+ 	as_fn_error "LTO support is not enabled for this target." "$LINENO" 5
+         fi
+@@ -6996,7 +6996,7 @@ rm -f conftest*
+ # Decide which environment variable is used to find dynamic libraries.
+ case "${host}" in
+   *-*-hpux*) RPATH_ENVVAR=SHLIB_PATH ;;
+-  *-*-darwin*) RPATH_ENVVAR=DYLD_LIBRARY_PATH ;;
++  *-*-darwin* | *-*-ios*) RPATH_ENVVAR=DYLD_LIBRARY_PATH ;;
+   *-*-mingw* | *-*-cygwin ) RPATH_ENVVAR=PATH ;;
+   *) RPATH_ENVVAR=LD_LIBRARY_PATH ;;
+ esac
+diff --git a/configure.ac b/configure.ac
+index aae94501e4..18e0e34f3b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -916,11 +916,11 @@ esac
+ case "${target}" in
+   *-*-chorusos)
+     ;;
+-  aarch64-*-darwin*)
++  aarch64-*-darwin* | aarch64-*-ios*)
+     noconfigdirs="$noconfigdirs ld gas gdb gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;
+-  arm-*-darwin*)
++  arm-*-darwin* | arm-*-ios*)
+     noconfigdirs="$noconfigdirs ld gas gdb gprof"
+     noconfigdirs="$noconfigdirs sim target-rda"
+     ;;

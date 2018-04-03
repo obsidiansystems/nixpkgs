@@ -1,5 +1,5 @@
 { stdenv, fetchFromGitHub, makeWrapper, autoconf, automake, libtool_2
-, llvm, libcxx, libcxxabi, clang, libuuid
+, llvm, libcxx, libcxxabi, clang, libuuid, updateAutotoolsGnuConfigScriptsHook
 , libobjc ? null, maloader ? null, xctoolchain ? null
 , hostPlatform, targetPlatform
 }:
@@ -31,7 +31,11 @@ let
 
     outputs = [ "out" "dev" ];
 
-    nativeBuildInputs = [ autoconf automake libtool_2 ];
+    nativeBuildInputs = [
+      autoconf automake libtool_2
+    ] ++ stdenv.lib.optionals targetPlatform.isiOS [
+      updateAutotoolsGnuConfigScriptsHook
+    ];
     buildInputs = [ libuuid ] ++
       # Only need llvm and clang if the stdenv isn't already clang-based (TODO: just make a stdenv.cc.isClang)
       stdenv.lib.optionals (!stdenv.isDarwin) [ llvm clang ] ++
