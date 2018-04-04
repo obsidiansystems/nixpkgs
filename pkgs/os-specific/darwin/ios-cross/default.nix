@@ -34,6 +34,11 @@ rec {
   binutils = wrapBintoolsWith {
     libc = targetIosSdkPkgs.libraries;
     bintools = binutils-unwrapped;
+    extraBuildCommands = ''
+      echo "-arch ${iosPlatformArch targetPlatform} -L${sdk}/usr/lib" >> $out/nix-support/libc-ldflags-before
+      ${lib.optionalString targetPlatform.isiPhoneSimulator "echo '-L${sdk}/usr/lib/system' >> $out/nix-support/libc-ldflags-before"}
+      echo "-i${if targetPlatform.isiPhoneSimulator then "os_simulator" else "phoneos"}_version_min 9.0.0" >> $out/nix-support/libc-ldflags-before
+    '';
   };
 
   clang = (wrapCCWith {
