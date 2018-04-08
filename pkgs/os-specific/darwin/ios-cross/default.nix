@@ -2,6 +2,7 @@
 , clang-unwrapped
 , binutils-unwrapped
 , runCommand
+, requireFile
 , stdenv
 , wrapBintoolsWith
 , wrapCCWith
@@ -25,11 +26,21 @@ rec {
   sdk = rec {
     name = "ios-sdk";
     type = "derivation";
-    outPath = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${version}.sdk";
+    #outPath = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhone${sdkType}.platform/Developer/SDKs/iPhone${sdkType}${version}.sdk";
+    outPath = "/nix/store/rcxax5vv5cv2bw66mcfz8r3k91skfgvn-iPhoneOS.sdk";
 
     sdkType = if targetPlatform.isiPhoneSimulator then "Simulator" else "OS";
     version = targetPlatform.sdkVer;
   };
+
+  #sdk = requireFile {
+  #  name = "iPhoneOS.platform";
+  #  sha256 = "0mdqa9w1p6cmli6976v4wi0sw9r4p5prkj7lzfd1877wk11c9c73";
+  #  url = "https://example.com";
+  #} // {
+  #  sdkType = if targetPlatform.isiPhoneSimulator then "Simulator" else "OS";
+  #  version = targetPlatform.sdkVer;
+  #};
 
   binutils = wrapBintoolsWith {
     libc = targetIosSdkPkgs.libraries;
