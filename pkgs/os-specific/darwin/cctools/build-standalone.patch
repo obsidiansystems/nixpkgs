@@ -1,0 +1,16 @@
+diff --git a/src/apple-llvm/src/projects/libtapi/CMakeLists.txt b/src/apple-llvm/src/projects/libtapi/CMakeLists.txt
+index 9e7a3d8..e11a41a 100644
+--- a/src/apple-llvm/src/projects/libtapi/CMakeLists.txt
++++ b/src/apple-llvm/src/projects/libtapi/CMakeLists.txt
+@@ -73,7 +73,10 @@ macro(add_tapi_library name)
+   if(ARG_SHARED)
+     set(ARG_ENABLE_SHARED SHARED)
+   endif()
+-  llvm_add_library(${name} ${ARG_ENABLE_SHARED} ${ARG_UNPARSED_ARGUMENTS} ${srcs})
++
++  set(sources ${srcs})
++  add_library(${name} ${ARG_ENABLE_SHARED} ${srcs})
++  set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
+ 
+   if(TARGET ${name})
+     target_link_libraries(${name} ${cmake_2_8_12_INTERFACE} ${LLVM_COMMON_LIBS})
