@@ -25,8 +25,7 @@ in
     bintools = darwin.binutils-unwrapped;
   };
 
-  cctools = callPackage ../os-specific/darwin/cctools/port.nix {
-    inherit (darwin) libobjc maloader;
+  cctools = darwin.callPackage ../os-specific/darwin/cctools/port.nix {
     stdenv = if stdenv.isDarwin then stdenv else pkgs.libcxxStdenv;
     libcxxabi = pkgs.libcxxabi;
     xctoolchain = darwin.xcode.toolchain;
@@ -51,8 +50,10 @@ in
     inherit (pkgs.llvmPackages) clang-unwrapped;
   };
 
+  libtapi = darwin.callPackage ../os-specific/darwin/cctools/libtapi.nix { };
+
   libobjc = apple-source-releases.objc4;
-  
+
   lsusb = callPackage ../os-specific/darwin/lsusb { };
 
   opencflite = callPackage ../os-specific/darwin/opencflite { };

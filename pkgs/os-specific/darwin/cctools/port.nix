@@ -1,5 +1,5 @@
 { stdenv, fetchFromGitHub, makeWrapper, autoconf, automake, libtool_2
-, llvm, libcxx, libcxxabi, clang, libuuid, updateAutotoolsGnuConfigScriptsHook
+, llvm, libcxx, libcxxabi, clang, libuuid, updateAutotoolsGnuConfigScriptsHook, libtapi
 , libobjc ? null, maloader ? null, xctoolchain ? null
 , hostPlatform, targetPlatform
 }:
@@ -22,12 +22,16 @@ let
     name = "${targetPrefix}cctools-port-${version}";
     version = "895";
 
-    src = fetchFromGitHub {
+    src = fetchFromGitHub ({
       owner  = "tpoechtrager";
       repo   = "cctools-port";
+    } // (if hostPlatform == targetPlatform then {
       rev    = "2e569d765440b8cd6414a695637617521aa2375b"; # From branch 895-ld64-274.2
       sha256 = "0l45mvyags56jfi24rawms8j2ihbc45mq7v13pkrrwppghqrdn52";
-    };
+    } else {
+      rev    = "f53c6186393915ba9bff287f18769f9e14ec02e6";
+      sha256 = "1kn3p3a884xvxnq0vwxymkxq5f538csl29hvchbh0iwy71n677a9";
+    }));
 
     outputs = [ "out" "dev" ];
 
@@ -39,7 +43,8 @@ let
     buildInputs = [ libuuid ] ++
       # Only need llvm and clang if the stdenv isn't already clang-based (TODO: just make a stdenv.cc.isClang)
       stdenv.lib.optionals (!stdenv.isDarwin) [ llvm clang ] ++
-      stdenv.lib.optionals stdenv.isDarwin [ libcxxabi libobjc ];
+      stdenv.lib.optionals stdenv.isDarwin [ libcxxabi libobjc ] ++
+      stdenv.lib.optionals (hostPlatform != targetPlatform) [ libtapi ];
 
     patches = [
       ./ld-rpath-nonfinal.patch ./ld-ignore-rpath-link.patch
