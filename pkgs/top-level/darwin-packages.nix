@@ -50,7 +50,7 @@ in
     inherit (pkgs.llvmPackages) clang-unwrapped;
   };
 
-  libtapi = darwin.callPackage ../os-specific/darwin/cctools/libtapi.nix { };
+  libtapi = darwin.callPackage ../os-specific/darwin/libtapi { };
 
   libobjc = apple-source-releases.objc4;
 
