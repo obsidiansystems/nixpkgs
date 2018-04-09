@@ -19,6 +19,8 @@ stdenv.mkDerivation {
     "-DCMAKE_SYSTEM_NAME=Darwin"
   ];
 
+  NIX_CFLAGS_COMPILE = [ "-std=c++11" ];
+
   nativeBuildInputs = [ cmake ];
   buildInputs = [ llvm ];
 
@@ -26,11 +28,14 @@ stdenv.mkDerivation {
 
   enableParallelBuilding = true;
 
+  #postPatch = ''
+  #  mv src src-old
+  #  mv src-old/apple-llvm/src/projects/libtapi ./
+  #  rm -rf src-old
+  #  cd libtapi
+  #'';
   postPatch = ''
-    mv src src-old
-    mv src-old/apple-llvm/src/projects/libtapi ./
-    rm -rf src-old
-    cd libtapi
+    cd src/apple-llvm/src/projects/libtapi
   '';
 
   postInstall = ''
