@@ -22,6 +22,8 @@ let
 
     "wasm64-wasi" "wasm32-wasi"
 
+    "wasm32-unknown"
+
     "powerpc64le-linux"
 
     "riscv32-linux" "riscv64-linux"
@@ -68,6 +70,7 @@ in {
   unix    = filterDoubles predicates.isUnix;
   wasi    = filterDoubles predicates.isWasi;
   windows = filterDoubles predicates.isWindows;
+  wasm    = filterDoubles predicates.isWasm;
 
   embedded = filterDoubles predicates.isNone;
 
