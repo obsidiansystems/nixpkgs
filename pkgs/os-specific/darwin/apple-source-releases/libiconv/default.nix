@@ -1,14 +1,18 @@
 { stdenv, appleDerivation }:
 
 appleDerivation {
-  preConfigure = "cd libiconv";
+  preConfigure = "cd libiconv" #TODO: This `cd` should be in postUnpack, not preConfigure; otherwise, autoreconfHook breaks
+    + stdenv.lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
+
+      sed -i 's/darwin\*/ios\*/g' configure libcharset/configure
+    '';
 
   postInstall = ''
     mv $out/lib/libiconv.dylib $out/lib/libiconv-nocharset.dylib
-    ${stdenv.cc.binutils.prefix}install_name_tool -id $out/lib/libiconv-nocharset.dylib $out/lib/libiconv-nocharset.dylib
+    ${stdenv.cc.bintools.targetPrefix}install_name_tool -id $out/lib/libiconv-nocharset.dylib $out/lib/libiconv-nocharset.dylib
 
     # re-export one useless symbol; ld will reject a dylib that only reexports other dylibs
-    echo 'void dont_use_this(){}' | ${stdenv.cc.binutils.prefix}clang -dynamiclib -x c - -current_version 2.4.0 \
+    echo 'void dont_use_this(){}' | ${stdenv.cc.bintools.targetPrefix}clang -dynamiclib -x c - -current_version 2.4.0 \
       -compatibility_version 7.0.0 -current_version 7.0.0 -o $out/lib/libiconv.dylib \
       -Wl,-reexport_library -Wl,$out/lib/libiconv-nocharset.dylib \
       -Wl,-reexport_library -Wl,$out/lib/libcharset.dylib
