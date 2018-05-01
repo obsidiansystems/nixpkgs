@@ -3,6 +3,8 @@
 appleDerivation {
   postUnpack = "sourceRoot=$sourceRoot/libiconv";
 
+  nativeBuildInputs = stdenv.lib.optional stdenv.hostPlatform.isiOS autoreconfHook;
+
   postInstall = ''
     mv $out/lib/libiconv.dylib $out/lib/libiconv-nocharset.dylib
     ${stdenv.cc.bintools.targetPrefix}install_name_tool -id $out/lib/libiconv-nocharset.dylib $out/lib/libiconv-nocharset.dylib
