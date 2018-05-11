@@ -11,21 +11,16 @@ rec {
 
   sheevaplug = rec {
     config = "armv5tel-unknown-linux-gnueabi";
-    float = "soft";
     platform = platforms.sheevaplug;
   };
 
   raspberryPi = rec {
     config = "armv6l-unknown-linux-gnueabihf";
-    float = "hard";
-    fpu = "vfp";
     platform = platforms.raspberrypi;
   };
 
   armv7l-hf-multiplatform = rec {
     config = "armv7a-unknown-linux-gnueabihf";
-    float = "hard";
-    fpu = "vfpv3-d16";
     platform = platforms.armv7l-hf-multiplatform;
   };
 
@@ -34,8 +29,23 @@ rec {
     platform = platforms.aarch64-multiplatform;
   };
 
+  armv5te-android-prebuilt = rec {
+    config = "armv5tel-unknown-linux-androideabi";
+    sdkVer = "21";
+    platform = platforms.armv5te-android;
+    useAndroidPrebuilt = true;
+  };
+
+  armv7a-android-prebuilt = rec {
+    config = "armv7a-unknown-linux-androideabi";
+    sdkVer = "21";
+    platform = platforms.armv7a-android;
+    useAndroidPrebuilt = true;
+  };
+
   aarch64-android-prebuilt = rec {
     config = "aarch64-unknown-linux-android";
+    sdkVer = "21";
     platform = platforms.aarch64-multiplatform;
     useAndroidPrebuilt = true;
   };
@@ -47,26 +57,16 @@ rec {
 
   pogoplug4 = rec {
     config = "armv5tel-unknown-linux-gnueabi";
-    float = "soft";
     platform = platforms.pogoplug4;
   };
 
   ben-nanonote = rec {
     config = "mipsel-unknown-linux-uclibc";
-    float = "soft";
-    platform = {
-      name = "ben_nanonote";
-      kernelMajor = "2.6";
-      kernelArch = "mips";
-      gcc = {
-        arch = "mips32";
-      };
-    };
+    platform = platforms.ben_nanonote;
   };
 
   fuloongminipc = rec {
     config = "mipsel-unknown-linux-gnu";
-    float = "hard";
     platform = platforms.fuloong2f_n32;
   };
 

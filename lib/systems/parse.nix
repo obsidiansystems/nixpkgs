@@ -79,15 +79,20 @@ rec {
     armv8r   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     armv8m   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     aarch64  = { bits = 64; significantByte = littleEndian; family = "arm"; };
+
     i686     = { bits = 32; significantByte = littleEndian; family = "x86"; };
     x86_64   = { bits = 64; significantByte = littleEndian; family = "x86"; };
+
     mips     = { bits = 32; significantByte = bigEndian;    family = "mips"; };
     mipsel   = { bits = 32; significantByte = littleEndian; family = "mips"; };
     mips64   = { bits = 64; significantByte = bigEndian;    family = "mips"; };
     mips64el = { bits = 64; significantByte = littleEndian; family = "mips"; };
+
     powerpc  = { bits = 32; significantByte = bigEndian;    family = "power"; };
+
     riscv32  = { bits = 32; significantByte = littleEndian; family = "riscv"; };
     riscv64  = { bits = 64; significantByte = littleEndian; family = "riscv"; };
+
     wasm32   = { bits = 32; significantByte = littleEndian; family = "wasm"; };
     wasm64   = { bits = 64; significantByte = littleEndian; family = "wasm"; };
   };
@@ -190,9 +195,24 @@ rec {
   types.abi = enum (attrValues abis);
 
   abis = setTypes types.openAbi {
-    android = {};
-    cygnus = {};
-    gnu = {
+    cygnus       = {};
+    msvc         = {};
+    eabi         = {};
+
+    androideabi  = { float = "hard"; };
+    android      = {
+      assertions = [
+        { assertion = platform: !platform.isAarch32;
+          message = ''
+            The "android" ABI is not for 32-bit ARM. Use "androideabi" instead.
+          '';
+        }
+      ];
+    };
+
+    gnueabi      = { float = "soft"; };
+    gnueabihf    = { float = "hard"; };
+    gnu          = {
       assertions = [
         { assertion = platform: !platform.isAarch32;
           message = ''
@@ -201,17 +221,14 @@ rec {
         }
       ];
     };
-    msvc = {};
-    eabi = {};
-    androideabi = {};
-    gnueabi = {};
-    gnueabihf = {};
-    musleabi = {};
-    musleabihf = {};
-    musl = {};
-    uclibceabihf = {};
-    uclibceabi = {};
-    uclibc = {};
+
+    musleabi     = { float = "soft"; };
+    musleabihf   = { float = "hard"; };
+    musl         = {};
+
+    uclibceabihf = { float = "soft"; };
+    uclibceabi   = { float = "hard"; };
+    uclibc       = {};
 
     unknown = {};
   };

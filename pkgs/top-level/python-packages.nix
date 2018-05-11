@@ -303,6 +303,8 @@ in {
 
   oauthenticator = callPackage ../development/python-modules/oauthenticator { };
 
+  outcome = callPackage ../development/python-modules/outcome {};
+
   plantuml = callPackage ../tools/misc/plantuml { };
 
   Pmw = callPackage ../development/python-modules/Pmw { };
@@ -435,6 +437,10 @@ in {
   tables = callPackage ../development/python-modules/tables {
     hdf5 = pkgs.hdf5.override { zlib = pkgs.zlib; };
   };
+
+  trustme = callPackage ../development/python-modules/trustme {};
+
+  trio = callPackage ../development/python-modules/trio {};
 
   tokenserver = callPackage ../development/python-modules/tokenserver {};
 
@@ -1628,6 +1634,8 @@ in {
   consul = callPackage ../development/python-modules/consul { };
 
   contexter = callPackage ../development/python-modules/contexter { };
+
+  contextvars = callPackage ../development/python-modules/contextvars {};
 
   contextlib2 = callPackage ../development/python-modules/contextlib2 { };
 
@@ -3119,6 +3127,8 @@ in {
   };
 
   imbalanced-learn = callPackage ../development/python-modules/imbalanced-learn { };
+
+  immutables = callPackage ../development/python-modules/immutables {};
 
   imread = buildPythonPackage rec {
     name = "python-imread-${version}";
@@ -18263,6 +18273,8 @@ EOF
   coinmarketcap = callPackage ../development/python-modules/coinmarketcap { };
 
   pyowm = callPackage ../development/python-modules/pyowm { };
+
+  prometheus_client = callPackage ../development/python-modules/prometheus_client { };
 });
 
 in fix' (extends overrides packages)
