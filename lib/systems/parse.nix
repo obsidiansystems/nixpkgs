@@ -69,9 +69,15 @@ rec {
   cpuTypes = with significantBytes; setTypes types.openCpuType {
     arm      = { bits = 32; significantByte = littleEndian; family = "arm"; };
     armv5tel = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv6m   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     armv6l   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     armv7a   = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv7r   = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv7m   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     armv7l   = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv8a   = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv8r   = { bits = 32; significantByte = littleEndian; family = "arm"; };
+    armv8m   = { bits = 32; significantByte = littleEndian; family = "arm"; };
     aarch64  = { bits = 64; significantByte = littleEndian; family = "arm"; };
     i686     = { bits = 32; significantByte = littleEndian; family = "x86"; };
     x86_64   = { bits = 64; significantByte = littleEndian; family = "x86"; };
@@ -186,7 +192,15 @@ rec {
   abis = setTypes types.openAbi {
     android = {};
     cygnus = {};
-    gnu = {};
+    gnu = {
+      assertions = [
+        { assertion = platform: !platform.isAarch32;
+          message = ''
+            The "gnu" ABI is ambiguous on 32-bit ARM. Use "gnueabi" or "gnueabihf" instead.
+          '';
+        }
+      ];
+    };
     msvc = {};
     eabi = {};
     androideabi = {};
@@ -195,6 +209,9 @@ rec {
     musleabi = {};
     musleabihf = {};
     musl = {};
+    uclibceabihf = {};
+    uclibceabi = {};
+    uclibc = {};
 
     unknown = {};
   };
@@ -261,7 +278,7 @@ rec {
       kernel = getKernel args.kernel;
       abi =
         /**/ if args ? abi       then getAbi args.abi
-        else if isLinux   parsed then abis.gnu
+        else if isLinux   parsed then (if isAarch32 parsed then abis.gnueabi else abis.gnu)
         else if isWindows parsed then abis.gnu
         else                     abis.unknown;
     };

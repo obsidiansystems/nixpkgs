@@ -998,6 +998,11 @@
     github = "demin-dmitriy";
     name = "Dmitriy Demin";
   };
+  demyanrogozhin = {
+    email = "demyan.rogozhin@gmail.com";
+    github = "demyanrogozhin";
+    name = "Demyan Rogozhin";
+  };
   derchris = {
     email = "derchris@me.com";
     github = "derchrisuk";
@@ -1740,6 +1745,11 @@
     github = "jdagilliland";
     name = "Jason Gilliland";
   };
+  jD91mZM2 = {
+    email = "me@krake.one";
+    github = "jD91mZM2";
+    name = "jD91mZM2";
+  };
   jefdaj = {
     email = "jefdaj@gmail.com";
     github = "jefdaj";
@@ -1759,6 +1769,11 @@
     email = "james@yamtime.com";
     github = "tftio";
     name = "James Felix Black";
+  };
+  jflanglois = {
+    email = "yourstruly@julienlanglois.me";
+    github = "jflanglois";
+    name = "Julien Langlois";
   };
   jfrankenau = {
     email = "johannes@frankenau.net";
@@ -1809,6 +1824,11 @@
     email = "joamaki@gmail.com";
     github = "joamaki";
     name = "Jussi Maki";
+  };
+  joelburget = {
+    email = "joelburget@gmail.com";
+    github = "joelburget";
+    name = "Joel Burget";
   };
   joelmo = {
     email = "joel.moberg@gmail.com";
@@ -3134,6 +3154,11 @@
     github = "rittelle";
     name = "Lennart Rittel";
   };
+  rkoe = {
+    email = "rk@simple-is-better.org";
+    github = "rkoe";
+    name = "Roland Koebler";
+  };
   rlupton20 = {
     email = "richard.lupton@gmail.com";
     github = "rlupton20";
@@ -3213,6 +3238,11 @@
     email = "rushmore@webenchanter.com";
     github = "rushmorem";
     name = "Rushmore Mushambi";
+  };
+  ruuda = {
+    email = "dev+nix@veniogames.com";
+    github = "ruuda";
+    name = "Ruud van Asseldonk";
   };
   rvl = {
     email = "dev+nix@rodney.id.au";
@@ -3978,6 +4008,11 @@
     email = "elisp.vim@gmail.com";
     github = "vyp";
     name = "vyp";
+  };
+  wchresta = {
+    email = "wchresta.nix@chrummibei.ch";
+    github = "wchresta";
+    name = "wchresta";
   };
   wedens = {
     email = "kirill.wedens@gmail.com";
