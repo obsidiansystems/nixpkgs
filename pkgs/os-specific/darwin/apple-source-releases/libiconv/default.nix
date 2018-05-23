@@ -1,8 +1,8 @@
 { stdenv, appleDerivation }:
 
 appleDerivation {
-  preConfigure = "cd libiconv" #TODO: This `cd` should be in postUnpack, not preConfigure; otherwise, autoreconfHook breaks
-    + stdenv.lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
+  preConfigure = "cd libiconv"
+    + stdenv.lib.optionalString stdenv.hostPlatform.isiOS ''
 
       sed -i 's/darwin\*/ios\*/g' configure libcharset/configure
     '';

@@ -14,7 +14,7 @@ in {
   stable = mkTelegram stableVersion;
   preview = mkTelegram (stableVersion // {
     stable = false;
-    version = "1.2.19";
-    sha256Hash = "0val6lfcg3ghcksflm3jclqly0x8plpn3an8v9bix0s5yll1ka4h";
+    version = "1.2.21";
+    sha256Hash = "0s7dywyz8p626741m32l4a90l1x01564xg2g10gvdb25s2phdfdl";
   });
 }

@@ -200,6 +200,7 @@ mapAliases (rec {
   sshfsFuse = sshfs-fuse; # added 2016-09
   surf-webkit2 = surf; # added 2017-04-02
   tahoelafs = tahoe-lafs; # added 2018-03-26
+  telnet = inetutils; # added 2018-05-15
   system_config_printer = system-config-printer;  # added 2016-01-03
   telepathy_farstream = telepathy-farstream; # added 2018-02-25
   telepathy_gabble = telepathy-gabble; # added 2018-02-25
@@ -227,6 +228,7 @@ mapAliases (rec {
   vorbisTools = vorbis-tools; # added 2016-01-26
   wineStaging = wine-staging; # added 2018-01-08
   winusb = woeusb; # added 2017-12-22
+  wireguard = wireguard-tools; # added 2018-05-19
   x11 = xlibsWrapper; # added 2015-09
   xf86_video_nouveau = xorg.xf86videonouveau; # added 2015-09
   xlibs = xorg; # added 2015-09

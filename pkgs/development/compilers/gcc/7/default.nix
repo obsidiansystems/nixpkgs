@@ -204,11 +204,7 @@ stdenv.mkDerivation ({
       patchShebangs $configureScript
     done
   '' + (
-    if (hostPlatform.isHurd
-        || (libcCross != null                  # e.g., building `gcc.crossDrv'
-            && libcCross ? crossConfig
-            && libcCross.crossConfig == "i586-pc-gnu")
-        || (crossGNU && libcCross != null))
+    if targetPlatform.isHurd
     then
       # On GNU/Hurd glibc refers to Hurd & Mach headers and libpthread is not
       # in glibc, so add the right `-I' flags to the default spec string.
@@ -385,6 +381,7 @@ stdenv.mkDerivation ({
       "--with-gnu-as" "--without-gnu-ld"
     ]
     ++ optional (targetPlatform == hostPlatform && targetPlatform.libc == "musl") "--disable-libsanitizer"
+    ++ optional (targetPlatform.isAarch64) "--enable-fix-cortex-a53-843419"
   ;
 
   targetConfig = if targetPlatform != hostPlatform then targetPlatform.config else null;

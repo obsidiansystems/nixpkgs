@@ -365,14 +365,13 @@ let self = _self // overrides; _self = with self; {
   };
 
   AppSt = buildPerlPackage rec {
-    name = "App-St-1.1.2";
+    name = "App-St-1.1.4";
     src = fetchurl {
-      url = https://github.com/nferraz/st/archive/v1.1.2.tar.gz;
-      sha256 = "1j1iwcxl16m4x5kl1vcv0linb93r55ndh3jm0w6qf459jl4x38s6";
+      url = https://github.com/nferraz/st/archive/v1.1.4.tar.gz;
+      sha256 = "1f4bqm4jiazcxgzzja1i48671za96621k0s3ln87cdacgvv1can0";
     };
     postInstall =
       ''
-        sed -e "1 s|\(.*\)|\1 -I $out/lib/perl5/site_perl|" -i $out/bin/st
         ($out/bin/st --help || true) | grep Usage
       '';
     meta = {
@@ -12059,6 +12058,20 @@ let self = _self // overrides; _self = with self; {
        description = "parses local .pm files as PAUSE does";
        license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
      };
+  };
+
+  ParsePlainConfig = buildPerlPackage rec {
+    name = "Parse-PlainConfig-3.05";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/C/CO/CORLISS/Parse-PlainConfig/${name}.tar.gz";
+      sha256 = "6b78a8552398b0d2d7063505c93b3cfed0432c5b2cf6e00b8e51febf411c1efa";
+    };
+    propagatedBuildInputs = [ ClassEHierarchy Paranoid ];
+    meta = {
+      description = "Parser/Generator of human-readable conf files";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      maintainers = [ maintainers.limeytexan ];
+    };
   };
 
   ParsePMFile = buildPerlPackage rec {

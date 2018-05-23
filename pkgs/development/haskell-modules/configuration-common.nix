@@ -82,7 +82,7 @@ self: super: {
       name = "git-annex-${drv.version}-src";
       url = "git://git-annex.branchable.com/";
       rev = "refs/tags/" + drv.version;
-      sha256 = "05rygb8jm4nh7ggzihz6664hcgwkbqspi8gbpkpf7l7wwvzdm1rd";
+      sha256 = "1w0gzqk70ymlpvh9zqkg1cd3ipaw4n85k4zsf49xl6kjp4vbcmwj";
     };
   })).overrideScope (self: super: {
     aws = dontCheck (self.aws_0_18);
@@ -208,6 +208,9 @@ self: super: {
   # https://github.com/jputcu/serialport/issues/25
   serialport = dontCheck super.serialport;
 
+  serialise = dontCheck super.serialise;
+  cryptohash-sha512 = dontCheck super.cryptohash-sha512;
+
   # https://github.com/kazu-yamamoto/simple-sendfile/issues/17
   simple-sendfile = dontCheck super.simple-sendfile;
 
@@ -247,7 +250,17 @@ self: super: {
   digit = doJailbreak super.digit;
 
   # https://github.com/jwiegley/hnix/issues/98 - tied to an older deriving-compat
-  hnix = doJailbreak super.hnix;
+  hnix = doJailbreak (overrideCabal super.hnix (old: {
+    patches = old.patches or [] ++ [
+      # should land in hnix-5.2
+      (pkgs.fetchpatch {
+        url = "https://github.com/haskell-nix/hnix/commit/9cfe060a9dbe9e7c64867956a0523eed9661803a.patch";
+        sha256 = "0ci4n7nw2pzqw0gkmkp4szzvxjyb143a4znjm39jmb0s397a68sh";
+        name = "disable-hpack-test-by-default.patch";
+       })
+    ];
+    testHaskellDepends = old.testHaskellDepends or [] ++ [ pkgs.nix ];
+  }));
 
   # Fails for non-obvious reasons while attempting to use doctest.
   search = dontCheck super.search;
@@ -1024,8 +1037,8 @@ self: super: {
   vulkan = super.vulkan.override { vulkan = pkgs.vulkan-loader; };
 
   # Builds only with the latest version of indexed-list-literals.
-  vector-sized_1_0_1_0 = super.vector-sized_1_0_1_0.override {
-    indexed-list-literals = self.indexed-list-literals_0_2_0_0;
+  vector-sized_1_0_2_0 = super.vector-sized_1_0_2_0.override {
+    indexed-list-literals = self.indexed-list-literals_0_2_1_1;
   };
 
   # https://github.com/dmwit/encoding/pull/3
