@@ -39,6 +39,9 @@ stdenv.mkDerivation {
     NIX_LDFLAGS="-L$NIX_BUILD_TOP/foo/lib -rpath $NIX_BUILD_TOP/foo/lib" $CC -lfoo -o ldflags-check ${./ldflags-main.c}
     ./ldflags-check
 
+    $CC -o sanitizers -fsanitize=address,undefined ${./sanitizers.c}
+    ./sanitizers
+
     touch $out
   '';
 
