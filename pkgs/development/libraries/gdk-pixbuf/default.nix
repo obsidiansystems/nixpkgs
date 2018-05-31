@@ -1,16 +1,19 @@
-{ stdenv, fetchurl, pkgconfig, glib, libtiff, libjpeg, libpng, libX11
-, jasper, libintlOrEmpty, gobjectIntrospection, doCheck ? false }:
+{ stdenv, fetchurl, fetchgit, fetchpatch, fixDarwinDylibNames, meson, ninja, pkgconfig, gettext, python3, libxml2, libxslt, docbook_xsl
+, docbook_xml_dtd_43, gtk-doc, glib, libtiff, libjpeg, libpng, libX11, gnome3
+, jasper, gobjectIntrospection, doCheck ? false, makeWrapper }:
 
 let
-  ver_maj = "2.36";
-  ver_min = "6";
+  pname = "gdk-pixbuf";
+  version = "2.36.7";
+  # TODO: since 2.36.8 gdk-pixbuf gets configured to use mime-type sniffing,
+  # which apparently requires access to shared-mime-info files during runtime.
 in
 stdenv.mkDerivation rec {
-  name = "gdk-pixbuf-${ver_maj}.${ver_min}";
+  name = "${pname}-${version}";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/gdk-pixbuf/${ver_maj}/${name}.tar.xz";
-    sha256 = "455eb90c09ed1b71f95f3ebfe1c904c206727e0eeb34fc94e5aaf944663a820c";
+    url = "mirror://gnome/sources/${pname}/${gnome3.versionBranch version}/${name}.tar.xz";
+    sha256 = "1b6e5eef09d98f05f383014ecd3503e25dfb03d7e5b5f5904e5a65b049a6a4d8";
   };
 
   outputs = [ "out" "dev" "devdoc" ];
@@ -20,9 +23,10 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   # !!! We might want to factor out the gdk-pixbuf-xlib subpackage.
-  buildInputs = [ libX11 gobjectIntrospection ] ++ libintlOrEmpty;
+  buildInputs = [ libX11 gobjectIntrospection ];
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkgconfig ]
+    ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
   propagatedBuildInputs = [ glib libtiff libjpeg libpng jasper ];
 
@@ -42,8 +46,29 @@ stdenv.mkDerivation rec {
       moveToOutput "bin/gdk-pixbuf-thumbnailer" "$out"
     '';
 
+  # The fixDarwinDylibNames hook doesn't patch library references or binaries.
+  preFixup = stdenv.lib.optionalString stdenv.isDarwin ''
+    for f in $(find $out/lib -name '*.dylib'); do
+        install_name_tool -change @rpath/libgdk_pixbuf-2.0.0.dylib $out/lib/libgdk_pixbuf-2.0.0.dylib $f
+    done
+
+    for f in $out/bin/* $dev/bin/*; do
+        install_name_tool -change @rpath/libgdk_pixbuf-2.0.0.dylib $out/lib/libgdk_pixbuf-2.0.0.dylib $f
+    done
+  '';
+
   # The tests take an excessive amount of time (> 1.5 hours) and memory (> 6 GB).
-  inherit (doCheck);
+  inherit doCheck;
+
+  passthru = {
+    updateScript = gnome3.updateScript {
+      packageName = pname;
+      attrPath = "gdk_pixbuf";
+    };
+
+    # gdk_pixbuf_moduledir variable from gdk-pixbuf-2.0.pc
+    moduleDir = "lib/gdk-pixbuf-2.0/2.10.0/loaders";
+  };
 
   meta = with stdenv.lib; {
     description = "A library for image loading and manipulation";
@@ -52,4 +77,3 @@ stdenv.mkDerivation rec {
     platforms = platforms.unix;
   };
 }
-

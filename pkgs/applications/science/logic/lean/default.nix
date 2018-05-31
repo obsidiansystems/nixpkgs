@@ -2,16 +2,17 @@
 
 stdenv.mkDerivation rec {
   name = "lean-${version}";
-  version = "3.1.0";
+  version = "3.4.1";
 
   src = fetchFromGitHub {
     owner  = "leanprover";
     repo   = "lean";
     rev    = "v${version}";
-    sha256 = "0w4cdai6mzx4wr7gscv4sl5q4mxx1agjbpp4smvrslav7gpbz025";
+    sha256 = "0ww8azlyy3xikhd7nh96f507sg23r53zvayij1mwv5513vmblhhw";
   };
 
-  buildInputs = [ gmp cmake ];
+  nativeBuildInputs = [ cmake ];
+  buildInputs = [ gmp ];
   enableParallelBuilding = true;
 
   preConfigure = ''

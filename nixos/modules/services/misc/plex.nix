@@ -82,7 +82,7 @@ in
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       preStart = ''
-        test -d "${cfg.dataDir}" || {
+        test -d "${cfg.dataDir}/Plex Media Server" || {
           echo "Creating initial Plex data directory in \"${cfg.dataDir}\"."
           mkdir -p "${cfg.dataDir}/Plex Media Server"
           chown -R ${cfg.user}:${cfg.group} "${cfg.dataDir}"
@@ -137,7 +137,7 @@ in
         User = cfg.user;
         Group = cfg.group;
         PermissionsStartOnly = "true";
-        ExecStart = "/bin/sh -c ${cfg.package}/usr/lib/plexmediaserver/Plex\\ Media\\ Server";
+        ExecStart = "\"${cfg.package}/usr/lib/plexmediaserver/Plex Media Server\"";
         KillSignal = "SIGQUIT";
         Restart = "on-failure";
       };

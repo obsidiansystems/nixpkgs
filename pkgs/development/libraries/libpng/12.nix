@@ -1,6 +1,8 @@
-{ stdenv, fetchurl, zlib }:
+{ stdenv, fetchurl, zlib
+, buildPlatform, hostPlatform
+}:
 
-assert !(stdenv ? cross) -> zlib != null;
+assert hostPlatform == buildPlatform -> zlib != null;
 
 stdenv.mkDerivation rec {
   name = "libpng-1.2.57";
@@ -15,11 +17,6 @@ stdenv.mkDerivation rec {
   propagatedBuildInputs = [ zlib ];
 
   passthru = { inherit zlib; };
-
-  crossAttrs = stdenv.lib.optionalAttrs (stdenv.cross.libc == "libSystem") {
-    propagatedBuildInputs = [];
-    passthru = {};
-  };
 
   configureFlags = "--enable-static";
 

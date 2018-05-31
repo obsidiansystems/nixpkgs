@@ -5,11 +5,11 @@
 
 stdenv.mkDerivation rec {
   name = "vis-${version}";
-  version  = "0.3";
+  version  = "0.5";
 
   src = fetchFromGitHub {
     rev = "v${version}";
-    sha256 = "13xyyq30dg66v4azl2jvlyfyglxmc3r9p7p87vrganq0p6lmb0bk";
+    sha256 = "1vhq6hprkgj90iwl5vl3pxs3xwc01mx8yhi6c1phzry5agqqp8jb";
     repo = "vis";
     owner = "martanne";
   };
@@ -25,6 +25,10 @@ stdenv.mkDerivation rec {
     acl
     libselinux
   ];
+
+  postPatch = ''
+    patchShebangs ./configure
+  '';
 
   LUA_CPATH="${lpeg}/lib/lua/${lua.luaversion}/?.so;";
   LUA_PATH="${lpeg}/share/lua/${lua.luaversion}/?.lua";
@@ -59,7 +63,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A vim like editor";
-    homepage = http://github.com/martanne/vis;
+    homepage = https://github.com/martanne/vis;
     license = licenses.isc;
     maintainers = with maintainers; [ vrthra ramkromberg ];
     platforms = platforms.unix;

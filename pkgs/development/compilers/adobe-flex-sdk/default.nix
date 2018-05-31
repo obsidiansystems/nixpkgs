@@ -1,7 +1,7 @@
 { stdenv, fetchurl, unzip }:
 
 stdenv.mkDerivation rec {
-  name = "adobe-flex-sdk-4.0.0.14159-mpl";
+  name = "adobe-flex-sdk-4.0.0.14159";
 
   src = fetchurl {
     # This is the open source distribution
@@ -32,9 +32,9 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  meta = { 
+  meta = {
     description = "Flex SDK for Adobe Flash / ActionScript";
-    homepage = "http://www.adobe.com/support/documentation/en/flex/3/releasenotes_flex3_sdk.html#installation";
+    homepage = "https://www.adobe.com/products/flex.html";
     license = stdenv.lib.licenses.mpl11;
     platforms = stdenv.lib.platforms.unix;
   };

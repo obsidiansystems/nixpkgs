@@ -17,7 +17,7 @@ let
     hardeningEnable = [ "pie" ];
     installPhase = ''
       mkdir -p $out/bin
-      gcc -Wall -O2 -DWRAPPER_DIR=\"${parentWrapperDir}\" \
+      $CC -Wall -O2 -DWRAPPER_DIR=\"${parentWrapperDir}\" \
           -lcap-ng -lcap ${./wrapper.c} -o $out/bin/security-wrapper
     '';
   };
@@ -79,9 +79,9 @@ let
                  ({ owner = "root";
                     group = "root";
                   } // s)
-          else if 
-             (s ? "setuid"  && s.setuid  == true) ||
-             (s ? "setguid" && s.setguid == true) ||
+          else if
+             (s ? "setuid" && s.setuid) ||
+             (s ? "setgid" && s.setgid) ||
              (s ? "permissions")
           then mkSetuidProgram s
           else mkSetuidProgram
@@ -155,7 +155,10 @@ in
   ###### implementation
   config = {
 
-    security.wrappers.fusermount.source = "${pkgs.fuse}/bin/fusermount";
+    security.wrappers = {
+      fusermount.source = "${pkgs.fuse}/bin/fusermount";
+      fusermount3.source = "${pkgs.fuse3}/bin/fusermount3";
+    };
 
     boot.specialFileSystems.${parentWrapperDir} = {
       fsType = "tmpfs";
@@ -171,7 +174,7 @@ in
 
     ###### setcap activation script
     system.activationScripts.wrappers =
-      lib.stringAfter [ "users" ]
+      lib.stringAfter [ "specialfs" "users" ]
         ''
           # Look in the system path and in the default profile for
           # programs to be wrapped.

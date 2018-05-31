@@ -1,20 +1,19 @@
 { stdenv, fetchFromGitHub, gnugrep
+, fixDarwinDylibNames
 , legacySupport ? false }:
 
 stdenv.mkDerivation rec {
   name = "zstd-${version}";
-  version = "1.2.0";
+  version = "1.3.4";
 
   src = fetchFromGitHub {
-    sha256 = "01b5w4yrwa8lgnjyi42zxjhw8cfyh8yfhdsjr04y5qsblz0hv0zl";
+    sha256 = "090ba7dnv5z2v4vlb8b275b0n7cqsdzjqvr3b6a0w65z13mgy2nw";
     rev = "v${version}";
     repo = "zstd";
     owner = "facebook";
   };
 
-  # The Makefiles don't properly use file targets, but blindly rebuild
-  # all dependencies on every make invocation. So no nice phases. :-(
-  phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
+  buildInputs = stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
   makeFlags = [
     "ZSTD_LEGACY_SUPPORT=${if legacySupport then "1" else "0"}"
@@ -44,11 +43,11 @@ stdenv.mkDerivation rec {
       speed is preserved and remain roughly the same at all settings, a
       property shared by most LZ compression algorithms, such as zlib.
     '';
-    homepage = http://www.zstd.net/;
+    homepage = https://facebook.github.io/zstd/;
     # The licence of the CLI programme is GPLv2+, that of the library BSD-2.
     license = with licenses; [ gpl2Plus bsd2 ];
 
     platforms = platforms.unix;
-    maintainers = with maintainers; [ nckx orivej ];
+    maintainers = with maintainers; [ orivej ];
   };
 }

@@ -1,4 +1,4 @@
-{stdenv, fetchurl, ocaml, lablgtk, findlib, mesa, freeglut, camlp4 } :
+{stdenv, fetchurl, ocaml, lablgtk, findlib, libGLU_combined, freeglut, camlp4 } :
 
 let
   pname = "lablgl";
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = [ocaml findlib lablgtk freeglut camlp4];
-  propagatedBuildInputs = [ mesa ];
+  propagatedBuildInputs = [ libGLU_combined ];
 
   patches = [ ./Makefile.config.patch ./META.patch ];
 
@@ -40,5 +40,6 @@ stdenv.mkDerivation rec {
     description = "OpenGL bindings for ocaml";
     license = licenses.gpl2;
     maintainers = with maintainers; [ pSub vbgl ];
+    broken = stdenv.isDarwin;
   };
 }

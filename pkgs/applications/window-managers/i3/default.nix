@@ -5,11 +5,11 @@
 
 stdenv.mkDerivation rec {
   name = "i3-${version}";
-  version = "4.13";
+  version = "4.15";
 
   src = fetchurl {
-    url = "http://i3wm.org/downloads/${name}.tar.bz2";
-    sha256 = "12ngz32swh9n85xy0cz1lq16aqi9ys5hq19v589q9a97wn1k3hcl";
+    url = "https://i3wm.org/downloads/${name}.tar.bz2";
+    sha256 = "09jk70hsdxab24lqvj2f30ijrkbv3f6q9xi5dcsax1dw3x6m4z91";
   };
 
   nativeBuildInputs = [ which pkgconfig makeWrapper ];
@@ -49,13 +49,15 @@ stdenv.mkDerivation rec {
     for program in $out/bin/i3-sensible-*; do
       sed -i 's/which/command -v/' $program
     done
+
+    install -vD -t $out/share/man/man1 man/*.{1,man}
   '';
 
   separateDebugInfo = true;
 
   meta = with stdenv.lib; {
     description = "A tiling window manager";
-    homepage    = "http://i3wm.org";
+    homepage    = "https://i3wm.org";
     maintainers = with maintainers; [ garbas modulistic fpletz ];
     license     = licenses.bsd3;
     platforms   = platforms.all;

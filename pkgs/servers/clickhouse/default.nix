@@ -1,22 +1,27 @@
-{ stdenv, fetchFromGitHub, cmake, libtool, boost, double_conversion, gperftools, icu, libmysql, lz4, openssl, poco, re2, readline, sparsehash, unixODBC, zookeeper_mt, zstd }:
+{ stdenv, fetchFromGitHub, cmake, libtool, boost, double-conversion, gperftools
+, icu, mysql, lz4, openssl, poco, re2, rdkafka, readline, sparsehash, unixODBC
+, zookeeper_mt, zstd }:
 
 stdenv.mkDerivation rec {
   name = "clickhouse-${version}";
 
-  version = "1.1.54190";
+  version = "1.1.54310";
 
   src = fetchFromGitHub {
     owner = "yandex";
     repo = "ClickHouse";
     rev = "v${version}-stable";
-    sha256 = "03snzrhz3ai66fqy3rh89cgmpiaskg3077zflkwzqxwx69jkmqix";
+    sha256 = "167pihqak8ip7bmlyrbzl9x3mpn381j8v7pl7nhrl9bfnzgrq69v";
   };
 
-  patches = [ ./prefix.patch ./termcap.patch ];
+  patches = [ ./termcap.patch ];
 
   nativeBuildInputs = [ cmake libtool ];
 
-  buildInputs = [ boost double_conversion gperftools icu libmysql lz4 openssl poco re2 readline sparsehash unixODBC zookeeper_mt zstd ];
+  buildInputs = [
+    boost double-conversion gperftools icu mysql.connector-c lz4 openssl poco
+    re2 rdkafka readline sparsehash unixODBC zookeeper_mt zstd
+  ];
 
   cmakeFlags = [ "-DENABLE_TESTS=OFF" "-DUNBUNDLED=ON" "-DUSE_STATIC_LIBRARIES=OFF" ];
 

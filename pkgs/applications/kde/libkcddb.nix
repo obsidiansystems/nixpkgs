@@ -1,18 +1,17 @@
-{ kdeApp, lib, extra-cmake-modules, qtbase, kdoctools
+{ mkDerivation, lib, extra-cmake-modules, qtbase, kdoctools
 , kcodecs, ki18n, kio, kwidgetsaddons
 , libmusicbrainz5 }:
 
-kdeApp {
+mkDerivation {
   name = "libkcddb";
   meta = with lib; {
     license = with licenses; [ gpl2 lgpl21 bsd3 ];
     maintainers = with maintainers; [ peterhoeg ];
   };
-  nativeBuildInputs = [ extra-cmake-modules ];
-  buildInputs = [ qtbase kdoctools ];
+  nativeBuildInputs = [ extra-cmake-modules kdoctools ];
+  buildInputs = [ qtbase ];
   propagatedBuildInputs = [
     kcodecs ki18n kio kwidgetsaddons
     libmusicbrainz5
   ];
-  enableParallelBuilding = true;
 }

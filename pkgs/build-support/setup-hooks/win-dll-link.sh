@@ -25,7 +25,7 @@ _linkDLLs() {
     linkCount=0
     # Iterate over any DLL that we depend on.
     local dll
-    for dll in $(objdump -p *.{exe,dll} | sed -n 's/.*DLL Name: \(.*\)/\1/p' | sort -u); do
+    for dll in $($OBJDUMP -p *.{exe,dll} | sed -n 's/.*DLL Name: \(.*\)/\1/p' | sort -u); do
         if [ -e "./$dll" ]; then continue; fi
         # Locate the DLL - it should be an *executable* file on $DLLPATH.
         local dllPath="$(PATH="$DLLPATH" type -P "$dll")"
@@ -35,7 +35,7 @@ _linkDLLs() {
         local dllPath2
         for dllPath2 in "$dllPath" "$(dirname $(readlink "$dllPath" || echo "$dllPath"))"/*.dll; do
             if [ -e ./"$(basename "$dllPath2")" ]; then continue; fi
-            ln -sr "$dllPath2" .
+            CYGWIN+=\ winsymlinks:nativestrict ln -sr "$dllPath2" .
             linkCount=$(($linkCount+1))
         done
     done

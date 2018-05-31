@@ -1,14 +1,13 @@
-{ stdenv, fetchurl, pkgconfig, zlib, freetype, cairo, lua5, texlive, ghostscript
+{ stdenv, fetchurl, makeWrapper, pkgconfig, zlib, freetype, cairo, lua5, texlive, ghostscript
 , libjpeg, qtbase
-, makeQtWrapper
 }:
 
 stdenv.mkDerivation rec {
-  name = "ipe-7.1.10";
+  name = "ipe-7.2.7";
 
   src = fetchurl {
-    url = "https://dl.bintray.com/otfried/generic/ipe/7.1/${name}-src.tar.gz";
-    sha256 = "0kwk8l2jasb4fdixaca08g661d0sdmx2jkk3ch7pxh0f4xkdxkkz";
+    url = "https://dl.bintray.com/otfried/generic/ipe/7.2/${name}-src.tar.gz";
+    sha256 = "08lzqhagvr8l69hxghyw9akf5dixbily7hj2gxhzzrp334k3yvfn";
   };
 
   # changes taken from Gentoo portage
@@ -28,16 +27,18 @@ stdenv.mkDerivation rec {
   LUA_PACKAGE = "lua";
 
   buildInputs = [
-    libjpeg pkgconfig zlib qtbase freetype cairo lua5 texlive ghostscript
+    libjpeg zlib qtbase freetype cairo lua5 texlive ghostscript
   ];
 
-  nativeBuildInputs = [ makeQtWrapper ];
+  nativeBuildInputs = [ makeWrapper pkgconfig ];
 
   postFixup = ''
     for prog in $out/bin/*; do
-      wrapQtProgram "$prog" --prefix PATH : "${texlive}/bin"
+      wrapProgram "$prog" --prefix PATH : "${texlive}/bin"
     done
   '';
+
+  patches = [ ./xlocale.patch ];
 
   #TODO: make .desktop entry
 

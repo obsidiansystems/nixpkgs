@@ -1,6 +1,7 @@
-{stdenv, git, cacert}: let
+{stdenvNoCC, git, cacert}: let
   urlToName = url: rev: let
-    base = baseNameOf (stdenv.lib.removeSuffix "/" url);
+    inherit (stdenvNoCC.lib) removeSuffix splitString last;
+    base = last (splitString ":" (baseNameOf (removeSuffix "/" url)));
 
     matched = builtins.match "(.*).git" base;
 
@@ -15,6 +16,9 @@ in
 , fetchSubmodules ? true, deepClone ? false
 , branchName ? null
 , name ? urlToName url rev
+, # Shell code executed after the file has been fetched
+  # successfully. This can do things like check or transform the file.
+  postFetch ? ""
 }:
 
 /* NOTE:
@@ -44,21 +48,21 @@ assert deepClone -> leaveDotGit;
 if md5 != "" then
   throw "fetchgit does not support md5 anymore, please use sha256"
 else
-stdenv.mkDerivation {
+stdenvNoCC.mkDerivation {
   inherit name;
   builder = ./builder.sh;
   fetcher = "${./nix-prefetch-git}";  # This must be a string to ensure it's called with bash.
-  buildInputs = [git];
+  nativeBuildInputs = [git];
 
   outputHashAlgo = "sha256";
   outputHashMode = "recursive";
   outputHash = sha256;
 
-  inherit url rev leaveDotGit fetchSubmodules deepClone branchName;
+  inherit url rev leaveDotGit fetchSubmodules deepClone branchName postFetch;
 
   GIT_SSL_CAINFO = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
-  impureEnvVars = stdenv.lib.fetchers.proxyImpureEnvVars ++ [
+  impureEnvVars = stdenvNoCC.lib.fetchers.proxyImpureEnvVars ++ [
     "GIT_PROXY_COMMAND" "SOCKS_SERVER"
   ];
 

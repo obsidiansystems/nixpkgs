@@ -1,8 +1,9 @@
-{ stdenv, lib, openssh, buildbot-worker, pythonPackages, runCommand, makeWrapper }:
+{ stdenv, lib, openssh, buildbot-worker, buildbot-pkg, pythonPackages, runCommand, makeWrapper }:
 
 let
   withPlugins = plugins: runCommand "wrapped-${package.name}" {
     buildInputs = [ makeWrapper ] ++ plugins;
+    propagatedBuildInputs = package.propagatedBuildInputs;
     passthru.withPlugins = moarPlugins: withPlugins (moarPlugins ++ plugins);
   } ''
     makeWrapper ${package}/bin/buildbot $out/bin/buildbot \
@@ -10,14 +11,14 @@ let
     ln -sfv ${package}/lib $out/lib
   '';
 
-  package = pythonPackages.buildPythonApplication (rec {
+  package = pythonPackages.buildPythonApplication rec {
     name = "${pname}-${version}";
     pname = "buildbot";
-    version = "0.9.7";
+    version = "1.1.1";
 
     src = pythonPackages.fetchPypi {
       inherit pname version;
-      sha256 = "0cwy39ap2v9kni3zm92633cnqf7qsnb4zlargx060pbfagkg1jwg";
+      sha256 = "1vcmanx3ma3cfyiddjcmsnx6qmxd3m5blqax04rcsiq2zq4dmzir";
     };
 
     buildInputs = with pythonPackages; [
@@ -35,11 +36,11 @@ let
       pyflakes
       openssh
       buildbot-worker
+      buildbot-pkg
       treq
     ];
 
     propagatedBuildInputs = with pythonPackages; [
-
       # core
       twisted
       jinja2
@@ -75,6 +76,9 @@ let
       ./skip_test_linux_distro.patch
     ];
 
+    # TimeoutErrors on slow machines -> aarch64
+    doCheck = !stdenv.isAarch64;
+
     postPatch = ''
       substituteInPlace buildbot/scripts/logwatcher.py --replace '/usr/bin/tail' "$(type -P tail)"
     '';
@@ -83,9 +87,9 @@ let
 
     meta = with stdenv.lib; {
       homepage = http://buildbot.net/;
-      description = "Continuous integration system that automates the build/test cycle";
+      description = "Buildbot is an open-source continuous integration framework for automating software build, test, and release processes";
       maintainers = with maintainers; [ nand0p ryansydnor ];
       license = licenses.gpl2;
     };
-  });
+  };
 in package

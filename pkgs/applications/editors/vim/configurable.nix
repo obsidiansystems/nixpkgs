@@ -4,9 +4,13 @@ args@{ source ? "default", callPackage, fetchurl, stdenv, ncurses, pkgconfig, ge
 , composableDerivation, writeText, lib, config, glib, gtk2, gtk3, python, perl, tcl, ruby
 , libX11, libXext, libSM, libXpm, libXt, libXaw, libXau, libXmu
 , libICE
+, vimPlugins
+, makeWrapper
 
 # apple frameworks
 , CoreServices, CoreData, Cocoa, Foundation, libobjc, cf-private
+
+, wrapPythonDrv ? false
 
 , ... }: with args;
 
@@ -24,6 +28,10 @@ let
           let pluginname = substitute(d, ".*/", "", "")
           if !has_key(seen, pluginname)
             exec 'set runtimepath^='.d
+            let after = d."/after"
+            if isdirectory(after)
+              exec 'set runtimepath^='.after
+            endif
             let seen[pluginname] = 1
           endif
         endfor
@@ -76,6 +84,11 @@ composableDerivation {
     flags = {
         ftNix = {
           patches = [ ./ft-nix-support.patch ];
+          preConfigure = ''
+            cp ${vimPlugins.vim-nix.src}/ftplugin/nix.vim runtime/ftplugin/nix.vim
+            cp ${vimPlugins.vim-nix.src}/indent/nix.vim runtime/indent/nix.vim
+            cp ${vimPlugins.vim-nix.src}/syntax/nix.vim runtime/syntax/nix.vim
+          '';
         };
       }
       // edf {
@@ -85,7 +98,7 @@ composableDerivation {
           NIX_LDFLAGS = stdenv.lib.optional stdenv.isDarwin
             "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation";
         };
-      } #Disable Darwin (Mac OS X) support.
+      } #Disable Darwin (macOS) support.
       // edf { name = "xsmp"; } #Disable XSMP session management
       // edf { name = "xsmp_interact"; } #Disable XSMP interaction
       // edf { name = "mzscheme"; feat = "mzschemeinterp";} #Include MzScheme interpreter.
@@ -96,6 +109,11 @@ composableDerivation {
         feat = "python${if python ? isPy3 then "3" else ""}interp";
         enable = {
           buildInputs = [ python ];
+        } // lib.optionalAttrs wrapPythonDrv {
+          nativeBuildInputs = [ makeWrapper ];
+          postInstall = ''
+            wrapProgram "$out/bin/vim" --prefix PATH : "${python}/bin"
+          '';
         } // lib.optionalAttrs stdenv.isDarwin {
           configureFlags
             = [ "--enable-python${if python ? isPy3 then "3" else ""}interp=yes"

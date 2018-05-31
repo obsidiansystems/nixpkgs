@@ -1,8 +1,7 @@
 /* Some functions for manipulating meta attributes, as well as the
    name attribute. */
 
-let lib = import ./default.nix;
-in
+{ lib }:
 
 rec {
 
@@ -15,6 +14,11 @@ rec {
   */
   addMetaAttrs = newAttrs: drv:
     drv // { meta = (drv.meta or {}) // newAttrs; };
+
+
+  /* Disable Hydra builds of given derivation.
+  */
+  dontDistribute = drv: addMetaAttrs { hydraPlatforms = []; } drv;
 
 
   /* Change the symbolic name of a package for presentation purposes
@@ -63,4 +67,23 @@ rec {
   */
   hiPrioSet = set: mapDerivationAttrset hiPrio set;
 
+
+  /* Check to see if a platform is matched by the given `meta.platforms`
+     element.
+
+     A `meta.platform` pattern is either
+
+       1. (legacy) a system string.
+
+       2. (modern) a pattern for the platform `parsed` field.
+
+     We can inject these into a patten for the whole of a structured platform,
+     and then match that.
+  */
+  platformMatch = platform: elem: let
+      pattern =
+        if builtins.isString elem
+        then { system = elem; }
+        else { parsed = elem; };
+    in lib.matchAttrs pattern platform;
 }

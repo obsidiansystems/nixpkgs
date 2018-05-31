@@ -18,30 +18,6 @@
 , # Use to reevaluate Nixpkgs; a dirty hack that should be removed
   nixpkgsFun
 
-  ## Platform parameters
-  ##
-  ## The "build" "host" "target" terminology below comes from GNU Autotools. See
-  ## its documentation for more information on what those words mean. Note that
-  ## each should always be defined, even when not cross compiling.
-  ##
-  ## For purposes of bootstrapping, think of each stage as a "sliding window"
-  ## over a list of platforms. Specifically, the host platform of the previous
-  ## stage becomes the build platform of the current one, and likewise the
-  ## target platform of the previous stage becomes the host platform of the
-  ## current one.
-  ##
-
-, # The platform on which packages are built. Consists of `system`, a
-  # string (e.g.,`i686-linux') identifying the most import attributes of the
-  # build platform, and `platform` a set of other details.
-  buildPlatform
-
-, # The platform on which packages run.
-  hostPlatform
-
-, # The platform which build tools (especially compilers) build for in this stage,
-  targetPlatform
-
   ## Other parameters
   ##
 
@@ -50,13 +26,13 @@
   # us to avoid expensive splicing.
   buildPackages
 
-, # The package set used in the next stage. If null, `__targetPackages` will be
+, # The package set used in the next stage. If null, `targetPackages` will be
   # defined internally as the final produced package set itself, just like with
   # `buildPackages` and for the same reasons.
   #
   # THIS IS A HACK for compilers that don't think critically about cross-
   # compilation. Please do *not* use unless you really know what you are doing.
-  __targetPackages
+  targetPackages
 
 , # The standard environment to use for building packages.
   stdenv
@@ -69,10 +45,10 @@
 , # Non-GNU/Linux OSes are currently "impure" platforms, with their libc
   # outside of the store.  Thus, GCC, GFortran, & co. must always look for files
   # in standard system directories (/usr/include, etc.)
-  noSysDirs ? buildPlatform.system != "x86_64-freebsd"
-           && buildPlatform.system != "i686-freebsd"
-           && buildPlatform.system != "x86_64-solaris"
-           && buildPlatform.system != "x86_64-kfreebsd-gnu"
+  noSysDirs ? stdenv.buildPlatform.system != "x86_64-freebsd"
+           && stdenv.buildPlatform.system != "i686-freebsd"
+           && stdenv.buildPlatform.system != "x86_64-solaris"
+           && stdenv.buildPlatform.system != "x86_64-kfreebsd-gnu"
 
 , # The configuration attribute set
   config
@@ -96,23 +72,20 @@ let
   stdenvBootstappingAndPlatforms = self: super: {
     buildPackages = (if buildPackages == null then self else buildPackages)
       // { recurseForDerivations = false; };
-    __targetPackages = (if __targetPackages == null then self else __targetPackages)
+    targetPackages = (if targetPackages == null then self else targetPackages)
       // { recurseForDerivations = false; };
-    inherit stdenv
-      buildPlatform hostPlatform targetPlatform;
+    inherit stdenv;
   };
 
   # The old identifiers for cross-compiling. These should eventually be removed,
   # and the packages that rely on them refactored accordingly.
   platformCompat = self: super: let
-    # TODO(@Ericson2314) this causes infinite recursion
-    #inherit (self) buildPlatform hostPlatform targetPlatform;
+    inherit (super.stdenv) buildPlatform hostPlatform targetPlatform;
   in {
     stdenv = super.stdenv // {
-      inherit (buildPlatform) platform;
-    } // lib.optionalAttrs (hostPlatform != buildPlatform) {
-      cross = hostPlatform;
+      inherit (super.stdenv.buildPlatform) platform;
     };
+    inherit buildPlatform hostPlatform targetPlatform;
     inherit (buildPlatform) system platform;
   };
 
@@ -124,7 +97,8 @@ let
       res self;
     in res;
 
-  aliases = self: super: import ./aliases.nix super;
+  aliases = self: super: if config.skipAliases or false then {}
+                         else import ./aliases.nix super;
 
   # stdenvOverrides is used to avoid having multiple of versions
   # of certain dependencies that were used in bootstrapping the
@@ -143,7 +117,9 @@ let
     lib.optionalAttrs allowCustomOverrides
       ((config.packageOverrides or (super: {})) super);
 
-  # The complete chain of package set builders, applied from top to bottom
+  # The complete chain of package set builders, applied from top to bottom.
+  # stdenvOverlays must be last as it brings package forward from the
+  # previous bootstrapping phases which have already been overlayed.
   toFix = lib.foldl' (lib.flip lib.extends) (self: {}) ([
     stdenvBootstappingAndPlatforms
     platformCompat
@@ -152,9 +128,9 @@ let
     splice
     allPackages
     aliases
-    stdenvOverrides
     configOverrides
-  ] ++ overlays);
+  ] ++ overlays ++ [
+    stdenvOverrides ]);
 
 in
   # Return the complete set of packages.

@@ -1,4 +1,5 @@
-{ stdenv, fetchurl, pkgconfig, gnused_422, perl, python2, zip, libffi, readline, icu, zlib, nspr }:
+{ stdenv, fetchurl, pkgconfig, gnused_422, perl, python2, zip, libffi, readline, icu, zlib, nspr
+, libobjc }:
 
 stdenv.mkDerivation rec {
   version = "38.2.1.rc0";
@@ -9,11 +10,12 @@ stdenv.mkDerivation rec {
   # probably it would be more ideal to pull a particular tag/revision
   # from the mercurial repo
   src = fetchurl {
-    url = "https://people.mozilla.org/~sstangl/mozjs-${version}.tar.bz2";
+    url = "https://people.freebsd.org/~sunpoet/sunpoet/mozjs-${version}.tar.bz2";
     sha256 = "0p4bmbpgkfsj54xschcny0a118jdrdgg0q29rwxigg3lh5slr681";
   };
 
-  buildInputs = [ libffi readline icu zlib nspr ];
+  buildInputs = [ libffi readline icu zlib nspr ]
+               ++ stdenv.lib.optional stdenv.isDarwin libobjc;
   nativeBuildInputs = [ pkgconfig perl python2 zip gnused_422 ];
 
   postUnpack = "sourceRoot=\${sourceRoot}/js/src";
@@ -53,10 +55,10 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Mozilla's JavaScript engine written in C/C++";
-    homepage = "https://developer.mozilla.org/en/SpiderMonkey";
+    homepage = https://developer.mozilla.org/en/SpiderMonkey;
     # TODO: MPL/GPL/LGPL tri-license.
 
     maintainers = [ maintainers.abbradar ];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

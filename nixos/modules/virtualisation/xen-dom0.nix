@@ -16,6 +16,7 @@ in
     virtualisation.xen.enable =
       mkOption {
         default = false;
+        type = types.bool;
         description =
           ''
             Setting this option enables the Xen hypervisor, a
@@ -34,24 +35,19 @@ in
       description = ''
         The package used for Xen binary.
       '';
+      relatedPackages = [ "xen" "xen-light" ];
     };
 
-    virtualisation.xen.qemu = mkOption {
-      type = types.path;
-      defaultText = "\${pkgs.xen}/lib/xen/bin/qemu-system-i386";
-      example = literalExample "''${pkgs.qemu_xen-light}/bin/qemu-system-i386";
-      description = ''
-        The qemu binary to use for Dom-0 backend.
-      '';
-    };
-
-    virtualisation.xen.qemu-package = mkOption {
+    virtualisation.xen.package-qemu = mkOption {
       type = types.package;
       defaultText = "pkgs.xen";
       example = literalExample "pkgs.qemu_xen-light";
       description = ''
-        The package with qemu binaries for xendomains.
+        The package with qemu binaries for dom0 qemu and xendomains.
       '';
+      relatedPackages = [ "xen"
+                          { name = "qemu_xen-light"; comment = "For use with pkgs.xen-light."; }
+                        ];
     };
 
     virtualisation.xen.bootParams =
@@ -157,8 +153,7 @@ in
     } ];
 
     virtualisation.xen.package = mkDefault pkgs.xen;
-    virtualisation.xen.qemu = mkDefault "${pkgs.xen}/lib/xen/bin/qemu-system-i386";
-    virtualisation.xen.qemu-package = mkDefault pkgs.xen;
+    virtualisation.xen.package-qemu = mkDefault pkgs.xen;
     virtualisation.xen.stored = mkDefault "${cfg.package}/bin/oxenstored";
 
     environment.systemPackages = [ cfg.package ];
@@ -246,6 +241,12 @@ in
           '';
           target = "default/xendomains";
         }
+      ]
+      ++ lib.optionals (builtins.compareVersions cfg.package.version "4.10" >= 0) [
+        # in V 4.10 oxenstored requires /etc/xen/oxenstored.conf to start
+        { source = "${cfg.package}/etc/xen/oxenstored.conf";
+          target = "xen/oxenstored.conf";
+        }
       ];
 
     # Xen provides udev rules.
@@ -267,26 +268,36 @@ in
         mkdir -p /var/lib/xen # so we create them here unconditionally.
         grep -q control_d /proc/xen/capabilities
         '';
-      serviceConfig.ExecStart = ''
-        ${cfg.stored}${optionalString cfg.trace " -T /var/log/xen/xenstored-trace.log"} --no-fork
-        '';
+      serviceConfig = if (builtins.compareVersions cfg.package.version "4.8" < 0) then
+        { ExecStart = ''
+            ${cfg.stored}${optionalString cfg.trace " -T /var/log/xen/xenstored-trace.log"} --no-fork
+            '';
+        } else {
+          ExecStart = ''
+            ${cfg.package}/etc/xen/scripts/launch-xenstore
+            '';
+          Type            = "notify";
+          RemainAfterExit = true;
+          NotifyAccess    = "all";
+        };
       postStart = ''
-        time=0
-        timeout=30
-        # Wait for xenstored to actually come up, timing out after 30 seconds
-        while [ $time -lt $timeout ] && ! `${cfg.package}/bin/xenstore-read -s / >/dev/null 2>&1` ; do
-            time=$(($time+1))
-            sleep 1
-        done
+        ${optionalString (builtins.compareVersions cfg.package.version "4.8" < 0) ''
+          time=0
+          timeout=30
+          # Wait for xenstored to actually come up, timing out after 30 seconds
+          while [ $time -lt $timeout ] && ! `${cfg.package}/bin/xenstore-read -s / >/dev/null 2>&1` ; do
+              time=$(($time+1))
+              sleep 1
+          done
 
-        # Exit if we timed out
-        if ! [ $time -lt $timeout ] ; then
-            echo "Could not start Xenstore Daemon"
-            exit 1
-        fi
-
-        ${cfg.package}/bin/xenstore-write "/local/domain/0/name" "Domain-0"
-        ${cfg.package}/bin/xenstore-write "/local/domain/0/domid" 0
+          # Exit if we timed out
+          if ! [ $time -lt $timeout ] ; then
+              echo "Could not start Xenstore Daemon"
+              exit 1
+          fi
+        ''}
+        echo "executing xen-init-dom0"
+        ${cfg.package}/lib/xen/bin/xen-init-dom0
         '';
     };
 
@@ -306,6 +317,7 @@ in
       description = "Xen Console Daemon";
       wantedBy = [ "multi-user.target" ];
       after = [ "xen-store.service" ];
+      requires = [ "xen-store.service" ];
       preStart = ''
         mkdir -p /var/run/xen
         ${optionalString cfg.trace "mkdir -p /var/log/xen"}
@@ -313,7 +325,9 @@ in
         '';
       serviceConfig = {
         ExecStart = ''
-          ${cfg.package}/bin/xenconsoled${optionalString cfg.trace " --log=all --log-dir=/var/log/xen"}
+          ${cfg.package}/bin/xenconsoled\
+            ${optionalString ((builtins.compareVersions cfg.package.version "4.8" >= 0)) " -i"}\
+            ${optionalString cfg.trace " --log=all --log-dir=/var/log/xen"}
           '';
       };
     };
@@ -323,8 +337,10 @@ in
       description = "Xen Qemu Daemon";
       wantedBy = [ "multi-user.target" ];
       after = [ "xen-console.service" ];
+      requires = [ "xen-store.service" ];
       serviceConfig.ExecStart = ''
-        ${cfg.qemu} -xen-attach -xen-domid 0 -name dom0 -M xenpv \
+        ${cfg.package-qemu}/${cfg.package-qemu.qemu-system-i386} \
+           -xen-attach -xen-domid 0 -name dom0 -M xenpv \
            -nographic -monitor /dev/null -serial /dev/null -parallel /dev/null
         '';
     };
@@ -333,7 +349,7 @@ in
     systemd.services.xen-watchdog = {
       description = "Xen Watchdog Daemon";
       wantedBy = [ "multi-user.target" ];
-      after = [ "xen-qemu.service" ];
+      after = [ "xen-qemu.service" "xen-domains.service" ];
       serviceConfig.ExecStart = "${cfg.package}/bin/xenwatchdogd 30 15";
       serviceConfig.Type = "forking";
       serviceConfig.RestartSec = "1";
@@ -426,13 +442,14 @@ in
       description = "Xen domains - automatically starts, saves and restores Xen domains";
       wantedBy = [ "multi-user.target" ];
       after = [ "xen-bridge.service" "xen-qemu.service" ];
+      requires = [ "xen-bridge.service" "xen-qemu.service" ];
       ## To prevent a race between dhcpcd and xend's bridge setup script
       ## (which renames eth* to peth* and recreates eth* as a virtual
       ## device), start dhcpcd after xend.
       before = [ "dhcpd.service" ];
       restartIfChanged = false;
       serviceConfig.RemainAfterExit = "yes";
-      path = [ cfg.package cfg.qemu-package ];
+      path = [ cfg.package cfg.package-qemu ];
       environment.XENDOM_CONFIG = "${cfg.package}/etc/sysconfig/xendomains";
       preStart = "mkdir -p /var/lock/subsys -m 755";
       serviceConfig.ExecStart = "${cfg.package}/etc/init.d/xendomains start";

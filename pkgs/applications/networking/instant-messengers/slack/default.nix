@@ -1,10 +1,11 @@
-{ stdenv, fetchurl, dpkg
-, alsaLib, atk, cairo, cups, curl, dbus, expat, fontconfig, freetype, glib, gnome2
-, libnotify, nspr, nss, systemd, xorg }:
+{ stdenv, fetchurl, dpkg, makeWrapper
+, alsaLib, atk, cairo, cups, curl, dbus, expat, fontconfig, freetype, glib
+, gnome3, gtk3, gdk_pixbuf, libnotify, libxcb, nspr, nss, pango
+, systemd, wget, xorg }:
 
 let
 
-  version = "2.5.2";
+  version = "3.2.0-beta25a7a50e";
 
   rpath = stdenv.lib.makeLibraryPath [
     alsaLib
@@ -17,11 +18,12 @@ let
     fontconfig
     freetype
     glib
-    gnome2.GConf
-    gnome2.gdk_pixbuf
-    gnome2.gtk
-    gnome2.pango
+    gnome3.gconf
+    gdk_pixbuf
+    gtk3
+    pango
     libnotify
+    libxcb
     nspr
     nss
     stdenv.cc.cc
@@ -45,7 +47,7 @@ let
     if stdenv.system == "x86_64-linux" then
       fetchurl {
         url = "https://downloads.slack-edge.com/linux_releases/slack-desktop-${version}-amd64.deb";
-        sha256 = "0mg8js18lnnwyvqksrhpym7d04bin16bh7sdmxbm36iijb9ajxmi";
+        sha256 = "0497794a7f0e5ac00a9421e6b1875dcc576ed93efc4a7d8c6465db641c234064";
       }
     else
       throw "Slack is not supported on ${stdenv.system}";
@@ -55,7 +57,13 @@ in stdenv.mkDerivation {
 
   inherit src;
 
-  buildInputs = [ dpkg ];
+  buildInputs = [
+    dpkg
+    gtk3  # needed for GSETTINGS_SCHEMAS_PATH
+  ];
+
+  nativeBuildInputs = [ makeWrapper ];
+
   unpackPhase = "true";
   buildCommand = ''
     mkdir -p $out
@@ -71,9 +79,10 @@ in stdenv.mkDerivation {
       patchelf --set-rpath ${rpath}:$out/lib/slack $file || true
     done
 
-    # Fix the symlink
+    # Replace the broken bin/slack symlink with a startup wrapper
     rm $out/bin/slack
-    ln -s $out/lib/slack/slack $out/bin/slack
+    makeWrapper $out/lib/slack/slack $out/bin/slack \
+      --prefix XDG_DATA_DIRS : $GSETTINGS_SCHEMAS_PATH
 
     # Fix the desktop link
     substituteInPlace $out/share/applications/slack.desktop \
@@ -83,7 +92,7 @@ in stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "Desktop client for Slack";
-    homepage = "https://slack.com";
+    homepage = https://slack.com;
     license = licenses.unfree;
     platforms = [ "x86_64-linux" ];
   };

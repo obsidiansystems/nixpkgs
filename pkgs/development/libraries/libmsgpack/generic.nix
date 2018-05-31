@@ -1,5 +1,6 @@
 { stdenv, cmake
 , version, src, patches ? [ ]
+, hostPlatform
 , ...
 }:
 
@@ -10,16 +11,20 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ cmake ];
 
-  crossAttrs = {
-  } // stdenv.lib.optionalAttrs (stdenv.cross.libc == "msvcrt") {
-    cmakeFlags = "-DMSGPACK_BUILD_EXAMPLES=OFF -DCMAKE_SYSTEM_NAME=Windows";
-  };
+  enableParallelBuilding = true;
+
+  cmakeFlags = []
+    ++ stdenv.lib.optional (stdenv.hostPlatform != stdenv.buildPlatform)
+                           "-DMSGPACK_BUILD_EXAMPLES=OFF"
+    ++ stdenv.lib.optional (hostPlatform.libc == "msvcrt")
+                           "-DCMAKE_SYSTEM_NAME=Windows"
+    ;
 
   meta = with stdenv.lib; {
     description = "MessagePack implementation for C and C++";
-    homepage = http://msgpack.org;
+    homepage    = https://msgpack.org;
+    license     = licenses.asl20;
     maintainers = with maintainers; [ redbaron wkennington ];
-    license = licenses.asl20;
-    platforms = platforms.all;
+    platforms   = platforms.all;
   };
 }

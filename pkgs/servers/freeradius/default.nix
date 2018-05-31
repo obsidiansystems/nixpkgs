@@ -13,7 +13,7 @@
 , withMemcached ? false
 , hiredis
 , withRedis ? false
-, libmysql
+, mysql
 , withMysql ? false
 , json_c
 , withJson ? false
@@ -29,7 +29,7 @@ assert withPcap -> libpcap != null;
 assert withCap -> libcap != null;
 assert withMemcached -> libmemcached != null;
 assert withRedis -> hiredis != null;
-assert withMysql -> libmysql != null;
+assert withMysql -> mysql != null;
 assert withYubikey -> libyubikey != null;
 assert withCollectd -> collectd != null;
 
@@ -40,11 +40,11 @@ assert withCollectd -> collectd != null;
 with stdenv.lib;
 stdenv.mkDerivation rec {
   name = "freeradius-${version}";
-  version = "3.0.12";
+  version = "3.0.17";
 
   src = fetchurl {
     url = "ftp://ftp.freeradius.org/pub/freeradius/freeradius-server-${version}.tar.gz";
-    sha256 = "182xnb9pdsivlyfm471l90m37q9i04h7jadhkgm0ivvzrzpzcnja";
+    sha256 = "0bc35knv46z729l4h22rirqns5v6jb0fzcffnjayhs8wjysfkfyy";
   };
 
   nativeBuildInputs = [ autoreconfHook ];
@@ -56,7 +56,7 @@ stdenv.mkDerivation rec {
     ++ optional withCap libcap
     ++ optional withMemcached libmemcached
     ++ optional withRedis hiredis
-    ++ optional withMysql libmysql
+    ++ optional withMysql mysql.connector-c
     ++ optional withJson json_c
     ++ optional withYubikey libyubikey
     ++ optional withCollectd collectd;
@@ -76,10 +76,10 @@ stdenv.mkDerivation rec {
   ];
 
   meta = with stdenv.lib; {
-    homepage = http://freeradius.org/;
+    homepage = https://freeradius.org/;
     description = "A modular, high performance free RADIUS suite";
-    license = stdenv.lib.licenses.gpl2;
-    maintainers = with maintainers; [ sheenobu ];
+    license = licenses.gpl2;
+    maintainers = with maintainers; [ sheenobu willibutz ];
     platforms = with platforms; linux;
   };
 

@@ -26,6 +26,7 @@ rec {
     , text
     , executable ? false # run chmod +x ?
     , destination ? ""   # relative path appended to $out eg "/bin/foo"
+    , checkPhase ? ""    # syntax checks, e.g. for scripts
     }:
     runCommand name
       { inherit text executable;
@@ -44,6 +45,8 @@ rec {
           echo -n "$text" > "$n"
         fi
 
+        ${checkPhase}
+
         (test -n "$executable" && chmod +x "$n") || true
       '';
 
@@ -54,6 +57,20 @@ rec {
   writeScript = name: text: writeTextFile {inherit name text; executable = true;};
   writeScriptBin = name: text: writeTextFile {inherit name text; executable = true; destination = "/bin/${name}";};
 
+  # Create a Shell script, check its syntax
+  writeShellScriptBin = name : text :
+    writeTextFile {
+      inherit name;
+      executable = true;
+      destination = "/bin/${name}";
+      text = ''
+        #!${stdenv.shell}
+        ${text}
+        '';
+      checkPhase = ''
+        ${stdenv.shell} -n $out/bin/${name}
+      '';
+    };
 
   # Create a forest of symlinks to the files in `paths'.
   symlinkJoin =
@@ -78,13 +95,13 @@ rec {
 
 
   # Make a package that just contains a setup hook with the given contents.
-  makeSetupHook = { deps ? [], substitutions ? {} }: script:
-    runCommand "hook" substitutions
+  makeSetupHook = { name ? "hook", deps ? [], substitutions ? {} }: script:
+    runCommand name substitutions
       (''
         mkdir -p $out/nix-support
         cp ${script} $out/nix-support/setup-hook
       '' + lib.optionalString (deps != []) ''
-        echo ${toString deps} > $out/nix-support/propagated-native-build-inputs
+        printWords ${toString deps} > $out/nix-support/propagated-build-inputs
       '' + lib.optionalString (substitutions != {}) ''
         substituteAll ${script} $out/nix-support/setup-hook
       '');
@@ -121,6 +138,7 @@ rec {
                 , sha1 ? null
                 , url ? null
                 , message ? null
+                , hashMode ? "flat"
                 } :
     assert (message != null) || (url != null);
     assert (sha256 != null) || (sha1 != null);
@@ -139,13 +157,14 @@ rec {
       hash = if sha256 != null then sha256 else sha1;
       name_ = if name == null then baseNameOf (toString url) else name;
     in
-    stdenv.mkDerivation {
+    stdenvNoCC.mkDerivation {
       name = name_;
+      outputHashMode = hashMode;
       outputHashAlgo = hashAlgo;
       outputHash = hash;
       preferLocalBuild = true;
       builder = writeScript "restrict-message" ''
-        source ${stdenv}/setup
+        source ${stdenvNoCC}/setup
         cat <<_EOF_
 
         ***
@@ -153,6 +172,7 @@ rec {
         ***
 
         _EOF_
+        exit 1
       '';
     };
 

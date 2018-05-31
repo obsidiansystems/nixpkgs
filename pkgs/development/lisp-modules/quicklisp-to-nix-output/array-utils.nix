@@ -1,33 +1,25 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''array-utils'';
-  version = ''20160929-git'';
+  version = ''20180131-git'';
 
   description = ''A few utilities for working with arrays.'';
 
   deps = [ ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/array-utils/2016-09-29/array-utils-20160929-git.tgz'';
-    sha256 = ''1nlrf7b81qq7l85kkdh3fxcs6ngnvh5zk7mb5mwf8vjm5kpfbbcx'';
+    url = ''http://beta.quicklisp.org/archive/array-utils/2018-01-31/array-utils-20180131-git.tgz'';
+    sha256 = ''01vjb146lb1dp77xcpinq4r1jv2fvl3gzj50x9i04b5mhfaqpkd0'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/array-utils[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "array-utils";
+
+  asdFilesToKeep = ["array-utils.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM array-utils DESCRIPTION A few utilities for working with arrays. SHA256 1nlrf7b81qq7l85kkdh3fxcs6ngnvh5zk7mb5mwf8vjm5kpfbbcx URL
-    http://beta.quicklisp.org/archive/array-utils/2016-09-29/array-utils-20160929-git.tgz MD5 8b3880c7b73625cf8ed599d91a3836b4 NAME array-utils TESTNAME NIL
-    FILENAME array-utils DEPS NIL DEPENDENCIES NIL VERSION 20160929-git SIBLINGS (array-utils-test)) */
+/* (SYSTEM array-utils DESCRIPTION A few utilities for working with arrays.
+    SHA256 01vjb146lb1dp77xcpinq4r1jv2fvl3gzj50x9i04b5mhfaqpkd0 URL
+    http://beta.quicklisp.org/archive/array-utils/2018-01-31/array-utils-20180131-git.tgz
+    MD5 339670a03dd7d865cd045a6556d705c6 NAME array-utils FILENAME array-utils
+    DEPS NIL DEPENDENCIES NIL VERSION 20180131-git SIBLINGS (array-utils-test)
+    PARASITES NIL) */

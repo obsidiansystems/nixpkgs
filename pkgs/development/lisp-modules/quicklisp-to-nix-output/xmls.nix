@@ -1,32 +1,29 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''xmls'';
-  version = ''1.7'';
+  version = ''3.0.2'';
+
+  parasites = [ "xmls/octets" "xmls/test" "xmls/unit-test" ];
 
   description = '''';
 
-  deps = [ ];
+  deps = [ args."cl-ppcre" args."fiveam" args."flexi-streams" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/xmls/2015-04-07/xmls-1.7.tgz'';
-    sha256 = ''1pch221g5jv02rb21ly9ik4cmbzv8ca6bnyrs4s0yfrrq0ji406b'';
+    url = ''http://beta.quicklisp.org/archive/xmls/2018-04-30/xmls-3.0.2.tgz'';
+    sha256 = ''1r7mvw62zjcg45j3hm8jlbiisad2b415pghn6qcmhl03dmgp7kgi'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/xmls[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "xmls";
+
+  asdFilesToKeep = ["xmls.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM xmls DESCRIPTION NIL SHA256 1pch221g5jv02rb21ly9ik4cmbzv8ca6bnyrs4s0yfrrq0ji406b URL http://beta.quicklisp.org/archive/xmls/2015-04-07/xmls-1.7.tgz
-    MD5 697c9f49a60651b759e24ea0c1eb1cfe NAME xmls TESTNAME NIL FILENAME xmls DEPS NIL DEPENDENCIES NIL VERSION 1.7 SIBLINGS NIL) */
+/* (SYSTEM xmls DESCRIPTION NIL SHA256
+    1r7mvw62zjcg45j3hm8jlbiisad2b415pghn6qcmhl03dmgp7kgi URL
+    http://beta.quicklisp.org/archive/xmls/2018-04-30/xmls-3.0.2.tgz MD5
+    2462bab4a5d74e87ef7bdef41cd06dc8 NAME xmls FILENAME xmls DEPS
+    ((NAME cl-ppcre FILENAME cl-ppcre) (NAME fiveam FILENAME fiveam)
+     (NAME flexi-streams FILENAME flexi-streams))
+    DEPENDENCIES (cl-ppcre fiveam flexi-streams) VERSION 3.0.2 SIBLINGS NIL
+    PARASITES (xmls/octets xmls/test xmls/unit-test)) */

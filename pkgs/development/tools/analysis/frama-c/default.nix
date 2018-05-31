@@ -1,5 +1,6 @@
 { stdenv, fetchurl, makeWrapper, ncurses, ocamlPackages, graphviz
-, ltl2ba, coq, alt-ergo, why3 }:
+, ltl2ba, coq, alt-ergo, why3, autoconf
+}:
 
 let
   mkocamlpath = p: "${p}/lib/ocaml/${ocamlPackages.ocaml.version}/site-lib";
@@ -8,20 +9,20 @@ in
 
 stdenv.mkDerivation rec {
   name    = "frama-c-${version}";
-  version = "20161101";
-  slang   = "Silicon";
+  version = "20171101";
+  slang   = "Sulfur";
 
   src = fetchurl {
     url    = "http://frama-c.com/download/frama-c-${slang}-${version}.tar.gz";
-    sha256 = "1qq045ymz1mx4m9dsypigrcagqyb2k78wk13nqlbykcs5xbihfdh";
+    sha256 = "1vwjfqmm1r36gkybsy3a7m89q5zicf4rnz5vlsn9imnpjpl9gjw1";
   };
 
   why2 = fetchurl {
-    url    = "http://why.lri.fr/download/why-2.37.tar.gz";
-    sha256 = "00xr8aq6zwln0ccfs1ng610j70r6ia6wqdyaqs9iqibqfa1scr3m";
+    url    = "http://why.lri.fr/download/why-2.39.tar.gz";
+    sha256 = "0nf17jl00s7q9z8gkbamnf7mglvxqrm3967c17ic4c9xz8g125a8";
   };
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [ autoconf makeWrapper ];
 
   buildInputs = with ocamlPackages; [
     ncurses ocaml findlib alt-ergo ltl2ba ocamlgraph

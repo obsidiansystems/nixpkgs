@@ -1,33 +1,29 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''ironclad'';
-  version = ''ironclad_0.33.0'';
+  version = ''v0.39'';
+
+  parasites = [ "ironclad/tests" ];
 
   description = ''A cryptographic toolkit written in pure Common Lisp'';
 
-  deps = [ args."nibbles" ];
+  deps = [ args."nibbles" args."rt" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/ironclad/2014-11-06/ironclad_0.33.0.tgz'';
-    sha256 = ''1ld0xz8gmi566zxl1cva5yi86aw1wb6i6446gxxdw1lisxx3xwz7'';
+    url = ''http://beta.quicklisp.org/archive/ironclad/2018-04-30/ironclad-v0.39.tgz'';
+    sha256 = ''0nqm6bnxiiv78c33zlr5n53wdkpcfxh1xrx7af6122n29ggzj3h8'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/ironclad[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "ironclad";
+
+  asdFilesToKeep = ["ironclad.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM ironclad DESCRIPTION A cryptographic toolkit written in pure Common Lisp SHA256 1ld0xz8gmi566zxl1cva5yi86aw1wb6i6446gxxdw1lisxx3xwz7 URL
-    http://beta.quicklisp.org/archive/ironclad/2014-11-06/ironclad_0.33.0.tgz MD5 2b7befe607e2fedffbdd45b2443db718 NAME ironclad TESTNAME NIL FILENAME ironclad
-    DEPS ((NAME nibbles)) DEPENDENCIES (nibbles) VERSION ironclad_0.33.0 SIBLINGS (ironclad-text)) */
+/* (SYSTEM ironclad DESCRIPTION
+    A cryptographic toolkit written in pure Common Lisp SHA256
+    0nqm6bnxiiv78c33zlr5n53wdkpcfxh1xrx7af6122n29ggzj3h8 URL
+    http://beta.quicklisp.org/archive/ironclad/2018-04-30/ironclad-v0.39.tgz
+    MD5 f4abb18cbbe173c569d8ed99800d9f9e NAME ironclad FILENAME ironclad DEPS
+    ((NAME nibbles FILENAME nibbles) (NAME rt FILENAME rt)) DEPENDENCIES
+    (nibbles rt) VERSION v0.39 SIBLINGS (ironclad-text) PARASITES
+    (ironclad/tests)) */

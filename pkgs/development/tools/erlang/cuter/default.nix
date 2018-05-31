@@ -2,7 +2,7 @@
 , beamPackages, z3, python27 }:
 
 stdenv.mkDerivation rec {
-  name = "cuter";
+  name = "cuter-${version}";
   version = "0.1";
 
   src = fetchFromGitHub {
@@ -39,7 +39,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "A concolic testing tool for the Erlang functional programming language";
     license = stdenv.lib.licenses.gpl3;
-    homepage = "https://github.com/aggelgian/cuter";
+    homepage = https://github.com/aggelgian/cuter;
     maintainers = with stdenv.lib.maintainers; [ ericbmerritt ];
     platforms = with stdenv.lib.platforms; unix;
   };

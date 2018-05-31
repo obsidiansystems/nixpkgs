@@ -1,16 +1,16 @@
 { stdenv, fetchurl, pkgconfig, systemd ? null, libobjc, IOKit }:
 
 stdenv.mkDerivation rec {
-  name = "libusb-1.0.20";
+  name = "libusb-1.0.22";
 
   src = fetchurl {
     url = "mirror://sourceforge/libusb/${name}.tar.bz2";
-    sha256 = "1zzp6hc7r7m3gl6zjbmzn92zkih4664cckaf49l1g5hapa8721fb";
+    sha256 = "0mw1a5ss4alg37m6bd4k44v35xwrcwp5qm4s686q1nsgkbavkbkm";
   };
 
   outputs = [ "out" "dev" ]; # get rid of propagating systemd closure
 
-  buildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkgconfig ];
   propagatedBuildInputs =
     stdenv.lib.optional stdenv.isLinux systemd ++
     stdenv.lib.optionals stdenv.isDarwin [ libobjc IOKit ];

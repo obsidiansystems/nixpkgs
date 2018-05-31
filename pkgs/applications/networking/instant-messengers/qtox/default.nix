@@ -1,51 +1,50 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, openal, opencv,
-  libtoxcore, libsodium, libXScrnSaver, glib, gdk_pixbuf, gtk2, cairo, xorg,
-  pango, atk, qrencode, ffmpeg, filter-audio, makeQtWrapper,
-  qtbase, qtsvg, qttools, qttranslations, sqlcipher,
-  libvpx, libopus }:
+{ stdenv, mkDerivation, lib, fetchFromGitHub, cmake, pkgconfig
+, libtoxcore
+, libpthreadstubs, libXdmcp, libXScrnSaver
+, qtbase, qtsvg, qttools, qttranslations
+, ffmpeg, filter-audio, libexif, libsodium, libopus
+, libvpx, openal, pcre, qrencode, sqlcipher
+, AVFoundation ? null }:
 
-stdenv.mkDerivation rec {
+let
+  version = "1.15.0";
+  rev = "v${version}";
+
+in mkDerivation rec {
   name = "qtox-${version}";
-  version = "1.10.1";
 
   src = fetchFromGitHub {
-    owner  = "tux3";
+    owner  = "qTox";
     repo   = "qTox";
-    rev    = "v${version}";
-    sha256 = "1c5y7fwhsq1f6z8208xl1jd6bl1r6k8g0fjqxf0z10373c9395jq";
+    sha256 = "1garwnlmg452b0bwx36rsh08s15q3zylb26l01iiwg4l9vcaldh9";
+    inherit rev;
   };
 
   buildInputs = [
-    libtoxcore openal opencv libsodium filter-audio
-    qtbase qttools qtsvg libXScrnSaver glib gtk2 cairo
-    pango atk qrencode ffmpeg qttranslations
-    sqlcipher
-    libopus libvpx
-  ] ++ (with xorg; [
-    libpthreadstubs libXdmcp
-  ]);
+    libtoxcore
+    libpthreadstubs libXdmcp libXScrnSaver
+    qtbase qtsvg qttranslations
+    ffmpeg filter-audio libexif libopus libsodium
+    libvpx openal pcre qrencode sqlcipher
+  ] ++ lib.optionals stdenv.isDarwin [ AVFoundation] ;
 
-  nativeBuildInputs = [ cmake makeQtWrapper pkgconfig ];
-
-  cmakeFlags = [
-    "-DGIT_DESCRIBE=${version}"
-  ];
-
-  installPhase = ''
-    runHook preInstall
-
-    install -Dm755 qtox $out/bin/qtox
-    wrapQtProgram $out/bin/qtox
-
-    runHook postInstall
-  '';
+  nativeBuildInputs = [ cmake pkgconfig qttools ];
 
   enableParallelBuilding = true;
 
-  meta = with stdenv.lib; {
+  cmakeFlags = [
+    "-DGIT_DESCRIBE=${rev}"
+    "-DENABLE_STATUSNOTIFIER=False"
+    "-DENABLE_GTK_SYSTRAY=False"
+    "-DENABLE_APPINDICATOR=False"
+    "-DTIMESTAMP=1"
+  ];
+
+  meta = with lib; {
     description = "Qt Tox client";
-    license = licenses.gpl3;
+    homepage    = https://tox.chat;
+    license     = licenses.gpl3;
     maintainers = with maintainers; [ viric jgeerds akaWolf peterhoeg ];
-    platforms = platforms.all;
+    platforms   = platforms.all;
   };
 }

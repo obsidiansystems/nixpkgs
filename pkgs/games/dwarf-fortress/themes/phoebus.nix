@@ -5,13 +5,13 @@
 
 stdenv.mkDerivation rec {
   name = "phoebus-theme-${version}";
-  version = "43.05c";
+  version = "44.07";
 
   src = fetchFromGitHub {
     owner = "DFgraphics";
     repo = "Phoebus";
     rev = version;
-    sha256 = "0wiz9rd5ypibgh8854h5n2xwksfxylaziyjpbp3p1rkm3r7kr4fd";
+    sha256 = "114yc0s7j57i4rq6iq295gggbgzx4qb389xip8lkzfg4dnp6klns";
   };
 
   installPhase = ''
@@ -19,13 +19,13 @@ stdenv.mkDerivation rec {
     cp -r data raw $out
   '';
 
-  passthru.dfVersion = "0.43.05";
+  passthru.dfVersion = "0.44.09";
 
   preferLocalBuild = true;
 
   meta = with stdenv.lib; {
     description = "Phoebus graphics set for Dwarf Fortress";
-    homepage = "http://www.bay12forums.com/smf/index.php?topic=137096.0";
+    homepage = http://www.bay12forums.com/smf/index.php?topic=137096.0;
     platforms = platforms.all;
     maintainers = with maintainers; [ a1russell abbradar ];
     # https://github.com/fricy/Phoebus/issues/5

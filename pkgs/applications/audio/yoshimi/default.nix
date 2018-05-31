@@ -1,27 +1,28 @@
-{ stdenv, fetchurl, alsaLib, boost, cairo, cmake, fftwSinglePrec, fltk
-, libjack2, libsndfile, libXdmcp, readline, lv2, mesa, minixml, pkgconfig, zlib, xorg
+{ stdenv, fetchurl, alsaLib, boost, cairo, cmake, fftwSinglePrec, fltk, pcre
+, libjack2, libsndfile, libXdmcp, readline, lv2, libGLU_combined, minixml, pkgconfig, zlib, xorg
 }:
 
 assert stdenv ? glibc;
 
 stdenv.mkDerivation  rec {
   name = "yoshimi-${version}";
-  version = "1.5.0";
+  version = "1.5.8";
 
   src = fetchurl {
     url = "mirror://sourceforge/yoshimi/${name}.tar.bz2";
-    sha256 = "10s1i18xlmvqfrnr0zn2mj2b28i7p62dlqzzzkmpaapqj1gsgpz5";
+    sha256 = "0gwsr5srzy28hwqhfzrc8pswysmyra8kbww3bxfx8bq4mdjifdj6";
   };
 
   buildInputs = [
-    alsaLib boost cairo fftwSinglePrec fltk libjack2 libsndfile libXdmcp readline lv2 mesa
-    minixml zlib xorg.libpthreadstubs
+    alsaLib boost cairo fftwSinglePrec fltk libjack2 libsndfile libXdmcp readline lv2 libGLU_combined
+    minixml zlib xorg.libpthreadstubs pcre
   ];
 
   nativeBuildInputs = [ cmake pkgconfig ];
 
   patchPhase = ''
-    sed -i -e 's,/usr/share,'$out/share,g src/Misc/Config.cpp src/Misc/Bank.cpp
+    substituteInPlace src/Misc/Config.cpp --replace /usr $out
+    substituteInPlace src/Misc/Bank.cpp --replace /usr $out
   '';
 
   preConfigure = "cd src";

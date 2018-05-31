@@ -2,14 +2,16 @@
 
 stdenv.mkDerivation rec {
   name = "snpeff-${version}";
-  version = "4.3i";
+  version = "4.3q";
 
   src = fetchurl {
-    url = "mirror://sourceforge/project/snpeff/snpEff_latest_core.zip";
-    sha256 = "0i1slg201c8yjfr4wrg4xcgzwi0c8b9l3fb1i73fphq6q6zdblzb";
+    url = "mirror://sourceforge/project/snpeff/snpEff_v4_3q_core.zip";
+    sha256 = "0sxz8zy8wrzcy01hyb1cirwbxqyjw30a2x3q6p4l7zmw2szi7mn1";
   };
 
   buildInputs = [ unzip jre makeWrapper ];
+
+  sourceRoot = "snpEff";
 
   installPhase = ''
     mkdir -p $out/libexec/snpeff

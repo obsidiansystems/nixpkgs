@@ -1,11 +1,11 @@
 { stdenv, fetchFromGitHub
-, vala, cmake, wrapGAppsHook, pkgconfig, gettext
-, gobjectIntrospection, gnome3, glib, gdk_pixbuf, gtk3, glib_networking
+, vala, cmake, ninja, wrapGAppsHook, pkgconfig, gettext
+, gobjectIntrospection, gnome3, glib, gdk_pixbuf, gtk3, glib-networking
 , xorg, libXdmcp, libxkbcommon
-, libnotify
+, libnotify, libsoup
 , libgcrypt
 , epoxy
-, at_spi2_core
+, at-spi2-core
 , sqlite
 , dbus
 , gpgme
@@ -13,26 +13,27 @@
  }:
 
 stdenv.mkDerivation rec {
-  name = "dino-unstable-2017-05-31";
+  name = "dino-unstable-2018-04-19";
 
   src = fetchFromGitHub {
     owner = "dino";
     repo = "dino";
-    rev = "2480c1ec26a8e0ccef3ea76e3c29566221405ffb";
-    sha256 = "0wdjj38gbr2j6yklna3pd8nsfpdfp1j936dy8s49pzayw4pxs2g2";
+    rev = "e80da806022d8aaa32f77f3c7f0333cc1c80829b";
+    sha256 = "04z4k1s4ck6vmbzlbpiw096ny0wpj4zi3cd0iv9vb2iwdj22gibm";
     fetchSubmodules = true;
   };
 
   nativeBuildInputs = [
     vala
     cmake
+    ninja
     pkgconfig
     wrapGAppsHook
   ];
 
   buildInputs = [
     gobjectIntrospection
-    glib_networking
+    glib-networking
     glib
     gnome3.libgee
     gnome3.defaultIconTheme
@@ -42,13 +43,14 @@ stdenv.mkDerivation rec {
     libnotify
     gpgme
     libgcrypt
+    libsoup
     pcre
     xorg.libxcb
     xorg.libpthreadstubs
     libXdmcp
     libxkbcommon
     epoxy
-    at_spi2_core
+    at-spi2-core
     dbus
     gettext
   ];

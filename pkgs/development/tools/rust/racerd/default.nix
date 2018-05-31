@@ -1,23 +1,24 @@
-{ stdenv, fetchgit, rustPlatform, makeWrapper }:
+{ stdenv, fetchFromGitHub, rustPlatform, makeWrapper }:
 
 with rustPlatform;
 
 buildRustPackage rec {
   name = "racerd-${version}";
-  version = "2016-12-24";
-  src = fetchgit {
-    url = "git://github.com/jwilm/racerd.git";
-    rev = "dc090ea11d550cd513416d21227d558dbfd2fcb6";
-    sha256 = "0jfryb1b32m6bn620gd7y670cfipaswj1cppzkybm4xg6abqh07b";
+  version = "2017-09-15";
+  src = fetchFromGitHub {
+    owner = "jwilm";
+    repo = "racerd";
+    rev = "29cd4c6fd2a9301e49931c2e065b2e10c4b587e4";
+    sha256 = "0knz881mjhd8q2i8ydggaa7lfpiqy11wjmnv5p80n1d8zca6yb7z";
   };
 
   doCheck = false;
 
-  depsSha256 = "1vv6fyisi11bcajxkq3ihpl59yh504xmnsr222zj15hmivn0jwf2";
+  cargoSha256 = "00gxj98zdkbrc5cxd4w5hk7iwv9a1kwa535hhspx9xd02r4d8rzl";
 
   buildInputs = [ makeWrapper ];
 
-  RUST_SRC_PATH = ''${rustPlatform.rust.rustc.src}/src'';
+  RUST_SRC_PATH = rustPlatform.rustcSrc;
 
   installPhase = ''
     mkdir -p $out/bin
@@ -27,7 +28,7 @@ buildRustPackage rec {
 
   meta = with stdenv.lib; {
     description = "JSON/HTTP Server based on racer for adding Rust support to editors and IDEs";
-    homepage = "https://github.com/jwilm/racerd";
+    homepage = https://github.com/jwilm/racerd;
     license = licenses.asl20;
     platforms = platforms.all;
   };

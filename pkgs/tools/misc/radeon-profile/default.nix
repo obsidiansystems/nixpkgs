@@ -1,24 +1,23 @@
-{ stdenv, fetchFromGitHub, qtbase, qmakeHook, makeQtWrapper, libXrandr }:
+{ stdenv, fetchFromGitHub, qtbase, qtcharts, qmake, libXrandr, libdrm }:
 
 stdenv.mkDerivation rec {
 
   name = "radeon-profile-${version}";
-  version = "20161221";
+  version = "20170714";
 
-  nativeBuildInputs = [ qmakeHook makeQtWrapper ];
-  buildInputs = [ qtbase libXrandr ];
+  nativeBuildInputs = [ qmake ];
+  buildInputs = [ qtbase qtcharts libXrandr libdrm ];
 
   src = (fetchFromGitHub {
     owner  = "marazmista";
     repo   = "radeon-profile";
     rev    = version;
-    sha256 = "0zdmpc0rx6i0y32dcbz02whp95hpbmmbkmcp39f00byvjm5cprgg";
+    sha256 = "08fv824iq00zbl9xk9zsfs8gkk8rsy6jlxbmszrjfx7ji28hansd";
   }) + "/radeon-profile";
 
   postInstall = ''
     mkdir -p $out/bin
     cp ./radeon-profile $out/bin/radeon-profile
-    wrapQtProgram  $out/bin/radeon-profile
   '';
 
   meta = with stdenv.lib; {

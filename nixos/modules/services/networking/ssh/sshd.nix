@@ -21,6 +21,8 @@ let
           daemon reads in addition to the the user's authorized_keys file.
           You can combine the <literal>keys</literal> and
           <literal>keyFiles</literal> options.
+          Warning: If you are using <literal>NixOps</literal> then don't use this
+          option since it will replace the key required for deployment via ssh.
         '';
       };
 
@@ -51,8 +53,6 @@ let
       length u.openssh.authorizedKeys.keys != 0 || length u.openssh.authorizedKeys.keyFiles != 0
     ));
   in listToAttrs (map mkAuthKeyFile usersWithKeys);
-
-  supportOldHostKeys = !versionAtLeast config.system.stateVersion "15.07";
 
 in
 
@@ -101,6 +101,15 @@ in
         '';
       };
 
+      sftpFlags = mkOption {
+        type = with types; listOf str;
+        default = [];
+        example = [ "-f AUTHPRIV" "-l INFO" ];
+        description = ''
+          Commandline flags to add to sftp-server.
+        '';
+      };
+
       permitRootLogin = mkOption {
         default = "prohibit-password";
         type = types.enum ["yes" "without-password" "prohibit-password" "forced-commands-only" "no"];
@@ -125,6 +134,14 @@ in
         default = [22];
         description = ''
           Specifies on which ports the SSH daemon listens.
+        '';
+      };
+
+      openFirewall = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether to automatically open the specified ports in the firewall.
         '';
       };
 
@@ -180,9 +197,6 @@ in
         default =
           [ { type = "rsa"; bits = 4096; path = "/etc/ssh/ssh_host_rsa_key"; }
             { type = "ed25519"; path = "/etc/ssh/ssh_host_ed25519_key"; }
-          ] ++ optionals supportOldHostKeys
-          [ { type = "dsa"; path = "/etc/ssh/ssh_host_dsa_key"; }
-            { type = "ecdsa"; bits = 521; path = "/etc/ssh/ssh_host_ecdsa_key"; }
           ];
         description = ''
           NixOS can automatically generate SSH host keys.  This option
@@ -199,6 +213,65 @@ in
         description = "Files from which authorized keys are read.";
       };
 
+      kexAlgorithms = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "curve25519-sha256@libssh.org"
+          "diffie-hellman-group-exchange-sha256"
+        ];
+        description = ''
+          Allowed key exchange algorithms
+          </para>
+          <para>
+          Defaults to recommended settings from both
+          <link xlink:href="https://stribika.github.io/2015/01/04/secure-secure-shell.html" />
+          and
+          <link xlink:href="https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Modern_.28OpenSSH_6.7.2B.29" />
+        '';
+      };
+
+      ciphers = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "chacha20-poly1305@openssh.com"
+          "aes256-gcm@openssh.com"
+          "aes128-gcm@openssh.com"
+          "aes256-ctr"
+          "aes192-ctr"
+          "aes128-ctr"
+        ];
+        description = ''
+          Allowed ciphers
+          </para>
+          <para>
+          Defaults to recommended settings from both
+          <link xlink:href="https://stribika.github.io/2015/01/04/secure-secure-shell.html" />
+          and
+          <link xlink:href="https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Modern_.28OpenSSH_6.7.2B.29" />
+        '';
+      };
+
+      macs = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "hmac-sha2-512-etm@openssh.com"
+          "hmac-sha2-256-etm@openssh.com"
+          "umac-128-etm@openssh.com"
+          "hmac-sha2-512"
+          "hmac-sha2-256"
+          "umac-128@openssh.com"
+        ];
+        description = ''
+          Allowed MACs
+          </para>
+          <para>
+          Defaults to recommended settings from both
+          <link xlink:href="https://stribika.github.io/2015/01/04/secure-secure-shell.html" />
+          and
+          <link xlink:href="https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Modern_.28OpenSSH_6.7.2B.29" />
+        '';
+      };
+
       extraConfig = mkOption {
         type = types.lines;
         default = "";
@@ -206,7 +279,7 @@ in
       };
 
       moduliFile = mkOption {
-        example = "services.openssh.moduliFile = /etc/my-local-ssh-moduli;";
+        example = "/etc/my-local-ssh-moduli;";
         type = types.path;
         description = ''
           Path to <literal>moduli</literal> file to install in
@@ -242,13 +315,10 @@ in
       let
         service =
           { description = "SSH Daemon";
-
             wantedBy = optional (!cfg.startWhenNeeded) "multi-user.target";
-
+            after = [ "network.target" ];
             stopIfChanged = false;
-
             path = [ cfgc.package pkgs.gawk ];
-
             environment.LD_LIBRARY_PATH = nssModulesPath;
 
             preStart =
@@ -299,7 +369,7 @@ in
 
       };
 
-    networking.firewall.allowedTCPPorts = cfg.ports;
+    networking.firewall.allowedTCPPorts = if cfg.openFirewall then cfg.ports else [];
 
     security.pam.services.sshd =
       { startSession = true;
@@ -336,7 +406,7 @@ in
         ''}
 
         ${optionalString cfg.allowSFTP ''
-          Subsystem sftp ${cfgc.package}/libexec/sftp-server
+          Subsystem sftp ${cfgc.package}/libexec/sftp-server ${concatStringsSep " " cfg.sftpFlags}
         ''}
 
         PermitRootLogin ${cfg.permitRootLogin}
@@ -352,14 +422,13 @@ in
           HostKey ${k.path}
         '')}
 
-        # Allow DSA client keys for now. (These were deprecated
-        # in OpenSSH 7.0.)
-        PubkeyAcceptedKeyTypes +ssh-dss
+        KexAlgorithms ${concatStringsSep "," cfg.kexAlgorithms}
+        Ciphers ${concatStringsSep "," cfg.ciphers}
+        MACs ${concatStringsSep "," cfg.macs}
 
-        # Re-enable DSA host keys for now.
-        ${optionalString supportOldHostKeys ''
-          HostKeyAlgorithms +ssh-dss
-        ''}
+        # LogLevel VERBOSE logs user's key fingerprint on login.
+        # Needed to have a clear audit track of which key was used to log in.
+        LogLevel VERBOSE
       '';
 
     assertions = [{ assertion = if cfg.forwardX11 then cfgc.setXAuthLocation else true;

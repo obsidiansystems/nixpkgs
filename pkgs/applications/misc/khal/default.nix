@@ -1,14 +1,15 @@
-{ stdenv, fetchurl, pkgs, python3Packages }:
+{ stdenv, pkgs, python3Packages }:
 
 with python3Packages;
 
 buildPythonApplication rec {
-  version = "0.9.5";
-  name = "khal-${version}";
+  name = "${pname}-${version}";
+  pname = "khal";
+  version = "0.9.9";
 
-  src = fetchurl {
-    url = "mirror://pypi/k/khal/khal-${version}.tar.gz";
-    sha256 = "0fvv0kjym9q8v20zbpr5m8ig65b8hva4p0c935qsdvgdni68jidr";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "0dq9aqb9pqjfqrnfg43mhpb7m0szmychxy1ydb3lwzf3500c9rsh";
   };
 
   LC_ALL = "en_US.UTF-8";
@@ -39,6 +40,6 @@ buildPythonApplication rec {
     homepage = http://lostpackets.de/khal/;
     description = "CLI calendar application";
     license = licenses.mit;
-    maintainers = with maintainers; [ matthiasbeyer jgeerds ];
+    maintainers = with maintainers; [ jgeerds ];
   };
 }

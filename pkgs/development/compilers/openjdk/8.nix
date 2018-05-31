@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, cpio, pkgconfig, file, which, unzip, zip, cups, freetype
+{ stdenv, lib, fetchurl, bash, cpio, pkgconfig, file, which, unzip, zip, cups, freetype
 , alsaLib, bootjdk, cacert, perl, liberation_ttf, fontconfig, zlib, lndir
 , libX11, libICE, libXrender, libXext, libXt, libXtst, libXi, libXinerama, libXcursor
 , libjpeg, giflib
@@ -14,49 +14,49 @@ let
    * The JRE libraries are in directories that depend on the CPU.
    */
   architecture =
-    if stdenv.system == "i686-linux" then
+    if stdenv.hostPlatform.system == "i686-linux" then
       "i386"
-    else if stdenv.system == "x86_64-linux" then
+    else if stdenv.hostPlatform.system == "x86_64-linux" then
       "amd64"
     else
       throw "openjdk requires i686-linux or x86_64 linux";
 
-  update = "131";
+  update = "172";
   build = "11";
   baseurl = "http://hg.openjdk.java.net/jdk8u/jdk8u";
   repover = "jdk8u${update}-b${build}";
   paxflags = if stdenv.isi686 then "msp" else "m";
   jdk8 = fetchurl {
              url = "${baseurl}/archive/${repover}.tar.gz";
-             sha256 = "1k401wsickbdy50yxjd26v8qm9519kxayaj3b103cr6ygp2rd9s6";
+             sha256 = "08mgfqbbgnx9n6prczwm4m8pgsakya45iai1gfslqnb0adh33jpi";
           };
   langtools = fetchurl {
              url = "${baseurl}/langtools/archive/${repover}.tar.gz";
-             sha256 = "1qj75bb17a9czvxz7rm246w97cavglrssx0l1mkbickx0i0wamm8";
+             sha256 = "0dph17mpr5ni280z8rmiwlw0v46dnzyph6fq132xvxiw2i1203zg";
           };
   hotspot = fetchurl {
              url = "${baseurl}/hotspot/archive/${repover}.tar.gz";
-             sha256 = "0kh8rk5y3n4g3hyjzflc8nwc0kyakjivpwlpj1bncsm1sykw8lr8";
+             sha256 = "181ixh75xjvlj0l3a58d9iqf50ivq77993yzfv0463dm44h6b8pp";
           };
   corba = fetchurl {
              url = "${baseurl}/corba/archive/${repover}.tar.gz";
-             sha256 = "0gqa58mwwyf6mbgp48j1akv1y8yq55zpwfziqrbdbpkcsaf603n7";
+             sha256 = "097azhdmr7ph1gvlzjgx6s2hyxmi2s5293d5hs23dl5i9f55b6x8";
           };
   jdk = fetchurl {
              url = "${baseurl}/jdk/archive/${repover}.tar.gz";
-             sha256 = "0ymvvi7srr9qkss20s1yg3x2mjw178bscrnxa6s8y82gsw02y820";
+             sha256 = "1lvk2brd9yclzd7cdk1kvnv4mbdxzjxd595pqhdaxdxxr5anhsvm";
           };
   jaxws = fetchurl {
              url = "${baseurl}/jaxws/archive/${repover}.tar.gz";
-             sha256 = "0507mxvir4s536pdz45pvmahwa6s3h2yhg6rwdzrb568ab06asmi";
+             sha256 = "0cl4b4c2qjyhlsa5khlxinilfaj6ai1mzji3y0263klc8q6bglwa";
           };
   jaxp = fetchurl {
              url = "${baseurl}/jaxp/archive/${repover}.tar.gz";
-             sha256 = "0igbg8axk028kqs9q11m8hb5bg2fa0qcwffbpfbhilyw5gmf7cy8";
+             sha256 = "00s6wm62v7gmkwy46js0lisijng40lnxscndczbgfvvz2q9zz4q1";
           };
   nashorn = fetchurl {
              url = "${baseurl}/nashorn/archive/${repover}.tar.gz";
-             sha256 = "0l63zm5a7ql3xvfxy5kzazq2184mpx0zyqzinjmq7v0q573g8xak";
+             sha256 = "0ab0rrmmf145nh4mibvknjni4whvzmk6fsnl7ihcn8m0zi6zyfra";
           };
   openjdk8 = stdenv.mkDerivation {
     name = "openjdk-8u${update}b${build}";
@@ -75,11 +75,14 @@ let
       gtk2 gnome_vfs GConf glib
     ];
 
+    #move the seven other source dirs under the main jdk8u directory,
+    #with version suffixes removed, as the remainder of the build will expect
     prePatch = ''
-      ls | grep jdk | grep -v '^jdk8u' | awk -F- '{print $1}' | while read p; do
-        mv $p-* $(ls | grep '^jdk8u')/$p
+      mainDir=$(find . -maxdepth 1 -name jdk8u\*);
+      find . -maxdepth 1 -name \*jdk\* -not -name jdk8u\* | awk -F- '{print $1}' | while read p; do
+        mv $p-* $mainDir/$p
       done
-      cd $(ls | grep '^jdk8u')
+      cd $mainDir
     '';
 
     patches = [
@@ -90,13 +93,19 @@ let
       ./004_add-fontconfig.patch
       ./005_enable-infinality.patch
     ] ++ lib.optionals (!minimal && enableGnome2) [
-      ./swing-use-gtk.patch
+      ./swing-use-gtk-jdk8.patch
     ];
 
     preConfigure = ''
       chmod +x configure
-      substituteInPlace configure --replace /bin/bash "$shell"
+      substituteInPlace configure --replace /bin/bash "${bash}/bin/bash"
       substituteInPlace hotspot/make/linux/adlc_updater --replace /bin/sh "$shell"
+      substituteInPlace hotspot/make/linux/makefiles/dtrace.make --replace /usr/include/sys/sdt.h "/no-such-path"
+    ''
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1306558
+    # https://github.com/JetBrains/jdk8u/commit/eaa5e0711a43d64874111254d74893fa299d5716
+    + stdenv.lib.optionalString stdenv.cc.isGNU ''
+      NIX_CFLAGS_COMPILE+=" -fno-lifetime-dse -fno-delete-null-pointer-checks -std=gnu++98 -Wno-error"
     '';
 
     configureFlags = [
@@ -123,6 +132,8 @@ let
     ];
 
     buildFlags = [ "all" ];
+
+    doCheck = false; # fails with "No rule to make target 'y'."
 
     installPhase = ''
       mkdir -p $out/lib/openjdk $out/share $jre/lib/openjdk
@@ -182,10 +193,11 @@ let
       done
 
       # Generate certificates.
-      pushd $jre/lib/openjdk/jre/lib/security
-      rm cacerts
-      perl ${./generate-cacerts.pl} $jre/lib/openjdk/jre/bin/keytool ${cacert}/etc/ssl/certs/ca-bundle.crt
-      popd
+      (
+        cd $jre/lib/openjdk/jre/lib/security
+        rm cacerts
+        perl ${./generate-cacerts.pl} $jre/lib/openjdk/jre/bin/keytool ${cacert}/etc/ssl/certs/ca-bundle.crt
+      )
 
       ln -s $out/lib/openjdk/bin $out/bin
       ln -s $jre/lib/openjdk/jre/bin $jre/bin
@@ -196,13 +208,13 @@ let
     preFixup = ''
       prefix=$jre stripDirs "$stripDebugList" "''${stripDebugFlags:--S}"
       patchELF $jre
-      propagatedNativeBuildInputs+=" $jre"
+      propagatedBuildInputs+=" $jre"
 
       # Propagate the setJavaClassPath setup hook from the JRE so that
       # any package that depends on the JRE has $CLASSPATH set up
       # properly.
       mkdir -p $jre/nix-support
-      echo -n "${setJavaClassPath}" > $jre/nix-support/propagated-native-build-inputs
+      printWords ${setJavaClassPath} > $jre/nix-support/propagated-build-inputs
 
       # Set JAVA_HOME automatically.
       mkdir -p $out/nix-support
@@ -215,13 +227,13 @@ let
       # Build the set of output library directories to rpath against
       LIBDIRS=""
       for output in $outputs; do
-        LIBDIRS="$(find $(eval echo \$$output) -name \*.so\* -exec dirname {} \; | sort | uniq | tr '\n' ':'):$LIBDIRS"
+        LIBDIRS="$(find $(eval echo \$$output) -name \*.so\* -exec dirname {} \+ | sort | uniq | tr '\n' ':'):$LIBDIRS"
       done
 
       # Add the local library paths to remove dependencies on the bootstrap
       for output in $outputs; do
-        OUTPUTDIR="$(eval echo \$$output)"
-        BINLIBS="$(find $OUTPUTDIR/bin/ -type f; find $OUTPUTDIR -name \*.so\*)"
+        OUTPUTDIR=$(eval echo \$$output)
+        BINLIBS=$(find $OUTPUTDIR/bin/ -type f; find $OUTPUTDIR -name \*.so\*)
         echo "$BINLIBS" | while read i; do
           patchelf --set-rpath "$LIBDIRS:$(patchelf --print-rpath "$i")" "$i" || true
           patchelf --shrink-rpath "$i" || true
@@ -241,7 +253,7 @@ let
       homepage = http://openjdk.java.net/;
       license = licenses.gpl2;
       description = "The open-source Java Development Kit";
-      maintainers = with maintainers; [ edwtjo ];
+      maintainers = with maintainers; [ edwtjo nequissimus ];
       platforms = platforms.linux;
     };
 

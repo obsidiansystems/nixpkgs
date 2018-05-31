@@ -33,9 +33,6 @@ in
     environment.profileRelativeEnvVars =
       { PATH = [ "/bin" ];
         INFOPATH = [ "/info" "/share/info" ];
-        PKG_CONFIG_PATH = [ "/lib/pkgconfig" ];
-        TERMINFO_DIRS = [ "/share/terminfo" ];
-        PERL5LIB = [ "/lib/perl5/site_perl" ];
         KDEDIRS = [ "" ];
         STRIGI_PLUGIN_PATH = [ "/lib/strigi/" ];
         QT_PLUGIN_PATH = [ "/lib/qt4/plugins" "/lib/kde4/plugins" ];
@@ -50,9 +47,6 @@ in
 
     environment.extraInit =
       ''
-         # reset TERM with new TERMINFO available (if any)
-         export TERM=$TERM
-
          unset ASPELL_CONF
          for i in ${concatStringsSep " " (reverseList cfg.profiles)} ; do
            if [ -d "$i/lib/aspell" ]; then

@@ -1,29 +1,33 @@
 { stdenv, lib, fetchurl, boost, cmake, ffmpeg, gettext, glew
 , ilmbase, libXi, libX11, libXext, libXrender
 , libjpeg, libpng, libsamplerate, libsndfile
-, libtiff, mesa, openal, opencolorio, openexr, openimageio, openjpeg_1, python
+, libtiff, libGLU_combined, openal, opencolorio, openexr, openimageio, openjpeg_1, pythonPackages
 , zlib, fftw, opensubdiv, freetype, jemalloc, ocl-icd
 , jackaudioSupport ? false, libjack2
 , cudaSupport ? false, cudatoolkit
 , colladaSupport ? true, opencollada
+, enableNumpy ? false, makeWrapper
 }:
 
 with lib;
 
+let python = pythonPackages.python; in
+
 stdenv.mkDerivation rec {
-  name = "blender-2.78c";
+  name = "blender-2.79b";
 
   src = fetchurl {
     url = "http://download.blender.org/source/${name}.tar.gz";
-    sha256 = "0f6k3m9yd5yhn7fq9srgzwh2gachlxm03bdrvn2r7xq00grqzab4";
+    sha256 = "1g4kcdqmf67srzhi3hkdnr4z1ph4h9sza1pahz38mrj998q4r52c";
   };
 
   buildInputs =
     [ boost cmake ffmpeg gettext glew ilmbase
       libXi libX11 libXext libXrender
-      freetype libjpeg libpng libsamplerate libsndfile libtiff mesa openal
+      freetype libjpeg libpng libsamplerate libsndfile libtiff libGLU_combined openal
       opencolorio openexr openimageio openjpeg_1 python zlib fftw jemalloc
       (opensubdiv.override { inherit cudaSupport; })
+      makeWrapper
     ]
     ++ optional jackaudioSupport libjack2
     ++ optional cudaSupport cudatoolkit
@@ -57,19 +61,28 @@ stdenv.mkDerivation rec {
     ++ optional jackaudioSupport "-DWITH_JACK=ON"
     ++ optionals cudaSupport
       [ "-DWITH_CYCLES_CUDA_BINARIES=ON"
-        # Disable the sm_20 architecture to work around a segfault in
-        # ptxas, as suggested on #blendercoders.
-        "-DCYCLES_CUDA_BINARIES_ARCH=sm_21;sm_30;sm_35;sm_37;sm_50;sm_52;sm_60;sm_61"
+        # Disable architectures before sm_30 to support new CUDA toolkits.
+        "-DCYCLES_CUDA_BINARIES_ARCH=sm_30;sm_35;sm_37;sm_50;sm_52;sm_60;sm_61"
       ]
     ++ optional colladaSupport "-DWITH_OPENCOLLADA=ON";
 
   NIX_CFLAGS_COMPILE = "-I${ilmbase.dev}/include/OpenEXR -I${python}/include/${python.libPrefix}m";
 
+  # Since some dependencies are built with gcc 6, we need gcc 6's
+  # libstdc++ in our RPATH. Sigh.
+  NIX_LDFLAGS = optionalString cudaSupport "-rpath ${stdenv.cc.cc.lib}/lib";
+
   enableParallelBuilding = true;
+
+  postInstall = optionalString enableNumpy
+    ''
+      wrapProgram $out/bin/blender \
+        --prefix PYTHONPATH : ${pythonPackages.numpy}/lib/python${python.majorVersion}/site-packages
+    '';
 
   meta = with stdenv.lib; {
     description = "3D Creation/Animation/Publishing System";
-    homepage = http://www.blender.org;
+    homepage = https://www.blender.org;
     # They comment two licenses: GPLv2 and Blender License, but they
     # say: "We've decided to cancel the BL offering for an indefinite period."
     license = licenses.gpl2Plus;

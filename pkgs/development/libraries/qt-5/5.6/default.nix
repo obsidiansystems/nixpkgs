@@ -18,63 +18,65 @@ existing packages here and modify it as necessary.
 1. Update the URL in `./fetch.sh`.
 2. Run `./maintainers/scripts/fetch-kde-qt.sh pkgs/development/libraries/qt-5/$VERSION/`
    from the top of the Nixpkgs tree.
-3. Use `nox-review wip` to check that everything builds.
-4. Commit the changes and open a pull request.
+3. Update `qtCompatVersion` below if the minor version number changes.
+4. Check that the new packages build correctly.
+5. Commit the changes and open a pull request.
 
 */
 
 {
   newScope,
   stdenv, fetchurl, makeSetupHook, makeWrapper,
-  bison, cups ? null, harfbuzz, mesa, perl,
+  bison, cups ? null, harfbuzz, libGL, perl,
   gstreamer, gst-plugins-base,
 
   # options
   developerBuild ? false,
   decryptSslTraffic ? false,
+  debug ? false,
 }:
 
 with stdenv.lib;
 
 let
 
+  qtCompatVersion = "5.6";
+
   mirror = "http://download.qt.io";
   srcs = import ./srcs.nix { inherit fetchurl; inherit mirror; };
 
-  qtSubmodule = args:
-    let
-      inherit (args) name;
-      version = args.version or srcs."${name}".version;
-      src = args.src or srcs."${name}".src;
-      inherit (stdenv) mkDerivation;
-    in mkDerivation (args // {
-      name = "${name}-${version}";
-      inherit src;
+  patches = {
+    qtbase = [ ./qtbase.patch ];
+    qtdeclarative = [ ./qtdeclarative.patch ];
+    qtscript = [ ./qtscript.patch ];
+    qtserialport = [ ./qtserialport.patch ];
+    qttools = [ ./qttools.patch ];
+    qtwebengine = [ ./qtwebengine-seccomp.patch ]
+      ++ optional stdenv.needsPax ./qtwebengine-paxmark-mksnapshot.patch;
+    qtwebkit = [ ./qtwebkit.patch ];
+  };
 
-      propagatedBuildInputs = args.qtInputs ++ (args.propagatedBuildInputs or []);
-      nativeBuildInputs =
-        (args.nativeBuildInputs or [])
-        ++ [ perl self.qmakeHook ];
+  mkDerivation =
+    import ../mkDerivation.nix
+    { inherit stdenv; inherit (stdenv) lib; }
+    { inherit debug; };
 
-      NIX_QT_SUBMODULE = args.NIX_QT_SUBMODULE or true;
-
-      outputs = args.outputs or [ "out" "dev" ];
-      setOutputFlags = args.setOutputFlags or false;
-
-      setupHook = ../qtsubmodule-setup-hook.sh;
-
-      enableParallelBuilding = args.enableParallelBuilding or true;
-
-      meta = self.qtbase.meta // (args.meta or {});
-    });
+  qtModule =
+    import ../qtModule.nix
+    { inherit mkDerivation perl; inherit (stdenv) lib; }
+    { inherit self srcs patches; };
 
   addPackages = self: with self;
     let
-      callPackage = self.newScope { inherit qtSubmodule srcs; };
+      callPackage = self.newScope { inherit qtCompatVersion qtModule srcs; };
     in {
 
-      qtbase = callPackage ./qtbase {
-        inherit bison cups harfbuzz mesa;
+      inherit mkDerivation;
+
+      qtbase = callPackage ../modules/qtbase.nix {
+        inherit bison cups harfbuzz libGL;
+        inherit (srcs.qtbase) src version;
+        patches = patches.qtbase;
         inherit developerBuild decryptSslTraffic;
       };
 
@@ -82,52 +84,46 @@ let
       /* qtactiveqt = not packaged */
       /* qtandroidextras = not packaged */
       /* qtcanvas3d = not packaged */
-      qtconnectivity = callPackage ./qtconnectivity.nix {};
-      qtdeclarative = callPackage ./qtdeclarative {};
-      qtdoc = callPackage ./qtdoc.nix {};
-      qtenginio = callPackage ./qtenginio.nix {};
-      qtgraphicaleffects = callPackage ./qtgraphicaleffects.nix {};
-      qtimageformats = callPackage ./qtimageformats.nix {};
-      qtlocation = callPackage ./qtlocation.nix {};
+      qtconnectivity = callPackage ../modules/qtconnectivity.nix {};
+      qtdeclarative = callPackage ../modules/qtdeclarative.nix {};
+      qtdoc = callPackage ../modules/qtdoc.nix {};
+      qtgraphicaleffects = callPackage ../modules/qtgraphicaleffects.nix {};
+      qtimageformats = callPackage ../modules/qtimageformats.nix {};
+      qtlocation = callPackage ../modules/qtlocation.nix {};
       /* qtmacextras = not packaged */
-      qtmultimedia = callPackage ./qtmultimedia.nix {
+      qtmultimedia = callPackage ../modules/qtmultimedia.nix {
         inherit gstreamer gst-plugins-base;
       };
       qtquick1 = null;
-      qtquickcontrols = callPackage ./qtquickcontrols.nix {};
-      qtquickcontrols2 = callPackage ./qtquickcontrols2.nix {};
-      qtscript = callPackage ./qtscript {};
-      qtsensors = callPackage ./qtsensors.nix {};
-      qtserialport = callPackage ./qtserialport {};
-      qtsvg = callPackage ./qtsvg.nix {};
-      qttools = callPackage ./qttools {};
-      qttranslations = callPackage ./qttranslations.nix {};
-      qtwayland = callPackage ./qtwayland.nix {};
-      qtwebchannel = callPackage ./qtwebchannel.nix {};
-      qtwebengine = callPackage ./qtwebengine {};
-      qtwebkit = callPackage ./qtwebkit {};
-      qtwebsockets = callPackage ./qtwebsockets.nix {};
+      qtquickcontrols = callPackage ../modules/qtquickcontrols.nix {};
+      qtquickcontrols2 = callPackage ../modules/qtquickcontrols2.nix {};
+      qtscript = callPackage ../modules/qtscript.nix {};
+      qtsensors = callPackage ../modules/qtsensors.nix {};
+      qtserialport = callPackage ../modules/qtserialport.nix {};
+      qtsvg = callPackage ../modules/qtsvg.nix {};
+      qttools = callPackage ../modules/qttools.nix {};
+      qttranslations = callPackage ../modules/qttranslations.nix {};
+      qtwayland = callPackage ../modules/qtwayland.nix {};
+      qtwebchannel = callPackage ../modules/qtwebchannel.nix {};
+      qtwebengine = callPackage ../modules/qtwebengine.nix {};
+      qtwebkit = callPackage ../modules/qtwebkit.nix {};
+      qtwebsockets = callPackage ../modules/qtwebsockets.nix {};
       /* qtwinextras = not packaged */
-      qtx11extras = callPackage ./qtx11extras.nix {};
-      qtxmlpatterns = callPackage ./qtxmlpatterns.nix {};
+      qtx11extras = callPackage ../modules/qtx11extras.nix {};
+      qtxmlpatterns = callPackage ../modules/qtxmlpatterns.nix {};
 
       env = callPackage ../qt-env.nix {};
-      full = env "qt-${qtbase.version}" [
-        qtconnectivity qtdeclarative qtdoc qtenginio qtgraphicaleffects
-        qtimageformats qtlocation qtmultimedia qtquickcontrols qtquickcontrols2
-        qtscript qtsensors qtserialport qtsvg qttools qttranslations qtwayland
+      full = env "qt-full-${qtbase.version}" [
+        qtconnectivity qtdeclarative qtdoc qtgraphicaleffects qtimageformats
+        qtlocation qtmultimedia qtquickcontrols qtquickcontrols2 qtscript
+        qtsensors qtserialport qtsvg qttools qttranslations qtwayland
         qtwebchannel qtwebengine qtwebkit qtwebsockets qtx11extras qtxmlpatterns
       ];
 
-      makeQtWrapper =
-        makeSetupHook
-        { deps = [ makeWrapper ]; }
-        (if stdenv.isDarwin then ../make-qt-wrapper-darwin.sh else ../make-qt-wrapper.sh);
-
-      qmakeHook =
-        makeSetupHook
-        { deps = [ self.qtbase.dev ]; }
-        (if stdenv.isDarwin then ../qmake-hook-darwin.sh else ../qmake-hook.sh);
+      qmake = makeSetupHook {
+        deps = [ self.qtbase.dev ];
+        substitutions = { inherit (stdenv) isDarwin; };
+      } ../hooks/qmake-hook.sh;
     };
 
    self = makeScope newScope addPackages;

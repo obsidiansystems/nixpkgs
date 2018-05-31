@@ -1,10 +1,10 @@
-{ stdenv, fetchurl, config, wrapGAppsHook
+{ lib, stdenv, fetchurl, config, wrapGAppsHook
 , alsaLib
 , atk
 , cairo
 , curl
 , cups
-, dbus_glib
+, dbus-glib
 , dbus_libs
 , fontconfig
 , freetype
@@ -12,10 +12,9 @@
 , gdk_pixbuf
 , glib
 , glibc
-, gst-plugins-base
-, gstreamer
 , gtk2
 , gtk3
+, kerberos
 , libX11
 , libXScrnSaver
 , libxcb
@@ -26,18 +25,20 @@
 , libXinerama
 , libXrender
 , libXt
-, libcanberra_gtk2
+, libcanberra-gtk2
 , libgnome
 , libgnomeui
+, libnotify
 , defaultIconTheme
-, mesa
+, libGLU_combined
 , nspr
 , nss
 , pango
 , libheimdal
 , libpulseaudio
 , systemd
-, generated ? import ./sources.nix
+, channel
+, generated
 , writeScript
 , xidel
 , coreutils
@@ -46,15 +47,16 @@
 , gnupg
 }:
 
-assert stdenv.isLinux;
-
 let
 
   inherit (generated) version sources;
 
-  arch = if stdenv.system == "i686-linux"
-    then "linux-i686"
-    else "linux-x86_64";
+  mozillaPlatforms = {
+    "i686-linux" = "linux-i686";
+    "x86_64-linux" = "linux-x86_64";
+  };
+
+  arch = mozillaPlatforms.${stdenv.system};
 
   isPrefixOf = prefix: string:
     builtins.substring 0 (builtins.stringLength prefix) string == prefix;
@@ -68,7 +70,7 @@ let
 
   source = stdenv.lib.findFirst (sourceMatches systemLocale) defaultSource sources;
 
-  name = "firefox-bin-unwrapped-${version}";
+  name = "firefox-${channel}-bin-unwrapped-${version}";
 
 in
 
@@ -82,12 +84,12 @@ stdenv.mkDerivation {
   libPath = stdenv.lib.makeLibraryPath
     [ stdenv.cc.cc
       alsaLib
-      alsaLib.dev
+      (lib.getDev alsaLib)
       atk
       cairo
       curl
       cups
-      dbus_glib
+      dbus-glib
       dbus_libs
       fontconfig
       freetype
@@ -95,10 +97,9 @@ stdenv.mkDerivation {
       gdk_pixbuf
       glib
       glibc
-      gst-plugins-base
-      gstreamer
       gtk2
       gtk3
+      kerberos
       libX11
       libXScrnSaver
       libXcomposite
@@ -109,20 +110,23 @@ stdenv.mkDerivation {
       libXinerama
       libXrender
       libXt
-      libcanberra_gtk2
+      libcanberra-gtk2
       libgnome
       libgnomeui
-      mesa
+      libnotify
+      libGLU_combined
       nspr
       nss
       pango
       libheimdal
       libpulseaudio
-      libpulseaudio.dev
+      (lib.getDev libpulseaudio)
       systemd
     ] + ":" + stdenv.lib.makeSearchPathOutput "lib" "lib64" [
       stdenv.cc.cc
     ];
+
+  inherit gtk3;
 
   buildInputs = [ wrapGAppsHook gtk3 defaultIconTheme ];
 
@@ -130,6 +134,11 @@ stdenv.mkDerivation {
   # See: https://github.com/NixOS/patchelf/issues/10
   dontStrip = true;
   dontPatchELF = true;
+
+  patchPhase = ''
+    sed -i -e '/^pref("app.update.channel",/d' defaults/pref/channel-prefs.js
+    echo 'pref("app.update.channel", "non-existing-channel")' >> defaults/pref/channel-prefs.js
+  '';
 
   installPhase =
     ''
@@ -160,8 +169,15 @@ stdenv.mkDerivation {
     '';
 
   passthru.ffmpegSupport = true;
+  passthru.gssSupport = true;
+  # update with:
+  # $ nix-shell maintainers/scripts/update.nix --argstr package firefox-bin-unwrapped
   passthru.updateScript = import ./update.nix {
-    inherit name writeScript xidel coreutils gnused gnugrep gnupg curl;
+    inherit name channel writeScript xidel coreutils gnused gnugrep gnupg curl;
+    baseUrl =
+      if channel == "devedition"
+        then "http://archive.mozilla.org/pub/devedition/releases/"
+        else "http://archive.mozilla.org/pub/firefox/releases/";
   };
   meta = with stdenv.lib; {
     description = "Mozilla Firefox, free web browser (binary package)";
@@ -170,7 +186,7 @@ stdenv.mkDerivation {
       free = false;
       url = http://www.mozilla.org/en-US/foundation/trademarks/policy/;
     };
-    platforms = platforms.linux;
+    platforms = builtins.attrNames mozillaPlatforms;
     maintainers = with maintainers; [ garbas ];
   };
 }

@@ -1,11 +1,11 @@
 { stdenv, fetchurl }:
 
 stdenv.mkDerivation rec {
-  name = "babeld-1.8.0";
+  name = "babeld-1.8.2";
 
   src = fetchurl {
     url = "http://www.pps.univ-paris-diderot.fr/~jch/software/files/${name}.tar.gz";
-    sha256 = "0v2jkav2sb0rpx3fmi5chhii08lc92pxf306nyha2amq9wib3a0i";
+    sha256 = "1p751zb7h75f8w7jz37432dj610f432jnj37lxhmav9q6aqyrv87";
   };
 
   preBuild = ''
@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage = "http://www.pps.univ-paris-diderot.fr/~jch/software/babel/";
+    homepage = http://www.pps.univ-paris-diderot.fr/~jch/software/babel/;
     description = "Loop-avoiding distance-vector routing protocol";
     license = stdenv.lib.licenses.mit;
     maintainers = with stdenv.lib.maintainers; [ fuuzetsu fpletz ];

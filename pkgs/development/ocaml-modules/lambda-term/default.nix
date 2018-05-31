@@ -1,21 +1,26 @@
-{ stdenv, buildOcaml, fetchurl, libev, ocaml, findlib, ocamlbuild, ocaml_lwt, ocaml_react, zed }:
+{ stdenv, buildOcaml, fetchurl, libev, ocaml, findlib, jbuilder, zed, lwt_react }:
 
-assert stdenv.lib.versionAtLeast (stdenv.lib.getVersion ocaml) "4.01";
+assert stdenv.lib.versionAtLeast ocaml.version "4.02";
 
 buildOcaml rec {
-  version = "1.10";
+  version = "1.12.0";
   name = "lambda-term";
 
   src = fetchurl {
     url = "https://github.com/diml/lambda-term/archive/${version}.tar.gz";
-    sha256 = "1kwpsqds51xmy3z3ddkam92hkl7arlzy9awhzsq62ysxcl91fb8m";
+    sha256 = "129m5jb015rqm6k3k25m1i2217vhz26n8sa7z113vjv4gs0bcd3d";
   };
 
-  buildInputs = [ libev ocaml findlib ocamlbuild ocaml_react ];
+  buildInputs = [ libev ocaml findlib jbuilder ];
 
-  propagatedBuildInputs = [ zed ocaml_lwt ];
+  propagatedBuildInputs = [ zed lwt_react ];
 
-  createFindlibDestdir = true;
+  buildPhase = "jbuilder build -p lambda-term";
+
+  installPhase = ''
+    ${jbuilder.installPhase}
+    mv $out/lib/ocaml/${ocaml.version}/site-lib/{stubslibs,lambda-term}/dlllambda_term_stubs.so
+  '';
 
   hasSharedObjects = true;
 

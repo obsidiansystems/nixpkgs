@@ -52,10 +52,11 @@ stdenv.mkDerivation rec {
   passthru.mysqlVersion = "5.6";
 
   meta = with stdenv.lib; {
-    homepage = "https://www.percona.com";
+    homepage = https://www.percona.com;
     description = "a free, fully compatible, enhanced, open source drop-in replacement for MySQL that provides superior performance, scalability and instrumentation";
     platforms = platforms.linux;
     license = licenses.gpl2;
     maintainers = with maintainers; [ grahamc ];
+    broken = true; # 2018-04-11
   };
 }

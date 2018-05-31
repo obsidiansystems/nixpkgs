@@ -1,10 +1,10 @@
 {stdenv, fetchurl}:
 stdenv.mkDerivation rec {
   name = "nauty-${version}";
-  version = "26r7";
+  version = "26r10";
   src = fetchurl {
     url = "http://pallini.di.uniroma1.it/nauty${version}.tar.gz";
-    sha256 = "1indcc1im7s5x89x0xn4699izw1wwars1aanpmf8jibnw66n9dcp";
+    sha256 = "16pdklh066z6mx424wkisr88fz9divn2caj7ggs03wy3y848spq6";
   };
   buildInputs = [];
   installPhase = ''
@@ -19,6 +19,6 @@ stdenv.mkDerivation rec {
     license = stdenv.lib.licenses.asl20;
     maintainers = [stdenv.lib.maintainers.raskin];
     platforms = stdenv.lib.platforms.linux;
-    homepage = "http://pallini.di.uniroma1.it/";
+    homepage = http://pallini.di.uniroma1.it/;
   };
 }

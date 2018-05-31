@@ -11,6 +11,8 @@ stdenv.mkDerivation rec {
     sha256 = "1fvmhrqdjs925hzr2i8bszm50h00gwsh17p2kn2pi51zrxck9xjj";
   };
 
+  configureFlags = [ "--enable-cxx" ];
+
   meta = {
     inherit version;
     description = ''A highly optimised library for bignum arithmetic forked from GMP'';
@@ -18,7 +20,7 @@ stdenv.mkDerivation rec {
     maintainers = [stdenv.lib.maintainers.raskin];
     platforms = stdenv.lib.platforms.linux;
     downloadPage = "http://mpir.org/downloads.html";
-    homepage = "http://mpir.org/";
+    homepage = http://mpir.org/;
     updateWalker = true;
   };
 }

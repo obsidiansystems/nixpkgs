@@ -1,33 +1,27 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''cl-paths-ttf'';
-  version = ''cl-vectors-20150407-git'';
+  version = ''cl-vectors-20180228-git'';
 
   description = ''cl-paths-ttf: vectorial paths manipulation'';
 
-  deps = [ args."zpb-ttf" ];
+  deps = [ args."cl-paths" args."zpb-ttf" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/cl-vectors/2015-04-07/cl-vectors-20150407-git.tgz'';
-    sha256 = ''1qd7ywc2ayiyd5nw7shnjgh0nc14h328h0cw921g5b2n8j6y959w'';
+    url = ''http://beta.quicklisp.org/archive/cl-vectors/2018-02-28/cl-vectors-20180228-git.tgz'';
+    sha256 = ''0fcypjfzqra8ryb4nx1vx1fqy7fwvyz3f443qkjg2z81akhkscly'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/cl-paths-ttf[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "cl-paths-ttf";
+
+  asdFilesToKeep = ["cl-paths-ttf.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM cl-paths-ttf DESCRIPTION cl-paths-ttf: vectorial paths manipulation SHA256 1qd7ywc2ayiyd5nw7shnjgh0nc14h328h0cw921g5b2n8j6y959w URL
-    http://beta.quicklisp.org/archive/cl-vectors/2015-04-07/cl-vectors-20150407-git.tgz MD5 9e255503bf4559912ea1511c919c474a NAME cl-paths-ttf TESTNAME NIL
-    FILENAME cl-paths-ttf DEPS ((NAME zpb-ttf)) DEPENDENCIES (zpb-ttf) VERSION cl-vectors-20150407-git SIBLINGS (cl-aa-misc cl-aa cl-paths cl-vectors)) */
+/* (SYSTEM cl-paths-ttf DESCRIPTION cl-paths-ttf: vectorial paths manipulation
+    SHA256 0fcypjfzqra8ryb4nx1vx1fqy7fwvyz3f443qkjg2z81akhkscly URL
+    http://beta.quicklisp.org/archive/cl-vectors/2018-02-28/cl-vectors-20180228-git.tgz
+    MD5 9d9629786d4f2c19c15cc6cd3049c343 NAME cl-paths-ttf FILENAME
+    cl-paths-ttf DEPS
+    ((NAME cl-paths FILENAME cl-paths) (NAME zpb-ttf FILENAME zpb-ttf))
+    DEPENDENCIES (cl-paths zpb-ttf) VERSION cl-vectors-20180228-git SIBLINGS
+    (cl-aa-misc cl-aa cl-paths cl-vectors) PARASITES NIL) */

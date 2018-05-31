@@ -1,19 +1,19 @@
 { lib, python3Packages, fetchFromGitHub, gtk3, cairo
 , aspellDicts, buildEnv
-, gnome3, hicolor_icon_theme
-, xvfb_run, dbus
+, gnome3, hicolor-icon-theme, librsvg
+, xvfb_run, dbus, libnotify
 }:
 
 python3Packages.buildPythonApplication rec {
   name = "paperwork-${version}";
   # Don't forget to also update paperwork-backend when updating this!
-  version = "1.0.6.1";
+  version = "1.2.2";
 
   src = fetchFromGitHub {
     repo = "paperwork";
-    owner = "jflesch";
+    owner = "openpaperwork";
     rev = version;
-    sha256 = "1v1lxyi4crdik4jlwjds9n6lzw4m4l4f9n5azlinv8wb477qpv6h";
+    sha256 = "1nb5sna2s952xb7c89qccg9qp693pyqj8g7xz16ll16ydfqnzsdk";
   };
 
   # Patch out a few paths that assume that we're using the FHS:
@@ -47,7 +47,9 @@ python3Packages.buildPythonApplication rec {
   }}/lib/aspell";
 
   checkInputs = [ xvfb_run dbus.daemon ];
-  buildInputs = [ gnome3.defaultIconTheme hicolor_icon_theme ];
+  buildInputs = [
+    gnome3.defaultIconTheme hicolor-icon-theme libnotify librsvg
+  ];
 
   # A few parts of chkdeps need to have a display and a dbus session, so we not
   # only need to run a virtual X server + dbus but also have a large enough
@@ -59,18 +61,19 @@ python3Packages.buildPythonApplication rec {
   '';
 
   propagatedBuildInputs = with python3Packages; [
-    paperwork-backend pypillowfight gtk3 cairo
+    paperwork-backend pypillowfight gtk3 cairo pyxdg dateutil
   ];
 
   makeWrapperArgs = [
     "--set GI_TYPELIB_PATH \"$GI_TYPELIB_PATH\""
+    "--set GDK_PIXBUF_MODULE_FILE \"$GDK_PIXBUF_MODULE_FILE\""
     "--prefix XDG_DATA_DIRS : \"$out/share\""
     "--suffix XDG_DATA_DIRS : \"$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\""
   ];
 
   meta = {
     description = "A personal document manager for scanned documents";
-    homepage = "https://github.com/jflesch/paperwork";
+    homepage = https://openpaper.work/;
     license = lib.licenses.gpl3Plus;
     maintainers = [ lib.maintainers.aszlig ];
     platforms = lib.platforms.linux;

@@ -3,18 +3,18 @@
 with stdenv.lib;
 stdenv.mkDerivation rec {
   name = "sysdig-${version}";
-  version = "0.16.0";
+  version = "0.21.0";
 
   src = fetchFromGitHub {
     owner = "draios";
     repo = "sysdig";
     rev = version;
-    sha256 = "1h3f9nkc5fkvks6va0maq377m9qxnsf4q3f2dc14rdzfvnzidy06";
+    sha256 = "0dakxv2pkbsivavz09fwvav4dla7qzklnv45zb7x306gankkjgi1";
   };
 
   buildInputs = [
     cmake zlib luajit ncurses perl jsoncpp libb64 openssl curl jq gcc
-  ];
+  ] ++ optional (kernel != null) kernel.moduleBuildDependencies;
 
   hardeningDisable = [ "pic" ];
 
@@ -35,23 +35,7 @@ stdenv.mkDerivation rec {
     export KERNELDIR="${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
   '';
 
-  libPath = makeLibraryPath [
-    zlib
-    luajit
-    ncurses
-    jsoncpp
-    curl
-    jq
-    openssl
-    libb64
-    gcc
-    stdenv.cc.cc
-  ];
-
-  postInstall = optionalString (!stdenv.isDarwin) ''
-    patchelf --set-rpath "$libPath" "$out/bin/sysdig"
-    patchelf --set-rpath "$libPath" "$out/bin/csysdig"
-  '' + optionalString (kernel != null) ''
+  postInstall = optionalString (kernel != null) ''
     make install_driver
     kernel_dev=${kernel.dev}
     kernel_dev=''${kernel_dev#/nix/store/}

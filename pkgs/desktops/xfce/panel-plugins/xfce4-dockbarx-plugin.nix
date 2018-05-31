@@ -14,8 +14,9 @@ stdenv.mkDerivation rec {
 
   pythonPath = [ dockbarx ];
 
-  buildInputs = [ pkgconfig python2 vala gtk2 pythonPackages.wrapPython ]
-    ++ (with xfce; [ libxfce4util xfce4panel xfconf xfce4_dev_tools ])
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ python2 vala gtk2 pythonPackages.wrapPython ]
+    ++ (with xfce; [ libxfce4util xfce4-panel xfconf xfce4-dev-tools ])
     ++ pythonPath;
 
   postPatch = ''
@@ -30,7 +31,9 @@ stdenv.mkDerivation rec {
 
   installPhase = "python waf install";
 
-  postFixup = "wrapPythonPrograms";
+  postFixup = ''
+    wrapPythonProgramsIn "$out/share/xfce4/panel/plugins" "$out $pythonPath"
+  '';
 
   meta = with stdenv.lib; {
     homepage = https://github.com/TiZ-EX1/xfce4-dockbarx-plugin;

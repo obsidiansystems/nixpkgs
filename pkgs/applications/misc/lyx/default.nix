@@ -3,24 +3,20 @@
 }:
 
 stdenv.mkDerivation rec {
-  version = "2.2.2";
+  version = "2.3.0";
   name = "lyx-${version}";
 
   src = fetchurl {
-    url = "ftp://ftp.lyx.org/pub/lyx/stable/2.2.x/${name}.tar.xz";
-    sha256 = "0s2mma8fkj5mi8qzc0j67589mbj854bypx2s3y59y1n429s3sp58";
+    url = "ftp://ftp.lyx.org/pub/lyx/stable/2.3.x/${name}.tar.xz";
+    sha256 = "0axri2h8xkna4mkfchfyyysbjl7s486vx80p5hzj9zgsvdm5a3ri";
   };
 
   # LaTeX is used from $PATH, as people often want to have it with extra pkgs
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    pkgconfig qtbase qtsvg python file/*for libmagic*/ bc
+    qtbase qtsvg python file/*for libmagic*/ bc
     hunspell makeWrapper # enchant
   ];
-
-  # bogus configure script tests
-  preConfigure = ''
-    NIX_CFLAGS_COMPILE+=" $(pkg-config --cflags Qt5Core)"
-  '';
 
   configureFlags = [
     "--enable-qt5"
@@ -41,7 +37,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "WYSIWYM frontend for LaTeX, DocBook";
-    homepage = "http://www.lyx.org";
+    homepage = http://www.lyx.org;
     license = licenses.gpl2Plus;
     maintainers = [ maintainers.vcunat ];
     platforms = platforms.linux;

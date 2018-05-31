@@ -1,42 +1,71 @@
 { stdenv, callPackage, fetchurl, makeWrapper
-, alsaLib, libX11, libXcursor, libXinerama, libXrandr, libXi, mesa_noglu
+, alsaLib, libX11, libXcursor, libXinerama, libXrandr, libXi, libGL
 , factorio-utils
 , releaseType
 , mods ? []
 , username ? "" , password ? ""
+, experimental ? false
 }:
 
-assert releaseType == "alpha" || releaseType == "headless" || releaseType == "demo";
+assert releaseType == "alpha"
+    || releaseType == "headless"
+    || releaseType == "demo";
 
-with stdenv.lib;
 let
-  version = if releaseType != "demo" then "0.15.16" else "0.14.23";
 
-  arch = if stdenv.system == "x86_64-linux" then {
-    inUrl = "linux64";
-    inTar = "x64";
-  } else if stdenv.system == "i686-linux" then {
-    inUrl = "linux32";
-    inTar = "i386";
-  } else abort "Unsupported platform";
-
-  authenticatedFetch = callPackage ./fetch.nix { inherit username password; };
-
-  fetch = rec {
-    extension = if releaseType != "demo" then "tar.xz" else "tar.gz";
-    url = "https://www.factorio.com/get-download/${version}/${releaseType}/${arch.inUrl}";
-    name = "factorio_${releaseType}_${arch.inTar}-${version}.${extension}";
-    x64 = {
-      headless =           fetchurl { inherit name url; sha256 = "0ig0nrvqllb9294qn2ci5j5s31ycsjn23bp6hc633xqkgfmklmic"; };
-      alpha    = authenticatedFetch { inherit name url; sha256 = "0bf0z6fi0cpbq487hz4sz8ljapchzhld01sj767wsldakjfkm9g9"; };
-      demo     =           fetchurl { inherit name url; sha256 = "10a2lwmspqviwgymn3zhjgpiynsa6dplgnikdirma5sl2hhcfb6s"; };
+  # NB If you nix-prefetch-url any of these, be sure to add a --name arg,
+  #    where the ultimate "_" (before the version) is changed to a "-".
+  branch = if experimental then "experimental" else "stable";
+  binDists = {
+    x86_64-linux = let bdist = bdistForArch { inUrl = "linux64"; inTar = "x64"; }; in {
+      alpha = {
+        stable        = bdist { sha256 = "0gxa8wh0py4l1ym57sfq792kfh00khi0f9ykjlmjqqkdksyxgddf"; fetcher = authenticatedFetch; };
+        experimental  = bdist { sha256 = "1iy3k9zrw3za9mabf89lfl8i20xfij66ih5vngz5xfyy99mwxiy6"; version = "0.16.35"; fetcher = authenticatedFetch; };
+      };
+      headless = {
+        stable        = bdist { sha256 = "0n2j86af41dkbsyyy5lawjpdd7c0lvfdwxpwbj1m8v470i1g8zq4"; };
+        experimental  = bdist { sha256 = "0x4miyva1lmiyv3lb4savdlycia1kzw6bri4qj9b2jmyw1dr8x8h"; version = "0.16.35"; };
+      };
+      demo = {
+        stable        = bdist { sha256 = "1z04rdlcxnfwami0l5nm292w4ydfhr1s6rcl8hxrsa73d4xk5lch"; version = "0.16.36"; };
+        experimental  = bdist { };
+      };
     };
-    i386 = {
-      headless = abort "Factorio 32-bit headless binaries are not available for download.";
-      alpha    = abort "Factorio 32-bit client is not available for this version.";
-      demo     = abort "Factorio 32-bit demo binaries are not available for download.";
+    i686-linux = let bdist = bdistForArch { inUrl = "linux32"; inTar = "i386"; }; in {
+      alpha = {
+        stable        = bdist { sha256 = "0nnfkxxqnywx1z05xnndgh71gp4izmwdk026nnjih74m2k5j086l"; version = "0.14.23"; nameMut = asGz; };
+        experimental  = bdist { };
+      };
+      headless = {
+        stable        = bdist { };
+        experimental  = bdist { };
+      };
+      demo = {
+        stable        = bdist { };
+        experimental  = bdist { };
+      };
     };
   };
+  actual = binDists.${stdenv.system}.${releaseType}.${branch} or (throw "Factorio: unsupported platform");
+
+  bdistForArch = arch: { sha256 ? null
+                       , version ? "0.16.36"
+                       , fetcher ? fetchurl
+                       , nameMut ? x: x
+                       }:
+    if sha256 == null then
+      throw "Factorio ${releaseType}-${arch.inTar} binaries are not (and were never?) available to download"
+    else {
+      inherit version arch;
+      src = fetcher {
+        inherit sha256;
+        url = "https://www.factorio.com/get-download/${version}/${releaseType}/${arch.inUrl}";
+        name = nameMut "factorio_${releaseType}_${arch.inTar}-${version}.tar.xz";
+      };
+    };
+  authenticatedFetch = callPackage ./fetch.nix { inherit username password; };
+  asGz = builtins.replaceStrings [".xz"] [".gz"];
+
 
   configBaseCfg = ''
     use-system-read-write-data-directories=false
@@ -60,10 +89,10 @@ let
 
   modDir = factorio-utils.mkModDirDrv mods;
 
-  base = {
+  base = with actual; {
     name = "factorio-${releaseType}-${version}";
 
-    src = fetch.${arch.inTar}.${releaseType};
+    inherit src;
 
     preferLocalBuild = true;
     dontBuild = true;
@@ -111,15 +140,16 @@ let
         libXinerama
         libXrandr
         libXi
-        mesa_noglu
+        libGL
       ];
 
       installPhase = base.installPhase + ''
         wrapProgram $out/bin/factorio                                \
           --prefix LD_LIBRARY_PATH : /run/opengl-driver/lib:$libPath \
           --run "$out/share/factorio/update-config.sh"               \
-          --argv0 "" \
-          --add-flags "-c \$HOME/.factorio/config.cfg ${optionalString (mods != []) "--mod-directory=${modDir}"}"
+          --argv0 ""                                                 \
+          --add-flags "-c \$HOME/.factorio/config.cfg"               \
+          ${if mods!=[] then "--add-flags --mod-directory=${modDir}" else ""}
 
           # TODO Currently, every time a mod is changed/added/removed using the
           # modlist, a new derivation will take up the entire footprint of the
@@ -155,4 +185,5 @@ let
       '';
     };
   };
+
 in stdenv.mkDerivation (releases.${releaseType})

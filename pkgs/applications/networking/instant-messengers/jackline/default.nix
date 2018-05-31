@@ -1,28 +1,29 @@
-{stdenv, fetchFromGitHub, ocamlPackages, opam}:
+{ stdenv, fetchFromGitHub, ocamlPackages }:
 
 assert stdenv.lib.versionAtLeast ocamlPackages.ocaml.version "4.02.2";
 
 stdenv.mkDerivation rec {
-  version = "2017-05-21";
+  version = "2017-12-24";
   name = "jackline-${version}";
 
   src = fetchFromGitHub {
     owner  = "hannesm";
     repo   = "jackline";
-    rev    = "0a1e4ea23245633fe23edf09b2309659a1bc3649";
-    sha256 = "1wnmwsp3a5nh3qs4h9grrdsvv0i3p419cfmhrrql3lj2x3ngdw82";
+    rev    = "8678e8a1a06e641218a31ae25150040202f89289";
+    sha256 = "05z9kvd7gwr59ic7hnmbayhwyyqd41xxz01cvdlcgplk3z7zlwg5";
   };
+
+  patches = [ ./tls-0.9.0.patch ];
 
   buildInputs = with ocamlPackages; [
                   ocaml ocamlbuild findlib topkg ppx_sexp_conv
                   erm_xmpp_0_3 tls nocrypto x509 ocaml_lwt otr astring
-                  ptime notty sexplib_p4 hex uutf opam
+                  ptime notty sexplib hex uutf
                 ];
 
-  buildPhase = with ocamlPackages;
-    "ocaml -I ${findlib}/lib/ocaml/${ocaml.version}/site-lib pkg/pkg.ml build --pinned true";
+  buildPhase = "${ocamlPackages.topkg.run} build --pinned true";
 
-  installPhase = "opam-installer --prefix=$out --script | sh";
+  inherit (ocamlPackages.topkg) installPhase;
 
   meta = with stdenv.lib; {
     homepage = https://github.com/hannesm/jackline;

@@ -1,45 +1,33 @@
 {
-  kdeDerivation, kdeWrapper, fetchFromGitHub, fetchurl, lib,
-  extra-cmake-modules, kdoctools,
-  baloo, kconfig, kfilemetadata, kinit, kirigami, knewstuff, plasma-framework
+  mkDerivation, fetchFromGitHub, fetchurl, lib,
+  extra-cmake-modules, kdoctools, wrapGAppsHook,
+  baloo, karchive, kconfig, kcrash, kfilemetadata, kinit, kirigami2, knewstuff, plasma-framework
 }:
 
 let
   pname = "peruse";
-  version = "1.2";
-  unarr = fetchFromGitHub {
-    owner  = "zeniko";
-    repo   = "unarr";
-    rev    = "d1be8c43a82a4320306c8e835a86fdb7b2574ca7";
-    sha256 = "03ds5da69zipa25rsp76l6xqivrh3wcgygwyqa5x2rgcz3rjnlpr";
-  };
-  unwrapped = kdeDerivation rec {
-    name = "${pname}-${version}";
+  version = "1.2.20180219";
 
-    src = fetchurl {
-      url = "mirror://kde/stable/${pname}/${name}.tar.xz";
-      sha256 = "1ik2627xynkichsq9x28rkczqn3l3p06q6vw5jdafdh3hisccmjq";
-    };
+in mkDerivation rec {
+  name = "${pname}-${version}";
 
-    nativeBuildInputs = [ extra-cmake-modules kdoctools ];
-
-    propagatedBuildInputs = [ baloo kconfig kfilemetadata kinit kirigami knewstuff plasma-framework ];
-
-    pathsToLink = [ "/etc/xdg/peruse.knsrc"];
-
-    preConfigure = ''
-      rm -rf src/qtquick/karchive-rar/external/unarr
-      ln -s ${unarr} src/qtquick/karchive-rar/external/unarr
-    '';
-
-    meta = with lib; {
-      license = licenses.gpl2;
-      maintainers = with maintainers; [ peterhoeg ];
-    };
-
+  # The last formal release from 2016 uses kirigami1 which is deprecated
+  src = fetchFromGitHub {
+    owner  = "KDE";
+    repo   = pname;
+    rev    = "4125d3149c45d196600258686610de701130113d";
+    sha256 = "1x8in7z17gzgiibshw7xfs6m6bhr3n5fys3nlpab77nm0dl3f4r5";
   };
 
-in kdeWrapper {
-  inherit unwrapped;
-  targets = [ "bin/peruse" "bin/perusecreator" ];
+  nativeBuildInputs = [ extra-cmake-modules kdoctools wrapGAppsHook ];
+
+  propagatedBuildInputs = [ baloo karchive kconfig kcrash kfilemetadata kinit kirigami2 knewstuff plasma-framework ];
+
+  pathsToLink = [ "/etc/xdg/peruse.knsrc"];
+
+  meta = with lib; {
+    license = licenses.gpl2;
+    maintainers = with maintainers; [ peterhoeg ];
+  };
+
 }

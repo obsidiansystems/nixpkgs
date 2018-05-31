@@ -6,7 +6,7 @@
 , glibcLocales
 , pytest
 , pytestcov
-, pytest-mock
+, mock
 , pygments
 , pillow
 , dateutil
@@ -28,16 +28,15 @@
 }:
 
 buildPythonPackage rec {
-  name = "${pname}-${version}";
   pname = "Nikola";
-  version = "7.8.6";
+  version = "7.8.15";
 
   # Nix contains only Python 3 supported version of doit, which is a dependency
   # of Nikola. Python 2 support would require older doit 0.29.0 (which on the
   # other hand doesn't support Python 3.3). So, just disable Python 2.
   disabled = !isPy3k;
 
-  buildInputs = [ pytest pytestcov pytest-mock glibcLocales ];
+  checkInputs = [ pytest pytestcov mock glibcLocales ];
 
   propagatedBuildInputs = [
     pygments pillow dateutil docutils Mako unidecode lxml Yapsy PyRSS2Gen
@@ -47,11 +46,11 @@ buildPythonPackage rec {
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "48d3a00c3fc9c61bcd305653a531949bdd777d9211434172549498fd8136e036";
+    sha256 = "182b4b9254f0d710603ba491853429ad6ef3f955f3e718191336b44cfd649000";
   };
 
   meta = {
-    homepage = "https://getnikola.com/";
+    homepage = https://getnikola.com/;
     description = "A modular, fast, simple, static website and blog generator";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ jluttine ];

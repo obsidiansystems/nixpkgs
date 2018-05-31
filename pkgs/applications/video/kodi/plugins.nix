@@ -1,47 +1,9 @@
-{ stdenv, fetchurl, fetchFromGitHub, fetchpatch, lib
-, unzip, cmake, kodi, steam, libcec_platform, tinyxml
-, jsoncpp, libhdhomerun }:
+{ stdenv, lib, callPackage, fetchurl, fetchFromGitHub, unzip
+, steam, libusb, pcre-cpp, jsoncpp, libhdhomerun, zlib }:
 
-let
+with (callPackage ./commons.nix {});
 
-  pluginDir = "/share/kodi/addons";
-
-  kodi-platform = stdenv.mkDerivation rec {
-    project = "kodi-platform";
-    version = "17.1";
-    name = "${project}-${version}";
-
-    src = fetchFromGitHub {
-      owner = "xbmc";
-      repo = project;
-      rev = "c8188d82678fec6b784597db69a68e74ff4986b5";
-      sha256 = "1r3gs3c6zczmm66qcxh9mr306clwb3p7ykzb70r3jv5jqggiz199";
-    };
-
-    buildInputs = [ cmake kodi libcec_platform tinyxml ];
-  };
-
-  mkKodiPlugin = { plugin, namespace, version, src, meta, sourceDir ? null, ... }:
-  stdenv.lib.makeOverridable stdenv.mkDerivation rec {
-    inherit src meta sourceDir;
-    name = "kodi-plugin-${plugin}-${version}";
-    passthru = {
-      kodiPlugin = pluginDir;
-      namespace = namespace;
-    };
-    dontStrip = true;
-    installPhase = ''
-      ${if isNull sourceDir then "" else "cd $src/$sourceDir"}
-      d=$out${pluginDir}/${namespace}
-      mkdir -p $d
-      sauce="."
-      [ -d ${namespace} ] && sauce=${namespace}
-      cp -R "$sauce/"* $d
-    '';
-  };
-
-in
-{
+rec {
 
   advanced-launcher = mkKodiPlugin rec {
 
@@ -57,15 +19,44 @@ in
     };
 
     meta = with stdenv.lib; {
-      homepage = "http://forum.kodi.tv/showthread.php?tid=85724";
+      homepage = https://forum.kodi.tv/showthread.php?tid=85724;
       description = "A program launcher for Kodi";
       longDescription = ''
         Advanced Launcher allows you to start any Linux, Windows and
-        OS X external applications (with command line support or not)
+        macOS external applications (with command line support or not)
         directly from the Kodi GUI. Advanced Launcher also give you
         the possibility to edit, download (from Internet resources)
         and manage all the meta-data (informations and images) related
         to these applications.
+      '';
+      platforms = platforms.all;
+      maintainers = with maintainers; [ edwtjo ];
+    };
+
+  };
+
+  advanced-emulator-launcher = mkKodiPlugin rec {
+
+    plugin = "advanced-emulator-launcher";
+    namespace = "plugin.program.advanced.emulator.launcher";
+    version = "0.9.6";
+
+    src = fetchFromGitHub {
+      owner = "Wintermute0110";
+      repo = namespace;
+      rev = version;
+      sha256 = "1sv9z77jj6bam6llcnd9b3dgkbvhwad2m1v541rv3acrackms2z2";
+    };
+
+    meta = with stdenv.lib; {
+      homepage = https://forum.kodi.tv/showthread.php?tid=287826;
+      description = "A program launcher for Kodi";
+      longDescription = ''
+        Advanced Emulator Launcher is a multi-emulator front-end for Kodi
+        scalable to collections of thousands of ROMs. Includes offline scrapers
+        for MAME and No-Intro ROM sets and also supports scrapping ROM metadata
+        and artwork online. ROM auditing for No-Intro ROMs using No-Intro XML
+        DATs. Launching of games and standalone applications is also available.
       '';
       platforms = platforms.all;
       maintainers = with maintainers; [ edwtjo ];
@@ -138,7 +129,7 @@ in
       sha256 = "1dvff24fbas25k5kvca4ssks9l1g5rfa3hl8lqxczkaqi3pp41j5";
     };
     meta = with stdenv.lib; {
-      homepage = http://forum.kodi.tv/showthread.php?tid=258159;
+      homepage = https://forum.kodi.tv/showthread.php?tid=258159;
       description = "A ROM launcher for Kodi that uses HyperSpin assets.";
       maintainers = with maintainers; [ edwtjo ];
     };
@@ -156,6 +147,28 @@ in
     };
   };
 
+  joystick = mkKodiABIPlugin rec {
+    namespace = "peripheral.joystick";
+    version = "1.3.2";
+    plugin = namespace;
+
+    src = fetchFromGitHub {
+      owner = "kodi-game";
+      repo = namespace;
+      rev = "96171dd32899553ffe8fc775fca66e8df5ff5cf1";
+      sha256 = "18m61v8z9fbh4imvzhh4g9629r9df49g2yk9ycaczirg131dhfbh";
+    };
+
+    meta = with stdenv.lib; {
+      description = "Binary addon for raw joystick input.";
+      platforms = platforms.all;
+      maintainers = with maintainers; [ edwtjo ];
+    };
+
+    extraBuildInputs = [ libusb pcre-cpp ];
+
+  };
+
   svtplay = mkKodiPlugin rec {
 
     plugin = "svtplay";
@@ -171,7 +184,7 @@ in
     };
 
     meta = with stdenv.lib; {
-      homepage = "http://forum.kodi.tv/showthread.php?tid=67110";
+      homepage = https://forum.kodi.tv/showthread.php?tid=67110;
       description = "Watch content from SVT Play";
       longDescription = ''
         With this addon you can stream content from SVT Play
@@ -179,6 +192,28 @@ in
         Play website and feeds it to the Kodi video player. HLS (m3u8)
         is the preferred video format by the plugin.
       '';
+      platforms = platforms.all;
+      maintainers = with maintainers; [ edwtjo ];
+    };
+
+  };
+
+  steam-controller = mkKodiABIPlugin rec {
+    namespace = "peripheral.steamcontroller";
+    version = "0.9.0";
+    plugin = namespace;
+
+    src = fetchFromGitHub {
+      owner = "kodi-game";
+      repo = namespace;
+      rev = "76f640fad4f68118f4fab6c4c3338d13daca7074";
+      sha256 = "0yqlfdiiymb8z6flyhpval8w3kdc9qv3mli3jg1xn5ac485nxsxh";
+    };
+
+    extraBuildInputs = [ libusb ];
+
+    meta = with stdenv.lib; {
+      description = "Binary addon for steam controller.";
       platforms = platforms.all;
       maintainers = with maintainers; [ edwtjo ];
     };
@@ -199,7 +234,7 @@ in
     };
 
     meta = with stdenv.lib; {
-      homepage = "http://forum.kodi.tv/showthread.php?tid=157499";
+      homepage = https://forum.kodi.tv/showthread.php?tid=157499;
       description = "Launch Steam in Big Picture Mode from Kodi";
       longDescription = ''
         This add-on will close/minimise Kodi, launch Steam in Big
@@ -228,13 +263,14 @@ in
     };
 
     meta = with stdenv.lib; {
-      homepage = http://forum.kodi.tv/showthread.php?tid=187421;
-      descritpion = "A comic book reader";
+      homepage = https://forum.kodi.tv/showthread.php?tid=187421;
+      description = "A comic book reader";
       maintainers = with maintainers; [ edwtjo ];
     };
   };
 
-  pvr-hts = (mkKodiPlugin rec {
+  pvr-hts = mkKodiABIPlugin rec {
+
     plugin = "pvr-hts";
     namespace = "pvr.hts";
     version = "3.4.16";
@@ -252,22 +288,11 @@ in
       platforms = platforms.all;
       maintainers = with maintainers; [ cpages ];
     };
-  }).override {
-    buildInputs = [ cmake kodi libcec_platform kodi-platform ];
 
-    # disables check ensuring install prefix is that of kodi
-    cmakeFlags = [ "-DOVERRIDE_PATHS=1" ];
-
-    # kodi checks for plugin .so libs existance in the addon folder (share/...)
-    # and the non-wrapped kodi lib/... folder before even trying to dlopen
-    # them. Symlinking .so, as setting LD_LIBRARY_PATH is of no use
-    installPhase = ''
-      make install
-      ln -s $out/lib/addons/pvr.hts/pvr.hts.so* $out/share/kodi/addons/pvr.hts
-    '';
   };
 
-  pvr-hdhomerun = (mkKodiPlugin rec {
+  pvr-hdhomerun = mkKodiABIPlugin rec {
+
     plugin = "pvr-hdhomerun";
     namespace = "pvr.hdhomerun";
     version = "2.4.7";
@@ -285,18 +310,54 @@ in
       platforms = platforms.all;
       maintainers = with maintainers; [ titanous ];
     };
-  }).override {
-    buildInputs = [ cmake jsoncpp libhdhomerun kodi libcec_platform kodi-platform ];
 
-    # disables check ensuring install prefix is that of kodi
-    cmakeFlags = [ "-DOVERRIDE_PATHS=1" ];
+    extraBuildInputs = [ jsoncpp libhdhomerun ];
 
-    # kodi checks for plugin .so libs existance in the addon folder (share/...)
-    # and the non-wrapped kodi lib/... folder before even trying to dlopen
-    # them. Symlinking .so, as setting LD_LIBRARY_PATH is of no use
-    installPhase = ''
-      make install
-      ln -s $out/lib/addons/pvr.hdhomerun/pvr.hdhomerun.so* $out/share/kodi/addons/pvr.hdhomerun
-    '';
+  };
+
+  pvr-iptvsimple = mkKodiABIPlugin rec {
+
+    plugin = "pvr-iptvsimple";
+    namespace = "pvr.iptvsimple";
+    version = "2.4.14";
+
+    src = fetchFromGitHub {
+      owner = "kodi-pvr";
+      repo = "pvr.iptvsimple";
+      rev = "2a649d7e21b64c4fa4a8b14c2cc139261eebc7e8";
+      sha256 = "1f1im2gachrxnr3z96h5cg2c13vapgkvkdwvrbl4hxlnyp1a6jyz";
+    };
+
+    meta = with stdenv.lib; {
+      homepage = https://github.com/kodi-pvr/pvr.iptvsimple;
+      description = "Kodi's IPTV Simple client addon";
+      platforms = platforms.all;
+      maintainers = with maintainers; [ ];
+      license = licenses.gpl2Plus;
+    };
+
+    extraBuildInputs = [ zlib ];
+  };
+
+  osmc-skin = mkKodiPlugin rec {
+
+    plugin = "osmc-skin";
+    namespace = "skin.osmc";
+    version = "17.0.4";
+
+    src = fetchFromGitHub {
+      owner = "osmc";
+      repo = namespace;
+      rev = "a9268937f49286bab9fb49de430b8aafd7a60a9e";
+      sha256 = "1b3fm02annsq58pcfc985glrmh21rmqksdj3q8wn6gyza06jdf3v";
+    };
+
+    meta = with stdenv.lib; {
+      homepage = https://github.com/osmc/skin.osmc;
+      description = "The default skin for OSMC";
+      platforms = platforms.all;
+      maintainers = with maintainers; [ worldofpeace ];
+      license = licenses.cc-by-nc-sa-30;
+    };
   };
 }

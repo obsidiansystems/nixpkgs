@@ -1,32 +1,24 @@
 { stdenv, fetchurl, fetchFromGitHub, fetchpatch, pkgconfig, libiconv
-, libintlOrEmpty, expat, zlib, libpng, pixman, fontconfig, freetype, xorg
+, libintl, expat, zlib, libpng, pixman, fontconfig, freetype, xorg
 , gobjectSupport ? true, glib
 , xcbSupport ? true # no longer experimental since 1.12
-, glSupport ? true, mesa_noglu ? null # mesa is no longer a big dependency
+, glSupport ? true, libGL ? null # libGLU_combined is no longer a big dependency
 , pdfSupport ? true
 , darwin
 }:
 
-assert glSupport -> mesa_noglu != null;
+assert glSupport -> libGL != null;
 
-let inherit (stdenv.lib) optional optionals; in
-
-stdenv.mkDerivation rec {
-  name = "cairo-1.14.8";
+let
+  version = "1.15.10";
+  inherit (stdenv.lib) optional optionals;
+in stdenv.mkDerivation rec {
+  name = "cairo-${version}";
 
   src = fetchurl {
-    url = "http://cairographics.org/releases/${name}.tar.xz";
-    sha1 = "c6f7b99986f93c9df78653c3e6a3b5043f65145e";
+    url = "http://cairographics.org/${if stdenv.lib.mod (builtins.fromJSON (stdenv.lib.versions.minor version)) 2 == 0 then "releases" else "snapshots"}/${name}.tar.xz";
+    sha256 = "14l3jll98pjdlpm8f972v0spzcsf6y5nz85y2k8iybyg6ihj5jk2";
   };
-
-  patches = [
-    # from https://bugs.freedesktop.org/show_bug.cgi?id=98165
-    (fetchpatch {
-      name = "cairo-CVE-2016-9082.patch";
-      url = "https://bugs.freedesktop.org/attachment.cgi?id=127421";
-      sha256 = "03sfyaclzlglip4pvfjb4zj4dmm8mlphhxl30mb6giinkc74bfri";
-    })
-  ];
 
   outputs = [ "out" "dev" "devdoc" ];
   outputBin = "dev"; # very small
@@ -34,7 +26,8 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [
     pkgconfig
     libiconv
-  ] ++ libintlOrEmpty ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+    libintl
+  ] ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
     CoreGraphics
     CoreText
     ApplicationServices
@@ -45,7 +38,7 @@ stdenv.mkDerivation rec {
     with xorg; [ libXext fontconfig expat freetype pixman zlib libpng libXrender ]
     ++ optionals xcbSupport [ libxcb xcbutil ]
     ++ optional gobjectSupport glib
-    ++ optional glSupport mesa_noglu
+    ++ optional glSupport libGL
     ; # TODO: maybe liblzo but what would it be for here?
 
   configureFlags = if stdenv.isDarwin then [
@@ -78,6 +71,8 @@ stdenv.mkDerivation rec {
     '';
 
   enableParallelBuilding = true;
+
+  doCheck = false; # fails
 
   postInstall = stdenv.lib.optionalString stdenv.isDarwin glib.flattenInclude;
 

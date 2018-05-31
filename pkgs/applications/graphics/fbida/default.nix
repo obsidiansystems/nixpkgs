@@ -1,6 +1,6 @@
 { stdenv, fetchurl, libjpeg, libexif, libungif, libtiff, libpng, libwebp, libdrm
 , pkgconfig, freetype, fontconfig, which, imagemagick, curl, sane-backends, libXpm
-, epoxy, poppler, lirc }:
+, epoxy, poppler, mesa_noglu, lirc }:
 
 stdenv.mkDerivation rec {
   name = "fbida-2.13";
@@ -11,19 +11,18 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ pkgconfig which ];
-  buildInputs = [ libexif libjpeg libpng libungif freetype fontconfig libtiff
-   libwebp imagemagick curl sane-backends libdrm libXpm epoxy poppler lirc ];
+  buildInputs = [
+    libexif libjpeg libpng libungif freetype fontconfig libtiff libwebp
+    imagemagick curl sane-backends libdrm libXpm epoxy poppler lirc
+    mesa_noglu
+  ];
   
-  makeFlags = [ "prefix=$(out)" "verbose=yes" ];
+  makeFlags = [ "prefix=$(out)" "verbose=yes" "STRIP=" ];
 
   patchPhase =
     ''
     sed -e 's@ cpp\>@ gcc -E -@' -i GNUmakefile
     '';
-
-  crossAttrs = {
-    makeFlags = makeFlags ++ [ "CC=${stdenv.cross.config}-gcc" "STRIP=" ];
-  };
 
   meta = with stdenv.lib; {
     description = "Image viewing and manipulation programs";

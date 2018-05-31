@@ -1,6 +1,8 @@
 { stdenv, fetchurl, pkgconfig, libusb1
-, qtbase, qttools, makeQtWrapper, qmakeHook
+, qtbase, qttools, makeWrapper, qmake
 , withEspeak ? false, espeak ? null }:
+
+let inherit (stdenv.lib) getDev; in
 
 stdenv.mkDerivation  rec {
   name = "rockbox-utility-${version}";
@@ -13,7 +15,12 @@ stdenv.mkDerivation  rec {
 
   buildInputs = [ libusb1 qtbase qttools ]
     ++ stdenv.lib.optional withEspeak espeak;
-  nativeBuildInputs = [ makeQtWrapper pkgconfig qmakeHook ];
+  nativeBuildInputs = [ makeWrapper pkgconfig qmake ];
+
+  postPatch = ''
+    sed -i rbutil/rbutilqt/rbutilqt.pro \
+        -e '/^lrelease.commands =/ s|$$\[QT_INSTALL_BINS\]/lrelease -silent|${getDev qttools}/bin/lrelease|'
+  '';
 
   preConfigure = ''
     cd rbutil/rbutilqt
@@ -24,13 +31,19 @@ stdenv.mkDerivation  rec {
 
     install -Dm755 RockboxUtility $out/bin/rockboxutility
     ln -s $out/bin/rockboxutility $out/bin/RockboxUtility
-    wrapQtProgram $out/bin/rockboxutility \
+    wrapProgram $out/bin/rockboxutility \
     ${stdenv.lib.optionalString withEspeak ''
       --prefix PATH : ${espeak}/bin
     ''}
 
     runHook postInstall
   '';
+
+  # `make build/rcc/qrc_rbutilqt-lang.cpp` fails with
+  #      RCC: Error in 'rbutilqt-lang.qrc': Cannot find file 'lang/rbutil_cs.qm'
+  # Do not add `lrelease rbutilqt.pro` into preConfigure, otherwise `make lrelease`
+  # may clobber the files read by the parallel `make build/rcc/qrc_rbutilqt-lang.cpp`.
+  enableParallelBuilding = false;
 
   meta = with stdenv.lib; {
     description = "Open source firmware for mp3 players";

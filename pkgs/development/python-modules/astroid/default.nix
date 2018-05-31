@@ -1,4 +1,4 @@
-{ lib, fetchurl, buildPythonPackage, python, logilab_common, six
+{ lib, fetchPypi, buildPythonPackage, python, logilab_common, six
 , lazy-object-proxy, wrapt, singledispatch, enum34, pythonOlder
 , backports_functools_lru_cache
 }:
@@ -6,11 +6,11 @@
 buildPythonPackage rec {
   name = "${pname}-${version}";
   pname = "astroid";
-  version = "1.5.2";
+  version = "1.6.3";
 
-  src = fetchurl {
-    url = "mirror://pypi/a/${pname}/${name}.tar.gz";
-    sha256 = "271f1c9ad6519a5dde2a7f0c9b62c2923b55e16569bdd888f9f9055cc5be37ed";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "35cfae47aac19c7b407b7095410e895e836f2285ccf1220336afba744cc4c5f2";
   };
 
   propagatedBuildInputs = [ logilab_common six lazy-object-proxy wrapt ]
@@ -31,7 +31,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "A abstract syntax tree for Python with inference support";
-    homepage = http://bitbucket.org/logilab/astroid;
+    homepage = https://bitbucket.org/logilab/astroid;
     license = licenses.lgpl2;
     platforms = platforms.all;
     maintainers = with maintainers; [ nand0p ];

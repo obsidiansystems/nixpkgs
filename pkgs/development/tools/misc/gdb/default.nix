@@ -1,21 +1,24 @@
-{ fetchurl, stdenv, ncurses, readline, gmp, mpfr, expat, texinfo, zlib
-, dejagnu, perl, pkgconfig
+{ stdenv
+
+# Build time
+, fetchurl, pkgconfig, perl, texinfo, setupDebugInfoDirs
+
+# Run time
+, ncurses, readline, gmp, mpfr, expat, zlib, dejagnu
 
 , buildPlatform, hostPlatform, targetPlatform
 
 , pythonSupport ? hostPlatform == buildPlatform && !hostPlatform.isCygwin, python ? null
 , guile ? null
 
-# Support all known targets in one gdb binary.
-, multitarget ? false
-
 # Additional dependencies for GNU/Hurd.
 , mig ? null, hurd ? null
+
 }:
 
 let
   basename = "gdb-${version}";
-  version = "7.12.1";
+  version = "8.1";
 in
 
 assert targetPlatform.isHurd -> mig != null && hurd != null;
@@ -29,10 +32,13 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://gnu/gdb/${basename}.tar.xz";
-    sha256 = "11ii260h1sd7v0bs3cz6d5l8gqxxgldry0md60ncjgixjw5nh1s6";
+    sha256 = "0d2bpqk58fqlx21rbnk8mbcjlggzc9kb5sjirrfrrrjq70ka0qdg";
   };
 
-  nativeBuildInputs = [ pkgconfig texinfo perl ]
+  patches = [ ./debug-info-from-env.patch ]
+    ++ stdenv.lib.optional stdenv.isDarwin ./darwin-target-match.patch;
+
+  nativeBuildInputs = [ pkgconfig texinfo perl setupDebugInfoDirs ]
     # TODO(@Ericson2314) not sure if should be host or target
     ++ stdenv.lib.optional targetPlatform.isHurd mig;
 
@@ -41,21 +47,29 @@ stdenv.mkDerivation rec {
     ++ stdenv.lib.optional targetPlatform.isHurd hurd
     ++ stdenv.lib.optional doCheck dejagnu;
 
+  propagatedNativeBuildInputs = [ setupDebugInfoDirs ];
+
   enableParallelBuilding = true;
 
   # darwin build fails with format hardening since v7.12
   hardeningDisable = stdenv.lib.optionals stdenv.isDarwin [ "format" ];
 
+  NIX_CFLAGS_COMPILE = "-Wno-format-nonliteral";
+
+  # TODO(@Ericson2314): Always pass "--target" and always prefix.
+  configurePlatforms = [ "build" "host" ] ++ stdenv.lib.optional (targetPlatform != hostPlatform) "target";
+
   configureFlags = with stdenv.lib; [
-    "--with-gmp=${gmp.dev}" "--with-mpfr=${mpfr.dev}" "--with-system-readline"
-    "--with-system-zlib" "--with-expat" "--with-libexpat-prefix=${expat.dev}"
-  ] ++ stdenv.lib.optional hostPlatform.isLinux
-      # TODO(@Ericson2314): make this conditional on whether host platform is NixOS
-      "--with-separate-debug-dir=/run/current-system/sw/lib/debug"
-    ++ stdenv.lib.optional (!pythonSupport) "--without-python"
-    # TODO(@Ericson2314): This should be done in stdenv, not per-package
-    ++ stdenv.lib.optional (targetPlatform != hostPlatform) "--target=${targetPlatform.config}"
-    ++ stdenv.lib.optional multitarget "--enable-targets=all";
+    "--enable-targets=all" "--enable-64-bit-bfd"
+    "--disable-install-libbfd"
+    "--disable-shared" "--enable-static"
+    "--with-system-zlib"
+    "--with-system-readline"
+
+    "--with-gmp=${gmp.dev}"
+    "--with-mpfr=${mpfr.dev}"
+    "--with-expat" "--with-libexpat-prefix=${expat.dev}"
+  ] ++ stdenv.lib.optional (!pythonSupport) "--without-python";
 
   postInstall =
     '' # Remove Info files already provided by Binutils and other packages.

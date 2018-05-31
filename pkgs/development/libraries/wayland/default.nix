@@ -8,11 +8,11 @@ assert expat != null;
 
 stdenv.mkDerivation rec {
   name = "wayland-${version}";
-  version = "1.12.0";
+  version = "1.15.0";
 
   src = fetchurl {
-    url = "http://wayland.freedesktop.org/releases/${name}.tar.xz";
-    sha256 = "d6b4135cba0188abcb7275513c72dede751d6194f6edc5b82183a3ba8b821ab1";
+    url = "https://wayland.freedesktop.org/releases/${name}.tar.xz";
+    sha256 = "1c5fnys8hi71cnzjv5k7j0r8gx80p0yyqlrpmn06mmarhnxvwgzb";
   };
 
   configureFlags = [ "--with-scanner" "--disable-documentation" ];
@@ -23,7 +23,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "Reference implementation of the wayland protocol";
-    homepage    = http://wayland.freedesktop.org/;
+    homepage    = https://wayland.freedesktop.org/;
     license     = lib.licenses.mit;
     platforms   = lib.platforms.linux;
     maintainers = with lib.maintainers; [ codyopel wkennington ];

@@ -4,7 +4,7 @@ with lib;
 
 let
 
-  inherit (pkgs) cups cups-pk-helper cups-filters gutenprint;
+  inherit (pkgs) cups cups-pk-helper cups-filters;
 
   cfg = config.services.printing;
 
@@ -35,9 +35,8 @@ let
     name = "cups-progs";
     paths =
       [ cups.out additionalBackends cups-filters pkgs.ghostscript ]
-      ++ optional cfg.gutenprint gutenprint
       ++ cfg.drivers;
-    pathsToLink = [ "/lib/cups" "/share/cups" "/bin" ];
+    pathsToLink = [ "/lib" "/share/cups" "/bin" ];
     postBuild = cfg.bindirCmds;
     ignoreCollisions = true;
   };
@@ -84,6 +83,8 @@ let
 
     WebInterface ${if cfg.webInterface then "Yes" else "No"}
 
+    LogLevel ${cfg.logLevel}
+
     ${cfg.extraConf}
   '';
 
@@ -97,11 +98,14 @@ let
       (writeConf "client.conf" cfg.clientConf)
       (writeConf "snmp.conf" cfg.snmpConf)
     ] ++ optional avahiEnabled browsedFile
-      ++ optional cfg.gutenprint gutenprint
       ++ cfg.drivers;
     pathsToLink = [ "/etc/cups" ];
     ignoreCollisions = true;
   };
+
+  filterGutenprint = pkgs: filter (pkg: pkg.meta.isGutenprint or false == true) pkgs;
+  containsGutenprint = pkgs: length (filterGutenprint pkgs) > 0;
+  getGutenprint = pkgs: head (filterGutenprint pkgs);
 
 in
 
@@ -122,7 +126,7 @@ in
 
       listenAddresses = mkOption {
         type = types.listOf types.str;
-        default = [ "127.0.0.1:631" ];
+        default = [ "localhost:631" ];
         example = [ "*:631" ];
         description = ''
           A list of addresses and ports on which to listen.
@@ -163,6 +167,15 @@ in
         '';
       };
 
+      logLevel = mkOption {
+        type = types.str;
+        default = "info";
+        example = "debug";
+        description = ''
+          Specifies the cupsd logging verbosity.
+        '';
+      };
+
       extraFilesConf = mkOption {
         type = types.lines;
         default = "";
@@ -178,7 +191,7 @@ in
         example =
           ''
             BrowsePoll cups.example.com
-            LogLevel debug
+            MaxCopies 42
           '';
         description = ''
           Extra contents of the configuration file of the CUPS daemon
@@ -224,23 +237,17 @@ in
         '';
       };
 
-      gutenprint = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Whether to enable Gutenprint drivers for CUPS. This includes auto-updating
-          Gutenprint PPD files.
-        '';
-      };
-
       drivers = mkOption {
         type = types.listOf types.path;
         default = [];
-        example = literalExample "[ pkgs.splix ]";
+        example = literalExample "[ pkgs.gutenprint pkgs.hplip pkgs.splix ]";
         description = ''
-          CUPS drivers to use. Drivers provided by CUPS, cups-filters, Ghostscript
-          and Samba are added unconditionally. For adding Gutenprint, see
-          <literal>gutenprint</literal>.
+          CUPS drivers to use. Drivers provided by CUPS, cups-filters,
+          Ghostscript and Samba are added unconditionally. If this list contains
+          Gutenprint (i.e. a derivation with
+          <literal>meta.isGutenprint = true</literal>) the PPD files in
+          <filename>/var/lib/cups/ppd</filename> will be updated automatically
+          to avoid errors due to incompatible versions.
         '';
       };
 
@@ -318,12 +325,17 @@ in
             [ ! -e /var/lib/cups/path ] && \
               ln -s ${bindir} /var/lib/cups/path
 
-            ${optionalString cfg.gutenprint ''
+            ${optionalString (containsGutenprint cfg.drivers) ''
               if [ -d /var/lib/cups/ppd ]; then
-                ${gutenprint}/bin/cups-genppdupdate -p /var/lib/cups/ppd
+                ${getGutenprint cfg.drivers}/bin/cups-genppdupdate -p /var/lib/cups/ppd
               fi
             ''}
           '';
+
+          serviceConfig = {
+            PrivateTmp = true;
+            RuntimeDirectory = [ "cups" ];
+          };
       };
 
     systemd.services.cups-browsed = mkIf avahiEnabled
@@ -344,8 +356,6 @@ in
 
     services.printing.extraConf =
       ''
-        LogLevel info
-
         DefaultAuthType Basic
 
         <Location />

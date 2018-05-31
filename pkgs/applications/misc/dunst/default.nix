@@ -1,41 +1,44 @@
-{ stdenv, fetchFromGitHub, fetchpatch
-, pkgconfig, which, perl
-, cairo, dbus, freetype, gdk_pixbuf, glib, libX11, libXScrnSaver
-, libXext, libXinerama, libnotify, libxdg_basedir, pango, xproto
-, librsvg
+{ stdenv, fetchFromGitHub, makeWrapper
+, pkgconfig, which, perl, libXrandr
+, cairo, dbus, systemd, gdk_pixbuf, glib, libX11, libXScrnSaver
+, libXinerama, libnotify, libxdg_basedir, pango, xproto, librsvg
 }:
 
 stdenv.mkDerivation rec {
   name = "dunst-${version}";
-  version = "1.1.0";
+  version = "1.3.2";
 
   src = fetchFromGitHub {
-    owner = "knopwob";
+    owner = "dunst-project";
     repo = "dunst";
     rev = "v${version}";
-    sha256 = "102s0rkcdz22hnacsi3dhm7kj3lsw9gnikmh3a7wk862nkvvwjmk";
+    sha256 = "1kqlshaflp306yrjjmc28pghi1y5p24vdx4bxf8i4n9khdawb514";
   };
 
-  patches = [(fetchpatch {
-    name = "add-svg-support.patch";
-    url = "https://github.com/knopwob/dunst/commit/63b11141185d1d07a6d12212257a543e182d250a.patch";
-    sha256 = "0giiaj5zjim7xqcav5ij5gn4x6nnchkllwcx0ln16j0p3vbi4y4x";
-  })];
-
-  nativeBuildInputs = [ perl pkgconfig which ];
+  nativeBuildInputs = [ perl pkgconfig which systemd makeWrapper ];
 
   buildInputs = [
-    cairo dbus freetype gdk_pixbuf glib libX11 libXScrnSaver libXext
-    libXinerama libnotify libxdg_basedir pango xproto librsvg
+    cairo dbus gdk_pixbuf glib libX11 libXScrnSaver
+    libXinerama libnotify libxdg_basedir pango xproto librsvg libXrandr
   ];
 
   outputs = [ "out" "man" ];
 
-  makeFlags = [ "PREFIX=$(out)" "VERSION=$(version)" ];
+  makeFlags = [
+    "PREFIX=$(out)"
+    "VERSION=$(version)"
+    "SERVICEDIR_DBUS=$(out)/share/dbus-1/services"
+    "SERVICEDIR_SYSTEMD=$(out)/lib/systemd/user"
+  ];
+
+  postInstall = ''
+    wrapProgram $out/bin/dunst \
+      --set GDK_PIXBUF_MODULE_FILE "$GDK_PIXBUF_MODULE_FILE"
+  '';
 
   meta = with stdenv.lib; {
     description = "Lightweight and customizable notification daemon";
-    homepage = http://www.knopwob.org/dunst/;
+    homepage = https://dunst-project.org/;
     license = licenses.bsd3;
     # NOTE: 'unix' or even 'all' COULD work too, I'm not sure
     platforms = platforms.linux;

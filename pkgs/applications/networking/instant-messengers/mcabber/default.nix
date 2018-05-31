@@ -4,14 +4,15 @@
 
 stdenv.mkDerivation rec {
   name = "mcabber-${version}";
-  version = "1.0.5";
+  version = "1.1.0";
 
   src = fetchurl {
     url = "http://mcabber.com/files/mcabber-${version}.tar.bz2";
-    sha256 = "0ixdzk5b3s31a4bdfqgqrsiq7vbgdzhqr49p9pz9cq9bgn0h1wm0";
+    sha256 = "1ggh865p1rf10ffsnf4g6qv9i8bls36dxdb1nzs5r9vdqci2rz04";
   };
 
-  buildInputs = [ openssl ncurses pkgconfig glib loudmouth libotr gpgme ];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ openssl ncurses glib loudmouth libotr gpgme ];
 
   configureFlags = "--with-openssl=${openssl.dev} --enable-modules --enable-otr";
 
@@ -24,6 +25,7 @@ stdenv.mkDerivation rec {
     maintainers = with maintainers; [ pSub ];
     platforms = with platforms; linux;
     updateWalker = true;
+    downloadPage = "http://mcabber.com/files/";
     downloadURLRegexp = "mcabber-[0-9.]+[.]tar[.][a-z0-9]+$";
   };
 }

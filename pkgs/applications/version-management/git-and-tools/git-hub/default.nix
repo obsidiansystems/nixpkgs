@@ -1,27 +1,29 @@
-{ stdenv, fetchFromGitHub, docutils, python2Packages }:
+{ stdenv, fetchFromGitHub, docutils, gitMinimal, python2Packages }:
 
 stdenv.mkDerivation rec {
   name = "git-hub-${version}";
-  version = "0.11.0";
+  version = "1.0.1";
 
   src = fetchFromGitHub {
-    sha256 = "1lpi373vzr6gda0gic7w37qhipfg7bjpn8nwjjgz44vf2vjlhf9k";
+    sha256 = "1lizjyi8vac1p1anbnh6qrr176rwxp5yjc1787asw437sackkwza";
     rev = "v${version}";
     repo = "git-hub";
     owner = "sociomantic-tsunami";
   };
 
   buildInputs = [ python2Packages.python ];
-  nativeBuildInputs = [ python2Packages.docutils ];
+  nativeBuildInputs = [
+    gitMinimal        # Used during build to generate Bash completion.
+    python2Packages.docutils
+  ];
 
   postPatch = ''
-    substituteInPlace Makefile --replace rst2man rst2man.py
     patchShebangs .
   '';
 
   enableParallelBuilding = true;
 
-  installFlags = [ "prefix=$(out)" ];
+  installFlags = [ "prefix=$(out)" "sysconfdir=$(out)/etc" ];
 
   postInstall = ''
     # Remove inert ftdetect vim plugin and a README that's a man page subset:
@@ -37,7 +39,6 @@ stdenv.mkDerivation rec {
       directly through the Git command line.
     '';
     license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ nckx ];
+    platforms = platforms.all;
   };
 }

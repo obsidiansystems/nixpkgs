@@ -33,7 +33,7 @@ let
     in
       pkgs.writeScript "container-init"
       ''
-        #! ${pkgs.stdenv.shell} -e
+        #! ${pkgs.runtimeShell} -e
 
         # Initialise the container side of the veth pair.
         if [ "$PRIVATE_NETWORK" = 1 ]; then
@@ -112,7 +112,7 @@ let
 
       # If the host is 64-bit and the container is 32-bit, add a
       # --personality flag.
-      ${optionalString (config.nixpkgs.system == "x86_64-linux") ''
+      ${optionalString (config.nixpkgs.localSystem.system == "x86_64-linux") ''
         if [ "$(< ''${SYSTEM_PATH:-/nix/var/nix/profiles/per-container/$INSTANCE/system}/system)" = i686-linux ]; then
           extraFlags+=" --personality=x86"
         fi
@@ -120,7 +120,6 @@ let
 
       # Run systemd-nspawn without startup notification (we'll
       # wait for the container systemd to signal readiness).
-      EXIT_ON_REBOOT=1 \
       exec ${config.systemd.package}/bin/systemd-nspawn \
         --keep-unit \
         -M "$INSTANCE" -D "$root" $extraFlags \
@@ -224,7 +223,7 @@ let
   serviceDirectives = cfg: {
     ExecReload = pkgs.writeScript "reload-container"
       ''
-        #! ${pkgs.stdenv.shell} -e
+        #! ${pkgs.runtimeShell} -e
         ${pkgs.nixos-container}/bin/nixos-container run "$INSTANCE" -- \
           bash --login -c "''${SYSTEM_PATH:-/nix/var/nix/profiles/system}/bin/switch-to-configuration test"
       '';
@@ -256,7 +255,7 @@ let
   };
 
 
-  system = config.nixpkgs.system;
+  system = config.nixpkgs.localSystem.system;
 
   bindMountOpts = { name, config, ... }: {
 
@@ -538,7 +537,7 @@ in
               type = types.bool;
               default = false;
               description = ''
-                Wether the container is automatically started at boot-time.
+                Whether the container is automatically started at boot-time.
               '';
             };
 
@@ -576,6 +575,16 @@ in
               '';
             };
 
+            extraFlags = mkOption {
+              type = types.listOf types.str;
+              default = [];
+              example = [ "--drop-capability=CAP_SYS_CHROOT" ];
+              description = ''
+                Extra flags passed to the systemd-nspawn command.
+                See systemd-nspawn(1) for details.
+              '';
+            };
+
           } // networkOptions;
 
           config = mkMerge
@@ -596,7 +605,9 @@ in
               { config =
                   { config, pkgs, ... }:
                   { services.postgresql.enable = true;
-                    services.postgresql.package = pkgs.postgresql92;
+                    services.postgresql.package = pkgs.postgresql96;
+
+                    system.nixos.stateVersion = "17.03";
                   };
               };
           }
@@ -713,7 +724,9 @@ in
             ${optionalString cfg.autoStart ''
               AUTO_START=1
             ''}
-            EXTRA_NSPAWN_FLAGS="${mkBindFlags cfg.bindMounts}"
+            EXTRA_NSPAWN_FLAGS="${mkBindFlags cfg.bindMounts +
+              optionalString (cfg.extraFlags != [])
+                (" " + concatStringsSep " " cfg.extraFlags)}"
           '';
       }) config.containers;
 
@@ -724,6 +737,11 @@ in
       '') config.containers);
 
     networking.dhcpcd.denyInterfaces = [ "ve-*" "vb-*" ];
+
+    services.udev.extraRules = optionalString config.networking.networkmanager.enable ''
+      # Don't manage interfaces created by nixos-container.
+      ENV{INTERFACE}=="v[eb]-*", ENV{NM_UNMANAGED}="1"
+    '';
 
     environment.systemPackages = [ pkgs.nixos-container ];
   });

@@ -1,8 +1,9 @@
-{ stdenv, lib, buildGoPackage, fetchFromGitHub, go-bindata  }:
+
+{ stdenv, lib, buildGoPackage, fetchFromGitHub, go-bindata }:
 
 buildGoPackage rec {
   name = "kops-${version}";
-  version = "1.6.0";
+  version = "1.9.0";
 
   goPackagePath = "k8s.io/kops";
 
@@ -10,7 +11,7 @@ buildGoPackage rec {
     rev = version;
     owner = "kubernetes";
     repo = "kops";
-    sha256 = "1z890kjgsdnghg71v4sp7lljvw14dhzr23m2qjmk6wndyssscykr";
+    sha256 = "03avkm7gk2dqyvd7245qsca1sbhwk41j9yhc208gcmjgjhkx2vn7";
   };
 
   buildInputs = [go-bindata];
@@ -24,8 +25,7 @@ buildGoPackage rec {
 
   preBuild = ''
     (cd go/src/k8s.io/kops
-     go-bindata -o upup/models/bindata.go -pkg models -prefix upup/models/ upup/models/...
-     go-bindata -o federation/model/bindata.go -pkg model -prefix federation/model federation/model/...)
+     go-bindata -o upup/models/bindata.go -pkg models -prefix upup/models/ upup/models/...)
   '';
 
   postInstall = ''
@@ -39,7 +39,7 @@ buildGoPackage rec {
     description = "Easiest way to get a production Kubernetes up and running";
     homepage = https://github.com/kubernetes/kops;
     license = licenses.asl20;
-    maintainers = with maintainers; [offline];
+    maintainers = with maintainers; [offline zimbatm];
     platforms = platforms.unix;
   };
 }

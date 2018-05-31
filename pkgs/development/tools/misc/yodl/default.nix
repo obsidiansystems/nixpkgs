@@ -2,20 +2,22 @@
 
 stdenv.mkDerivation rec {
   name = "yodl-${version}";
-  version = "3.08.02";
+  version = "4.02.00";
 
   nativeBuildInputs = [ icmake ];
 
   buildInputs = [ perl ];
 
   src = fetchFromGitHub {
-    sha256 = "0z4pjrl4bq03fxc50c9h0bnc90vqn5c2dy830mjyzjrn1ms3i003";
+    sha256 = "08i3q3h581kxr5v7wi114bng66pwwsjs5qj3ywnnrr7ra1h5rzwa";
     rev = version;
     repo = "yodl";
     owner = "fbb-git";
   };
 
-  sourceRoot = "yodl-${version}-src/yodl";
+  setSourceRoot = ''
+    sourceRoot=$(echo */yodl)
+  '';
 
   preConfigure = ''
     patchShebangs ./build
@@ -24,6 +26,9 @@ stdenv.mkDerivation rec {
     substituteInPlace macros/rawmacros/startdoc.pl --replace /usr/bin/perl ${perl}/bin/perl
     substituteInPlace scripts/yodl2whatever.in --replace getopt ${utillinux}/bin/getopt
   '';
+
+  # Set TERM because icmbuild calls tput.
+  TERM = "xterm";
 
   buildPhase = ''
     ./build programs
@@ -41,7 +46,7 @@ stdenv.mkDerivation rec {
     description = "A package that implements a pre-document language and tools to process it";
     homepage = https://fbb-git.github.io/yodl/;
     license = licenses.gpl3;
-    maintainers = with maintainers; [ nckx pSub ];
+    maintainers = with maintainers; [ pSub ];
     platforms = platforms.linux;
   };
 }

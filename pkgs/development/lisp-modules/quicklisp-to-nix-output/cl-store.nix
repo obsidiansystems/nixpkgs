@@ -1,33 +1,27 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''cl-store'';
-  version = ''20160531-git'';
+  version = ''20180328-git'';
+
+  parasites = [ "cl-store-tests" ];
 
   description = ''Serialization package'';
 
-  deps = [ ];
+  deps = [ args."rt" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/cl-store/2016-05-31/cl-store-20160531-git.tgz'';
-    sha256 = ''0j1pfgvzy6l7hb68xsz2dghsa94lip7caq6f6608jsqadmdswljz'';
+    url = ''http://beta.quicklisp.org/archive/cl-store/2018-03-28/cl-store-20180328-git.tgz'';
+    sha256 = ''1r5fmmpjcshfqv43zv282kjsxxp0imxd2fdpwwcr7y7m256w660n'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/cl-store[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "cl-store";
+
+  asdFilesToKeep = ["cl-store.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM cl-store DESCRIPTION Serialization package SHA256 0j1pfgvzy6l7hb68xsz2dghsa94lip7caq6f6608jsqadmdswljz URL
-    http://beta.quicklisp.org/archive/cl-store/2016-05-31/cl-store-20160531-git.tgz MD5 8b3f33956b05d8e900346663f6abca3c NAME cl-store TESTNAME NIL FILENAME
-    cl-store DEPS NIL DEPENDENCIES NIL VERSION 20160531-git SIBLINGS NIL) */
+/* (SYSTEM cl-store DESCRIPTION Serialization package SHA256
+    1r5fmmpjcshfqv43zv282kjsxxp0imxd2fdpwwcr7y7m256w660n URL
+    http://beta.quicklisp.org/archive/cl-store/2018-03-28/cl-store-20180328-git.tgz
+    MD5 2f8831cb60c0b0575c65e1dbebc07dee NAME cl-store FILENAME cl-store DEPS
+    ((NAME rt FILENAME rt)) DEPENDENCIES (rt) VERSION 20180328-git SIBLINGS NIL
+    PARASITES (cl-store-tests)) */

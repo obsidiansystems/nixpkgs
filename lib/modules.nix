@@ -1,10 +1,12 @@
-with import ./lists.nix;
-with import ./strings.nix;
-with import ./trivial.nix;
-with import ./attrsets.nix;
-with import ./options.nix;
-with import ./debug.nix;
-with import ./types.nix;
+{ lib }:
+
+with lib.lists;
+with lib.strings;
+with lib.trivial;
+with lib.attrsets;
+with lib.options;
+with lib.debug;
+with lib.types;
 
 rec {
 
@@ -57,7 +59,7 @@ rec {
         };
       };
 
-      closed = closeModules (modules ++ [ internalModule ]) ({ inherit config options; lib = import ./.; } // specialArgs);
+      closed = closeModules (modules ++ [ internalModule ]) ({ inherit config options lib; } // specialArgs);
 
       options = mergeModules prefix (reverseList (filterModules (specialArgs.modulesPath or "") closed));
 
@@ -98,7 +100,7 @@ rec {
   /* Close a set of modules under the ‘imports’ relation. */
   closeModules = modules: args:
     let
-      toClosureList = file: parentKey: imap (n: x:
+      toClosureList = file: parentKey: imap1 (n: x:
         if isAttrs x || isFunction x then
           let key = "${parentKey}:anon-${toString n}"; in
           unifyModuleSyntax file key (unpackSubmodule (applyIfFunction key) x args)
@@ -153,11 +155,11 @@ rec {
       # a module will resolve strictly the attributes used as argument but
       # not their values.  The values are forwarding the result of the
       # evaluation of the option.
-      requiredArgs = builtins.attrNames (builtins.functionArgs f);
+      requiredArgs = builtins.attrNames (lib.functionArgs f);
       context = name: ''while evaluating the module argument `${name}' in "${key}":'';
       extraArgs = builtins.listToAttrs (map (name: {
         inherit name;
-        value = addErrorContext (context name)
+        value = builtins.addErrorContext (context name)
           (args.${name} or config._module.args.${name});
       }) requiredArgs);
 
@@ -307,7 +309,8 @@ rec {
           res.mergedValue;
 
     in opt //
-      { value = addErrorContext "while evaluating the option `${showOption loc}':" value;
+      { value = builtins.addErrorContext "while evaluating the option `${showOption loc}':" value;
+        inherit (res.defsFinal') highestPrio;
         definitions = map (def: def.value) res.defsFinal;
         files = map (def: def.file) res.defsFinal;
         inherit (res) isDefined;
@@ -315,7 +318,7 @@ rec {
 
   # Merge definitions of a value of a given type.
   mergeDefinitions = loc: type: defs: rec {
-    defsFinal =
+    defsFinal' =
       let
         # Process mkMerge and mkIf properties.
         defs' = concatMap (m:
@@ -323,20 +326,25 @@ rec {
         ) defs;
 
         # Process mkOverride properties.
-        defs'' = filterOverrides defs';
+        defs'' = filterOverrides' defs';
 
         # Sort mkOrder properties.
         defs''' =
           # Avoid sorting if we don't have to.
-          if any (def: def.value._type or "" == "order") defs''
-          then sortProperties defs''
-          else defs'';
-      in defs''';
+          if any (def: def.value._type or "" == "order") defs''.values
+          then sortProperties defs''.values
+          else defs''.values;
+      in {
+        values = defs''';
+        inherit (defs'') highestPrio;
+      };
+
+    defsFinal = defsFinal'.values;
 
     # Type-check the remaining definitions, and merge them.
     mergedValue = foldl' (res: def:
       if type.check def.value then res
-      else throw "The option value `${showOption loc}' in `${def.file}' is not a ${type.description}.")
+      else throw "The option value `${showOption loc}' in `${def.file}' is not of type `${type.description}'.")
       (type.merge loc defsFinal) defsFinal;
 
     isDefined = defsFinal != [];
@@ -414,13 +422,18 @@ rec {
 
      Note that "z" has the default priority 100.
   */
-  filterOverrides = defs:
+  filterOverrides = defs: (filterOverrides' defs).values;
+
+  filterOverrides' = defs:
     let
       defaultPrio = 100;
       getPrio = def: if def.value._type or "" == "override" then def.value.priority else defaultPrio;
       highestPrio = foldl' (prio: def: min (getPrio def) prio) 9999 defs;
       strip = def: if def.value._type or "" == "override" then def // { value = def.value.content; } else def;
-    in concatMap (def: if getPrio def == highestPrio then [(strip def)] else []) defs;
+    in {
+      values = concatMap (def: if getPrio def == highestPrio then [(strip def)] else []) defs;
+      inherit highestPrio;
+    };
 
   /* Sort a list of properties.  The sort priority of a property is
      1000 by default, but can be overridden by wrapping the property
@@ -658,10 +671,11 @@ rec {
   doRename = { from, to, visible, warn, use }:
     let
       toOf = attrByPath to
-        (abort "Renaming error: option `${showOption to}' does not exists.");
+        (abort "Renaming error: option `${showOption to}' does not exist.");
     in
       { config, options, ... }:
       { options = setAttrByPath from (mkOption {
+          inherit visible;
           description = "Alias of <option>${showOption to}</option>.";
           apply = x: use (toOf config);
         });

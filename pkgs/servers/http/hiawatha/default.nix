@@ -12,14 +12,18 @@ assert enableSSL -> openssl !=null;
 
 stdenv.mkDerivation rec {
   name = "hiawatha-${version}";
-  version = "10.5";
+  version = "10.8.1";
 
   src = fetchurl {
     url = "https://github.com/hsleisink/hiawatha/archive/v${version}.tar.gz";
-    sha256 = "11nqdmmhq1glgsiza8pfh69wmpgwl51vb3xijmpcxv63a7ywp4fj";
+    sha256 = "1f2hlw2lp98b4dx87i7pz7h66vsy2g22b5adfrlij3kj0vfv61w8";
   };
 
   buildInputs =  [ cmake libxslt zlib libxml2 ] ++ stdenv.lib.optional enableSSL openssl ;
+
+  prePatch = ''
+    substituteInPlace CMakeLists.txt --replace SETUID ""
+  '';
 
   cmakeFlags = [
     ( if enableSSL then "-DENABLE_TLS=on" else "-DENABLE_TLS=off" )
@@ -44,8 +48,8 @@ stdenv.mkDerivation rec {
   meta = with stdenv.lib; {
     description = "An advanced and secure webserver";
     license = licenses.gpl2;
-    homepage = "https://www.hiawatha-webserver.org";
-    maintainer = [ maintainers.ndowens ];
+    homepage = https://www.hiawatha-webserver.org;
+    maintainers = [ maintainers.ndowens ];
   };
 
 }

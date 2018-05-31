@@ -23,10 +23,17 @@ in pythonPackages.buildPythonApplication rec {
 
     substituteInPlace cloudinit/config/cc_growpart.py \
       --replace 'util.subp(["growpart"' 'util.subp(["${cloud-utils}/bin/growpart"'
+
+    # Argparse is part of python stdlib
+    sed -i s/argparse// requirements.txt
     '';
 
   propagatedBuildInputs = with pythonPackages; [ cheetah jinja2 prettytable
-    oauthlib pyserial configobj pyyaml argparse requests jsonpatch ];
+    oauthlib pyserial configobj pyyaml requests jsonpatch ];
+
+  checkInputs = with pythonPackages; [ contextlib2 httpretty mock unittest2 ];
+
+  doCheck = false;
 
   meta = {
     homepage = http://cloudinit.readthedocs.org;

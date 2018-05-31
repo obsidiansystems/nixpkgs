@@ -1,12 +1,12 @@
-{ stdenv, fetchurl, openssl, nettle, expat, libevent }:
+{ stdenv, fetchurl, openssl, nettle, expat, libevent, dns-root-data }:
 
 stdenv.mkDerivation rec {
   name = "unbound-${version}";
-  version = "1.6.2";
+  version = "1.7.1";
 
   src = fetchurl {
-    url = "http://unbound.net/downloads/${name}.tar.gz";
-    sha256 = "171vbqijfk1crm04dbgbvw4052n6kwcvyvly3habg011qdr3schs";
+    url = "https://unbound.net/downloads/${name}.tar.gz";
+    sha256 = "13b210hd200xxvaffyzqb4g58knv1sfigph70ai74lrcb3pqbq2n";
   };
 
   outputs = [ "out" "lib" "man" ]; # "dev" would only split ~20 kB
@@ -20,13 +20,14 @@ stdenv.mkDerivation rec {
     "--localstatedir=/var"
     "--sysconfdir=/etc"
     "--sbindir=\${out}/bin"
+    "--with-rootkey-file=${dns-root-data}/root.key"
     "--enable-pie"
     "--enable-relro-now"
   ];
 
   installFlags = [ "configfile=\${out}/etc/unbound/unbound.conf" ];
 
-  preFixup = stdenv.lib.optionalString stdenv.isLinux
+  preFixup = stdenv.lib.optionalString (stdenv.isLinux && !stdenv.hostPlatform.isMusl) # XXX: revisit
     # Build libunbound again, but only against nettle instead of openssl.
     # This avoids gnutls.out -> unbound.lib -> openssl.out.
     # There was some problem with this on Darwin; let's not complicate non-Linux.

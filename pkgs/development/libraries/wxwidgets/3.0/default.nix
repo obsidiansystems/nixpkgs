@@ -1,46 +1,57 @@
-{ stdenv, fetchurl, fetchpatch, pkgconfig, gtk2, libXinerama, libSM, libXxf86vm
+{ stdenv, fetchFromGitHub, fetchurl, fetchpatch, pkgconfig
+, gtk2, gtk3, libXinerama, libSM, libXxf86vm
 , xf86vidmodeproto , gstreamer, gst-plugins-base, GConf, setfile
-, withMesa ? true, mesa_glu ? null, mesa_noglu ? null
+, withMesa ? true, libGLU ? null, libGL ? null
 , compat24 ? false, compat26 ? true, unicode ? true
-, withWebKit ? false, webkitgtk2 ? null
+, withGtk2 ? true
+, withWebKit ? false, webkitgtk24x-gtk2 ? null, webkitgtk ? null
 , AGL ? null, Carbon ? null, Cocoa ? null, Kernel ? null, QTKit ? null
 }:
 
 
-assert withMesa -> mesa_glu != null && mesa_noglu != null;
-assert withWebKit -> webkitgtk2 != null;
+assert withMesa -> libGLU != null && libGL != null;
+assert withWebKit -> (if withGtk2 then webkitgtk24x-gtk2 else webkitgtk) != null;
 
 with stdenv.lib;
 
 let
-  version = "3.0.2";
+  version = "3.0.3.1";
 in
 stdenv.mkDerivation {
   name = "wxwidgets-${version}";
 
-  src = fetchurl {
-    url = "mirror://sourceforge/wxwindows/wxWidgets-${version}.tar.bz2";
-    sha256 = "0paq27brw4lv8kspxh9iklpa415mxi8zc117vbbbhfjgapf7js1l";
+  src = fetchFromGitHub {
+    owner = "wxWidgets";
+    repo = "wxWidgets";
+    rev = "v${version}";
+    sha256 = "1b90in65k1ij6kyk41knxs86i6hx5lkz30gpvzdvh0cbjagv5asq";
   };
 
   buildInputs =
-    [ gtk2 libXinerama libSM libXxf86vm xf86vidmodeproto gstreamer
+    [ (if withGtk2 then gtk2 else gtk3) libXinerama libSM libXxf86vm xf86vidmodeproto gstreamer
       gst-plugins-base GConf ]
-    ++ optional withMesa mesa_glu
-    ++ optional withWebKit webkitgtk2
+    ++ optional withMesa libGLU
+    ++ optional withWebKit (if withGtk2 then webkitgtk24x-gtk2 else webkitgtk)
     ++ optionals stdenv.isDarwin [ setfile Carbon Cocoa Kernel QTKit ];
 
   nativeBuildInputs = [ pkgconfig ];
 
   propagatedBuildInputs = optional stdenv.isDarwin AGL;
 
-  patches = [ (fetchpatch {
-    url = "https://raw.githubusercontent.com/jessehager/MINGW-packages/af6ece963d8157dd3fbc710bcc190647c4924c63/mingw-w64-wxwidgets/wxWidgets-3.0.2-gcc6-abs.patch";
-    sha256 = "0100pg0z7i6cjyysf2k3330pmqmdaxgc9hz6kxnfvc31dynjcq3h";
-  }) ];
+  patches = [
+    (fetchurl { # https://trac.wxwidgets.org/ticket/17942
+      url = "https://trac.wxwidgets.org/raw-attachment/ticket/17942/"
+          + "fix_assertion_using_hide_in_destroy.diff";
+      sha256 = "009y3dav79wiig789vkkc07g1qdqprg1544lih79199kb1h64lvy";
+    })
+    # "Add support for WebKit2GTK+ in wxWebView". Will be in 3.0.4
+  ] ++ optional (!withGtk2) (fetchpatch {
+      url = "https://github.com/wxWidgets/wxWidgets/commit/ec6e54bc893fb7516731ca9c71e0d0bbc5ae9ff7.patch";
+      sha256 = "0gxd83xajm7gdv9rdzyvqwa2p5nz29nr23i0zx2dgfpsvz2qjp3q";
+    });
 
   configureFlags =
-    [ "--enable-gtk2" "--disable-precomp-headers" "--enable-mediactrl"
+    [ "--disable-precomp-headers" "--enable-mediactrl"
       (if compat24 then "--enable-compat24" else "--disable-compat24")
       (if compat26 then "--enable-compat26" else "--disable-compat26") ]
     ++ optional unicode "--enable-unicode"
@@ -51,7 +62,7 @@ stdenv.mkDerivation {
     ++ optionals withWebKit
       ["--enable-webview" "--enable-webview-webkit"];
 
-  SEARCH_LIB = "${mesa_glu.out}/lib ${mesa_noglu.out}/lib ";
+  SEARCH_LIB = "${libGLU.out}/lib ${libGL.out}/lib ";
 
   preConfigure = "
     substituteInPlace configure --replace 'SEARCH_INCLUDE=' 'DUMMY_SEARCH_INCLUDE='
@@ -72,7 +83,7 @@ stdenv.mkDerivation {
 
   passthru = {
     inherit compat24 compat26 unicode;
-    gtk = gtk2;
+    gtk = if withGtk2 then gtk2 else gtk3;
   };
 
   enableParallelBuilding = true;
@@ -80,8 +91,8 @@ stdenv.mkDerivation {
   meta = {
     platforms = with platforms; darwin ++ linux;
     license = licenses.wxWindows;
-    homepage = "https://www.wxwidgets.org/";
-    description = "a C++ library that lets developers create applications for Windows, Mac OS X, Linux and other platforms with a single code base";
+    homepage = https://www.wxwidgets.org/;
+    description = "a C++ library that lets developers create applications for Windows, macOS, Linux and other platforms with a single code base";
     longDescription = "wxWidgets gives you a single, easy-to-use API for writing GUI applications on multiple platforms that still utilize the native platform's controls and utilities. Link with the appropriate library for your platform and compiler, and your application will adopt the look and feel appropriate to that platform. On top of great GUI functionality, wxWidgets gives you: online help, network programming, streams, clipboard and drag and drop, multithreading, image loading and saving in a variety of popular formats, database support, HTML viewing and printing, and much more.";
   };
 }

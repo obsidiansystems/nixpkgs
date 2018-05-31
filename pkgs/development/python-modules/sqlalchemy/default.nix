@@ -11,19 +11,19 @@
 buildPythonPackage rec {
   pname = "SQLAlchemy";
   name = "${pname}-${version}";
-  version = "1.1.10";
+  version = "1.2.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "dbd92b8af2306d600efa98ed36262d73aad227440a758c8dc3a067ca30096bd3";
+    sha256 = "d6cda03b0187d6ed796ff70e87c9a7dce2c2c9650a7bc3c022cd331416853c31";
   };
 
-  checkInputs = [ pytest mock pytest_xdist ]
-    ++ lib.optional (!isPy3k) pysqlite;
-
-  # Test-only dependency pysqlite doesn't build on Python 3. This isn't an
-  # acceptable reason to make all dependents unavailable on Python 3 as well
-  #doCheck = !(isPyPy || isPy3k);
+  checkInputs = [
+    pytest
+    mock
+#     Disable pytest_xdist tests for now, because our version seems to be too new.
+#     pytest_xdist
+  ] ++ lib.optional (!isPy3k) pysqlite;
 
   checkPhase = ''
     py.test

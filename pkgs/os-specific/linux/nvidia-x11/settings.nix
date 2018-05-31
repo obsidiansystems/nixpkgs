@@ -1,25 +1,48 @@
 nvidia_x11: sha256:
 
-{ stdenv, lib, fetchurl, pkgconfig, m4, jansson, gtk2, dbus, gtk3, libXv, libXrandr, libvdpau
+{ stdenv, lib, fetchurl, pkgconfig, m4, jansson, gtk2, dbus, gtk3, libXv, libXrandr, libXext, libXxf86vm, libvdpau
 , librsvg, wrapGAppsHook
 , withGtk2 ? false, withGtk3 ? true
 }:
 
-stdenv.mkDerivation rec {
-  name = "nvidia-settings-${nvidia_x11.version}";
-  inherit (nvidia_x11) version;
-
+let
   src = fetchurl {
-    url = "https://download.nvidia.com/XFree86/nvidia-settings/${name}.tar.bz2";
+    url = "https://download.nvidia.com/XFree86/nvidia-settings/nvidia-settings-${nvidia_x11.version}.tar.bz2";
     inherit sha256;
   };
 
+  libXNVCtrl = stdenv.mkDerivation {
+    name = "libXNVCtrl-${nvidia_x11.version}";
+    inherit (nvidia_x11) version;
+    inherit src;
+
+    buildInputs = [ libXrandr libXext ];
+
+    preBuild = ''
+      cd src/libXNVCtrl
+    '';
+
+    installPhase = ''
+      mkdir -p $out/lib
+      mkdir -p $out/include/NVCtrl
+
+      cp libXNVCtrl.a $out/lib
+      cp NVCtrl.h     $out/include/NVCtrl
+      cp NVCtrlLib.h  $out/include/NVCtrl
+    '';
+  };
+
+in
+
+stdenv.mkDerivation rec {
+  name = "nvidia-settings-${nvidia_x11.version}";
+  inherit (nvidia_x11) version;
+  inherit src;
+
   nativeBuildInputs = [ pkgconfig m4 ];
 
-  buildInputs = [ jansson libXv libXrandr libvdpau nvidia_x11 gtk2 dbus ]
+  buildInputs = [ jansson libXv libXrandr libXext libXxf86vm libvdpau nvidia_x11 gtk2 dbus ]
              ++ lib.optionals withGtk3 [ gtk3 librsvg wrapGAppsHook ];
-
-  NIX_LDFLAGS = [ "-lvdpau" "-lXrandr" "-lXv" "-lnvidia-ml" ];
 
   makeFlags = [ "NV_USE_BUNDLED_LIBJANSSON=0" ];
   installFlags = [ "PREFIX=$(out)" ];
@@ -48,15 +71,19 @@ stdenv.mkDerivation rec {
   binaryName = if withGtk3 then ".nvidia-settings-wrapped" else "nvidia-settings";
 
   postFixup = ''
-    patchelf --set-rpath "$(patchelf --print-rpath $out/bin/$binaryName):$out/lib" \
+    patchelf --set-rpath "$(patchelf --print-rpath $out/bin/$binaryName):$out/lib:${libXv}/lib" \
       $out/bin/$binaryName
   '';
 
+  passthru = {
+    inherit libXNVCtrl;
+  };
+
   meta = with stdenv.lib; {
-    homepage = "http://www.nvidia.com/object/unix.html";
+    homepage = http://www.nvidia.com/object/unix.html;
     description = "Settings application for NVIDIA graphics cards";
     license = licenses.unfreeRedistributable;
-    platforms = platforms.linux;
+    platforms = nvidia_x11.meta.platforms;
     maintainers = with maintainers; [ abbradar ];
   };
 }

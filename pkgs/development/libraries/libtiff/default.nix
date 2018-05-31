@@ -1,28 +1,27 @@
 { stdenv, fetchurl, fetchpatch, pkgconfig, zlib, libjpeg, xz }:
 
 let
-  version = "4.0.7";
+  version = "4.0.9";
 in
 stdenv.mkDerivation rec {
   name = "libtiff-${version}";
 
   src = fetchurl {
     url = "http://download.osgeo.org/libtiff/tiff-${version}.tar.gz";
-    sha256 = "06ghqhr4db1ssq0acyyz49gr8k41gzw6pqb6mbn5r7jqp77s4hwz";
+    sha256 = "1kfg4q01r4mqn7dj63ifhi6pmqzbf4xax6ni6kkk81ri5kndwyvf";
   };
 
-  prePatch =let
-      # https://lwn.net/Vulnerabilities/711777/ and more patched in *-6 -> *-7
+  prePatch = let
       debian = fetchurl {
-        url = http://http.debian.net/debian/pool/main/t/tiff/tiff_4.0.7-6.debian.tar.xz;
-        sha256 = "9c9048c28205bdbeb5ba36c7a194d0cd604bd137c70961607bfc8a079be5fa31";
+        url = http://snapshot.debian.org/archive/debian-debug/20180128T155203Z//pool/main/t/tiff/tiff_4.0.9-3.debian.tar.xz;
+        sha256 = "0wya42y7kcq093g3h7ca10cm5sns1mgnkjmdd2qdi59v8arga4y4";
       };
     in ''
       tar xf '${debian}'
       patches="$patches $(cat debian/patches/series | sed 's|^|debian/patches/|')"
     '';
 
-  outputs = [ "bin" "dev" "out" "doc" ];
+  outputs = [ "bin" "dev" "out" "man" "doc" ];
 
   nativeBuildInputs = [ pkgconfig ];
 
@@ -30,7 +29,7 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  doCheck = true;
+  doCheck = true; # not cross;
 
   meta = with stdenv.lib; {
     description = "Library and utilities for working with the TIFF image file format";

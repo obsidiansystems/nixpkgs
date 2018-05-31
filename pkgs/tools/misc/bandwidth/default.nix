@@ -11,11 +11,11 @@ let
 in
 stdenv.mkDerivation rec {
   name = "bandwidth-${version}";
-  version = "1.3.1";
+  version = "1.5.1";
 
   src = fetchurl {
     url = "http://zsmith.co/archives/${name}.tar.gz";
-    sha256 = "13a0mxrkybpwiynv4cj8wsy8zl5xir5xi1a03fzam5gw815dj4am";
+    sha256 = "1v9k1a2ilkbhc3viyacgq88c9if60kwsd1fy6rn84317qap4i7ib";
   };
 
   buildInputs = [ nasm ];
@@ -34,6 +34,6 @@ stdenv.mkDerivation rec {
     description = "Artificial benchmark for identifying weaknesses in the memory subsystem";
     license = licenses.mit;
     platforms = platforms.unix;
-    maintainers = with maintainers; [ nckx wkennington ];
+    maintainers = with maintainers; [ wkennington ];
   };
 }

@@ -1,32 +1,41 @@
-{ stdenv, fetchurl, gmp-static, gperf, autoreconfHook }:
+{ stdenv, fetchurl, gmp-static, gperf, autoreconfHook, libpoly }:
 
 stdenv.mkDerivation rec {
   name    = "yices-${version}";
-  version = "2.5.1";
+  version = "2.5.4";
 
   src = fetchurl {
-    url = "http://yices.csl.sri.com/cgi-bin/yices2-newnewdownload.cgi?file=yices-${version}-src.tar.gz&accept=I+Agree";
-    name = "yices-${version}-src.tar.gz";
-    sha256 = "1wfq6hcm54h0mqmbs1ip63i0ywlwnciav86sbzk3gafxyzg1nd0c";
+    url = "https://github.com/SRI-CSL/yices2/archive/Yices-${version}.tar.gz";
+    name = "${name}-src.tar.gz";
+    sha256 = "1k8wmlddi3zv5kgg6xbch3a0s0xqsmsfc7y6z8zrgcyhswl36h7p";
   };
 
-  patchPhase = ''patchShebangs tests/regress/check.sh'';
-
-  configureFlags = [ "--with-static-gmp=${gmp-static.out}/lib/libgmp.a"
-                     "--with-static-gmp-include-dir=${gmp-static.dev}/include"
-                   ];
-  buildInputs = [ gmp-static gperf autoreconfHook ];
+  nativeBuildInputs = [ autoreconfHook ];
+  buildInputs       = [ gmp-static gperf libpoly ];
+  configureFlags =
+    [ "--with-static-gmp=${gmp-static.out}/lib/libgmp.a"
+      "--with-static-gmp-include-dir=${gmp-static.dev}/include"
+      "--enable-mcsat"
+    ];
 
   enableParallelBuilding = true;
   doCheck = true;
 
-  installPhase = ''make install LDCONFIG=true'';
+  # Usual shenanigans
+  patchPhase = ''patchShebangs tests/regress/check.sh'';
+
+  # Includes a fix for the embedded soname being libyices.so.2.5, but
+  # only installing the libyices.so.2.5.x file.
+  installPhase = ''
+      make install LDCONFIG=true
+      (cd $out/lib && ln -s -f libyices.so.${version} libyices.so.2.5)
+  '';
 
   meta = with stdenv.lib; {
     description = "A high-performance theorem prover and SMT solver";
     homepage    = "http://yices.csl.sri.com";
-    license     = licenses.unfreeRedistributable;
-    platforms   = platforms.linux ++ platforms.darwin;
+    license     = licenses.gpl3;
+    platforms   = with platforms; linux ++ darwin;
     maintainers = [ maintainers.thoughtpolice ];
   };
 }

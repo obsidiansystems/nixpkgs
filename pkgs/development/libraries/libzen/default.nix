@@ -1,11 +1,11 @@
 { stdenv, fetchurl, autoreconfHook }:
 
 stdenv.mkDerivation rec {
-  version = "0.4.34";
+  version = "0.4.37";
   name = "libzen-${version}";
   src = fetchurl {
     url = "https://mediaarea.net/download/source/libzen/${version}/libzen_${version}.tar.bz2";
-    sha256 = "02krmhl6dplidz6h251ajpzzdhzzm0hp0lwwv9rgn55xjgh4yxw3";
+    sha256 = "1hcsrmn85b0xp0mp33aazk7g071q1v3f163nnhv8b0mv9c4bgsfn";
   };
 
   nativeBuildInputs = [ autoreconfHook ];
@@ -14,6 +14,8 @@ stdenv.mkDerivation rec {
   sourceRoot = "./ZenLib/Project/GNU/Library/";
 
   preConfigure = "sh autogen.sh";
+
+  enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
     description = "Shared library for libmediainfo and mediainfo";

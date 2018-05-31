@@ -6,29 +6,36 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   name = "feh-${version}";
-  version = "2.18.2";
+  version = "2.26.3";
 
   src = fetchurl {
-    url = "http://feh.finalrewind.org/${name}.tar.bz2";
-    sha256 = "09f5rfzls4h5jcrp7ylwbiljp5qzc2nbw9p2csv0pnlaixj69gil";
+    url = "https://feh.finalrewind.org/${name}.tar.bz2";
+    sha256 = "08aagymgajcvciagwy2zdxhicvdfnjmd2xyx9bqjy7l1n16ydwrz";
   };
 
-  outputs = [ "out" "doc" ];
+  outputs = [ "out" "man" "doc" ];
 
   nativeBuildInputs = [ makeWrapper xorg.libXt ]
     ++ optionals doCheck [ perlPackages.TestCommand perlPackages.TestHarness ];
 
   buildInputs = [ xorg.libX11 xorg.libXinerama imlib2 libjpeg libpng curl libexif ];
 
-  preBuild = ''
-    makeFlags="PREFIX=$out exif=1"
-      '';
+  makeFlags = [
+    "PREFIX=$(out)" "exif=1"
+  ] ++ optional stdenv.isDarwin "verscmp=0";
+
+  postBuild = ''
+    pushd man
+    make
+    popd
+  '';
 
   postInstall = ''
     wrapProgram "$out/bin/feh" --prefix PATH : "${libjpeg.bin}/bin" \
-                               --add-flags '--theme=feh' 
-        '';
-  
+                               --add-flags '--theme=feh'
+    install -D -m 644 man/*.1 $out/share/man/man1
+  '';
+
   checkPhase = ''
     PERL5LIB="${perlPackages.TestCommand}/lib/perl5/site_perl" make test
   '';
@@ -37,9 +44,9 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "A light-weight image viewer";
-    homepage = https://derf.homelinux.org/projects/feh/;
+    homepage = "https://feh.finalrewind.org/";
     license = licenses.mit;
-    maintainers = [ maintainers.viric ];
+    maintainers = [ maintainers.viric maintainers.willibutz ];
     platforms = platforms.unix;
   };
 }

@@ -1,7 +1,7 @@
 {stdenv, fetchurl, tcl, tk, xlibsWrapper, makeWrapper}:
 
-let version = "3.0"; in
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
+  version = "3.0";
   name = "wordnet-${version}";
   src = fetchurl {
     url = "http://wordnetcode.princeton.edu/${version}/WordNet-${version}.tar.bz2";
@@ -39,7 +39,7 @@ stdenv.mkDerivation {
          for computational linguistics and natural language processing.
       '';
 
-    homepage = http://wordnet.princeton.edu/;
+    homepage = https://wordnet.princeton.edu/;
 
     maintainers = [ ];
     platforms = with stdenv.lib.platforms; linux ++ darwin;

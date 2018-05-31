@@ -1,6 +1,7 @@
 { lib, fetchurl, stdenv, zlib, lzo, libtasn1, nettle, pkgconfig, lzip
-, guileBindings, guile, perl, gmp, autogen, libidn, p11_kit, unbound, libiconv
+, guileBindings, guile, perl, gmp, autogen, libidn, p11-kit, libiconv
 , tpmSupport ? false, trousers, which, nettools, libunistring
+, unbound, dns-root-data, gettext
 
 # Version dependent args
 , version, src, patches ? [], postPatch ? "", nativeBuildInputs ? []
@@ -11,7 +12,8 @@ assert guileBindings -> guile != null;
 let
   # XXX: Gnulib's `test-select' fails on FreeBSD:
   # http://hydra.nixos.org/build/2962084/nixlog/1/raw .
-  doCheck = !stdenv.isFreeBSD && !stdenv.isDarwin && lib.versionAtLeast version "3.4";
+  doCheck = !stdenv.isFreeBSD && !stdenv.isDarwin && lib.versionAtLeast version "3.4"
+      && stdenv.buildPlatform == stdenv.hostPlatform;
 in
 stdenv.mkDerivation {
   name = "gnutls-${version}";
@@ -32,15 +34,14 @@ stdenv.mkDerivation {
   ++ [
     "--disable-dependency-tracking"
     "--enable-fast-install"
+    "--with-unbound-root-key-file=${dns-root-data}/root.key"
   ] ++ lib.optional guileBindings
     [ "--enable-guile" "--with-guile-site-dir=\${out}/share/guile/site" ];
 
   enableParallelBuilding = true;
 
-  buildInputs = [ lzo lzip libtasn1 libidn p11_kit zlib gmp autogen libunistring ]
-    ++ lib.optional (stdenv.isFreeBSD || stdenv.isDarwin) libiconv
+  buildInputs = [ lzo lzip libtasn1 libidn p11-kit zlib gmp autogen libunistring unbound gettext libiconv ]
     ++ lib.optional (tpmSupport && stdenv.isLinux) trousers
-    ++ [ unbound ]
     ++ lib.optional guileBindings guile
     ++ buildInputs;
 

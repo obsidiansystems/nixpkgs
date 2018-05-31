@@ -1,27 +1,27 @@
-{ stdenv, fetchgit, autoreconfHook, openssl, libpcap, dpdk }:
+{ stdenv, fetchurl, autoreconfHook, pkgconfig
+, dpdk, libconfig, libpcap, numactl, openssl
+}:
 
 stdenv.mkDerivation rec {
   name = "odp-dpdk-${version}";
-  version = "1.12.0.0";
+  version = "1.19.0.0_DPDK_17.11";
 
-  src = fetchgit {
-    url = "https://git.linaro.org/lng/odp-dpdk.git";
-    rev = "5e370e1113973feafb43a8e57d4c59be40e9aeab";
-    sha256 = "0rrakbxnbsqaj148xaz2hwxjvg3cmzlynfkvcp8w56sqyly75d0n";
+  src = fetchurl {
+    url = "https://git.linaro.org/lng/odp-dpdk.git/snapshot/${name}.tar.gz";
+    sha256 = "05bwjaxl9hqc6fbkp95nniq11g3kvzmlxw0bq55i7p2v35nv38px";
   };
 
-  nativeBuildInputs = [ autoreconfHook ];
-  buildInputs = [ openssl dpdk libpcap ];
+  nativeBuildInputs = [ autoreconfHook pkgconfig ];
+  buildInputs = [ dpdk libconfig libpcap numactl openssl ];
 
-  RTE_SDK = "${dpdk}";
+  RTE_SDK = "${dpdk}/share/dpdk";
   RTE_TARGET = "x86_64-native-linuxapp-gcc";
 
   dontDisableStatic = true;
 
   configureFlags = [
-    "--with-platform=linux-dpdk"
     "--disable-shared"
-    "--with-sdk-install-path=${dpdk}/${RTE_TARGET}"
+    "--with-dpdk-path=${dpdk}"
   ];
 
   meta = with stdenv.lib; {

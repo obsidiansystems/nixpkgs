@@ -2,14 +2,14 @@
 #
 # Please insert new packages *alphabetically*
 # in the OTHER PACKAGES section.
-{ pkgs }:
+{ pkgs, haskellLib }:
 
 let
   removeLibraryHaskellDepends = pnames: depends:
     builtins.filter (e: !(builtins.elem (e.pname or "") pnames)) depends;
 in
 
-with import ./lib.nix { inherit pkgs; };
+with haskellLib;
 
 self: super:
 
@@ -23,12 +23,12 @@ self: super:
       };
   in stage1 // stage2 // {
 
-  old-time = overrideCabal stage2.old-time (drv: {
-    postPatch = ''
-      ${pkgs.autoconf}/bin/autoreconf --install --force --verbose
-    '';
-    buildTools = pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.darwin.libiconv;
-  });
+#  old-time = overrideCabal stage2.old-time (drv: {
+#    postPatch = ''
+#      ${pkgs.autoconf}/bin/autoreconf --install --force --verbose
+#    '';
+#    buildTools = pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.darwin.libiconv;
+#  });
 
   network = addBuildTools super.network (pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.darwin.libiconv);
   zlib = addBuildTools super.zlib (pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.darwin.libiconv);
@@ -53,20 +53,10 @@ self: super:
   terminfo = self.terminfo_0_4_0_2;
   xhtml = self.xhtml_3000_2_1;
 
-  # Cabal isn't part of the stage1 packages which form the default package-db
-  # that GHCJS provides.
-  # Almost all packages require Cabal to build their Setup.hs,
-  # but usually they don't declare it explicitly as they don't need to for normal GHC.
-  # To account for that we add Cabal by default.
-  mkDerivation = args: super.mkDerivation (args // {
-    setupHaskellDepends = (args.setupHaskellDepends or []) ++
-      (if args.pname == "Cabal" then [ ]
-      # Break the dependency cycle between Cabal and hscolour
-      else if args.pname == "hscolour" then [ (dontHyperlinkSource self.Cabal) ]
-      else [ self.Cabal ]);
-  });
-
 ## OTHER PACKAGES
+
+  # haddock throws the error: No input file(s).
+  fail = dontHaddock super.fail;
 
   cereal = addBuildDepend super.cereal [ self.fail ];
 
@@ -149,6 +139,17 @@ self: super:
 
   http2 = addBuildDepends super.http2 [ self.aeson self.aeson-pretty self.hex self.unordered-containers self.vector self.word8 ];
   # ghcjsBoot uses async 2.0.1.6, protolude wants 2.1.*
+
+  # These are the correct dependencies specified when calling `cabal2nix --compiler ghcjs`
+  # By default, the `miso` derivation present in hackage-packages.nix
+  # does not contain dependencies suitable for ghcjs
+  miso = overrideCabal super.miso (drv: {
+      libraryHaskellDepends = with self; [
+        BoundedChan bytestring containers ghcjs-base aeson base
+        http-api-data http-types network-uri scientific servant text
+        transformers unordered-containers vector
+      ];
+    });
 
   pqueue = overrideCabal super.pqueue (drv: {
     postPatch = ''

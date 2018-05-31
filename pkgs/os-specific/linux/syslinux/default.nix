@@ -30,7 +30,8 @@ stdenv.mkDerivation rec {
   preBuild = ''
     substituteInPlace Makefile --replace /bin/pwd $(type -P pwd)
     substituteInPlace gpxe/src/Makefile.housekeeping --replace /bin/echo $(type -P echo)
-    substituteInPlace utils/ppmtolss16 gpxe/src/Makefile --replace /usr/bin/perl $(type -P perl)
+    substituteInPlace utils/ppmtolss16 --replace /usr/bin/perl $(type -P perl)
+    substituteInPlace gpxe/src/Makefile --replace /usr/bin/perl $(type -P perl)
   '';
 
   stripDebugList = "bin sbin share/syslinux/com32";
@@ -49,12 +50,15 @@ stdenv.mkDerivation rec {
   postInstall = ''
     wrapProgram $out/bin/syslinux \
       --prefix PATH : "${mtools}/bin"
+
+    # Delete com32 headers to save space, nobody seems to be using them
+    rm -rf $out/share/syslinux/com32
   '';
 
   meta = with stdenv.lib; {
     homepage = http://www.syslinux.org/;
     description = "A lightweight bootloader";
     license = licenses.gpl2;
-    platforms = platforms.linux;
+    platforms = [ "i686-linux" "x86_64-linux" ];
   };
 }

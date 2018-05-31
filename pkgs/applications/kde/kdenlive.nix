@@ -1,9 +1,7 @@
-{ kdeApp
-, kdeWrapper
+{ mkDerivation
 , lib
 , extra-cmake-modules
 , kdoctools
-, qtscript
 , kactivities
 , kconfig
 , kcrash
@@ -23,29 +21,32 @@
 , kplotting
 , ktextwidgets
 , mlt
-, shared_mime_info
+, shared-mime-info
 , libv4l
 , kfilemetadata
 , ffmpeg
 , phonon-backend-gstreamer
+, qtdeclarative
 , qtquickcontrols
+, qtscript
+, qtwebkit
 }:
 
-let
-unwrapped = kdeApp {
+mkDerivation {
   name = "kdenlive";
   nativeBuildInputs = [
     extra-cmake-modules
     kdoctools
   ];
   buildInputs = [
-    qtscript
     kconfig
     kcrash
+    kdbusaddons
+    kfilemetadata
     kguiaddons
+    ki18n
     kiconthemes
     kinit
-    kdbusaddons
     knotifications
     knewstuff
     karchive
@@ -53,30 +54,21 @@ unwrapped = kdeApp {
     kplotting
     ktextwidgets
     mlt
-    shared_mime_info
+    phonon-backend-gstreamer
+    qtdeclarative
+    qtquickcontrols
+    qtscript
+    qtwebkit
+    shared-mime-info
     libv4l
     ffmpeg
   ];
-  propagatedBuildInputs = [
-    kactivities
-    ki18n
-    kio
-    kio-extras
-    kwindowsystem
-    kfilemetadata
-    plasma-framework
-    phonon-backend-gstreamer
-    qtquickcontrols
-  ];
-  enableParallelBuilding = true;
+  postPatch =
+    # Module Qt5::Concurrent must be included in `find_package` before it is used.
+    ''
+      sed -i CMakeLists.txt -e '/find_package(Qt5 REQUIRED/ s|)| Concurrent)|'
+    '';
   meta = {
     license = with lib.licenses; [ gpl2Plus ];
   };
-};
-in
-kdeWrapper
-{
-  inherit unwrapped;
-  targets = [ "bin/kdenlive" ];
-  paths = [ kinit ];
 }

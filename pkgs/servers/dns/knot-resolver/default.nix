@@ -1,75 +1,82 @@
-{ stdenv, fetchurl, fetchpatch, pkgconfig, utillinux, hexdump, which
-, knot-dns, luajit, libuv, lmdb
-, cmocka, systemd, hiredis, libmemcached
-, gnutls, nettle
-, luajitPackages, makeWrapper
+{ stdenv, fetchurl, runCommand, pkgconfig, hexdump, which
+, knot-dns, luajit, libuv, lmdb, gnutls, nettle
+, cmocka, systemd, dns-root-data, makeWrapper
+, extraFeatures ? false /* catch-all if defaults aren't enough */
+, hiredis, libmemcached, luajitPackages
 }:
+let # un-indented, over the whole file
 
-let
-  inherit (stdenv.lib) optional;
-in
-stdenv.mkDerivation rec {
+result = if extraFeatures then wrapped-full else unwrapped;
+
+inherit (stdenv.lib) optional optionals optionalString concatStringsSep;
+
+unwrapped = stdenv.mkDerivation rec {
   name = "knot-resolver-${version}";
-  version = "1.2.6";
+  version = "2.3.0";
 
   src = fetchurl {
     url = "http://secure.nic.cz/files/knot-resolver/${name}.tar.xz";
-    sha256 = "31e1b8899c5592433e5265a8e9685126fc5aeff3bd6b10884154b2e34b786f3c";
+    sha256 = "2d19c5daf8440bd3d2acd1886b9ede65f04f7753c6fd4618a92a1a4ba3b27a9b";
   };
-
-  patches = [(fetchpatch {
-    name = "luajit-2.1.0-beta3.diff";
-    url = https://gitlab.labs.nic.cz/knot/resolver/merge_requests/289.diff;
-    sha256 = "1cgfi715qhmvb31ri2wr6cacsjvb1dqavdmnnl1074y25zalxfax";
-  })];
 
   outputs = [ "out" "dev" ];
 
-  configurePhase = ":";
+  configurePhase = "patchShebangs scripts/";
 
-  nativeBuildInputs = [ pkgconfig which makeWrapper hexdump ];
+  nativeBuildInputs = [ pkgconfig which hexdump ];
 
-  buildInputs = [ knot-dns luajit libuv gnutls ]
-    ++ optional stdenv.isLinux lmdb # system lmdb causes some problems on Darwin
-    ## optional dependencies; TODO: libedit, dnstap?
-    ++ optional doInstallCheck cmocka
-    ++ optional stdenv.isLinux systemd # socket activation
-    ++ [
-      nettle # DNS cookies
-      hiredis libmemcached # additional cache backends
-      # http://knot-resolver.readthedocs.io/en/latest/build.html#requirements
-    ];
+  # http://knot-resolver.readthedocs.io/en/latest/build.html#requirements
+  buildInputs = [ knot-dns luajit libuv gnutls nettle lmdb ]
+    ++ optional doCheck cmocka
+    ++ optional stdenv.isLinux systemd # sd_notify
+    ## optional dependencies; TODO: libedit, dnstap
+    ;
 
-  makeFlags = [ "PREFIX=$(out)" ];
+  makeFlags = [
+    "PREFIX=$(out)"
+    "ROOTHINTS=${dns-root-data}/root.hints"
+    "KEYFILE_DEFAULT=${dns-root-data}/root.ds"
+  ];
   CFLAGS = [ "-O2" "-DNDEBUG" ];
 
   enableParallelBuilding = true;
 
-  doInstallCheck = true;
-  installCheckTarget = "check";
+  doCheck = true;
+  doInstallCheck = false; # FIXME
   preInstallCheck = ''
-    export LD_LIBRARY_PATH="$out/lib"
+    patchShebangs tests/config/runtest.sh
   '';
 
-  # optional: to allow auto-bootstrapping root trust anchor via https
-  postInstall = with luajitPackages; ''
-    wrapProgram "$out/sbin/kresd" \
-      --set LUA_PATH '${
-        stdenv.lib.concatStringsSep ";"
-          (map getLuaPath [ luasec luasocket ])
-        }' \
-      --set LUA_CPATH '${
-        stdenv.lib.concatStringsSep ";"
-          (map getLuaCPath [ luasec luasocket ])
-        }'
+  postInstall = ''
+    rm "$out"/etc/knot-resolver/root.hints # using system-wide instead
   '';
 
   meta = with stdenv.lib; {
     description = "Caching validating DNS resolver, from .cz domain registry";
     homepage = https://knot-resolver.cz;
     license = licenses.gpl3Plus;
-    platforms = platforms.unix;
+    # Platforms using negative pointers for stack won't work ATM due to LuaJIT impl.
+    platforms = filter (p: p != "aarch64-linux") platforms.unix;
     maintainers = [ maintainers.vcunat /* upstream developer */ ];
   };
-}
+};
+
+wrapped-full = with luajitPackages; let
+    luaPkgs =  [ luasec luasocket ]; # TODO: cqueues and others for http2 module
+  in runCommand unwrapped.name
+  {
+    nativeBuildInputs = [ makeWrapper ];
+    preferLocalBuild = true;
+    allowSubstitutes = false;
+  }
+  ''
+    mkdir -p "$out/sbin" "$out/share"
+    makeWrapper '${unwrapped}/sbin/kresd' "$out"/sbin/kresd \
+      --set LUA_PATH  '${concatStringsSep ";" (map getLuaPath  luaPkgs)}' \
+      --set LUA_CPATH '${concatStringsSep ";" (map getLuaCPath luaPkgs)}'
+    ln -sr '${unwrapped}/share/man' "$out"/share/
+    ln -sr "$out"/{sbin,bin}
+  '';
+
+in result
 

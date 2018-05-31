@@ -4,13 +4,13 @@ with lib;
 
 mkDerivation rec {
   pname = "psc-package";
-  version = "0.1.1";
+  version = "0.3.2";
 
   src = fetchFromGitHub {
     owner = "purescript";
     repo = pname;
     rev = "v${version}";
-    sha256 = "078xjn10yq4i0ff78bxscvxhn29p3s7iwv3pjyqxzlhaymn5949l";
+    sha256 = "1zpzcyh82xl0grvgcj8b7yzh053i9z94kbym5qrv413pcx7w50cm";
   };
 
   isLibrary = false;
@@ -22,5 +22,5 @@ mkDerivation rec {
 
   description = "An experimental package manager for PureScript";
   license = licenses.bsd3;
-  maintainers = with lib.maintainers; [ profpatsch ];
+  maintainers = with lib.maintainers; [ Profpatsch ];
 }

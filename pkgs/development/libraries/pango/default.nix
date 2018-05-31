@@ -1,19 +1,19 @@
-{ stdenv, fetchurl, pkgconfig, libXft, cairo, harfbuzz
-, libintlOrEmpty, gobjectIntrospection, darwin
+{ stdenv, fetchurl, fetchpatch, pkgconfig, libXft, cairo, harfbuzz
+, libintl, gobjectIntrospection, darwin
 }:
 
 with stdenv.lib;
 
 let
   ver_maj = "1.40";
-  ver_min = "5";
+  ver_min = "14";
 in
 stdenv.mkDerivation rec {
   name = "pango-${ver_maj}.${ver_min}";
 
   src = fetchurl {
     url = "mirror://gnome/sources/pango/${ver_maj}/${name}.tar.xz";
-    sha256 = "24748140456c42360b07b2c77a1a2e1216d07c056632079557cd4e815b9d01c9";
+    sha256 = "90af1beaa7bf9e4c52db29ec251ec4fd0a8f2cc185d521ad1f88d01b3a6a17e3";
   };
 
   outputs = [ "bin" "dev" "out" "devdoc" ];
@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
        CoreGraphics
        CoreText
     ]);
-  propagatedBuildInputs = [ cairo harfbuzz libXft ] ++ libintlOrEmpty;
+  propagatedBuildInputs = [ cairo harfbuzz libXft libintl ];
 
   enableParallelBuilding = true;
 

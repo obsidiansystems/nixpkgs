@@ -1,14 +1,16 @@
-{ stdenv, fetchFromGitHub, cmake }:
+{ stdenv, fetchFromGitHub, cmake
+, hostPlatform
+}:
 
 stdenv.mkDerivation rec {
   name = "nlohmann_json-${version}";
-  version = "2.1.0";
+  version = "3.1.2";
 
   src = fetchFromGitHub {
     owner = "nlohmann";
     repo = "json";
     rev = "v${version}";
-    sha256 = "116309lx77m31x4krln0g7mra900g0knk9lbkxbpxnmamkagjyl9";
+    sha256 = "1mpr781fb2dfbyscrr7nil75lkxsazg4wkm749168lcf2ksrrbfi";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -21,7 +23,7 @@ stdenv.mkDerivation rec {
   crossAttrs = {
     cmakeFlags = "-DBuildTests=OFF";
     doCheck = false;
-  } // stdenv.lib.optionalAttrs (stdenv.cross.libc == "msvcrt") {
+  } // stdenv.lib.optionalAttrs (hostPlatform.libc == "msvcrt") {
     cmakeFlags = "-DBuildTests=OFF -DCMAKE_SYSTEM_NAME=Windows";
   };
 

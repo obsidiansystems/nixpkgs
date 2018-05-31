@@ -1,32 +1,30 @@
-{ stdenv, fetchFromGitHub, pkgconfig, qmakeHook
+{ stdenv, fetchFromGitHub, pkgconfig, qmake
 , python, qtbase, qttools, zlib }:
 
-let
-#  qtEnv = with qt5; env "qt-${qtbase.version}" [ qtbase qttools ];
-in stdenv.mkDerivation rec {
+stdenv.mkDerivation rec {
   name = "tiled-${version}";
-  version = "0.18.2";
+  version = "1.1.5";
 
   src = fetchFromGitHub {
     owner = "bjorn";
     repo = "tiled";
     rev = "v${version}";
-    sha256 = "087jl36g6w2g5l70gz573iwyvx3r7i8fijl3y4mmmf8pyqdyq1n2";
+    sha256 = "1l8sx0qfkm7n2ag0ns01vrs8mzcxzva00in4xqz4zgd505qx5q9v";
   };
 
-  nativeBuildInputs = [ pkgconfig qmakeHook ];
+  nativeBuildInputs = [ pkgconfig qmake ];
   buildInputs = [ python qtbase qttools ];
 
   enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
     description = "Free, easy to use and flexible tile map editor";
-    homepage = http://www.mapeditor.org/;
+    homepage = https://www.mapeditor.org/;
     license = with licenses; [
       bsd2	# libtiled and tmxviewer
       gpl2Plus	# all the rest
     ];
+    maintainers = with maintainers; [ dywedir ];
     platforms = platforms.linux;
-    maintainers = [ maintainers.nckx ];
   };
 }

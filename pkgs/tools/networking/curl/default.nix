@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, perl
+{ stdenv, lib, fetchurl, pkgconfig, perl
 , http2Support ? true, nghttp2
 , idnSupport ? false, libidn ? null
 , ldapSupport ? false, openldap ? null
@@ -6,8 +6,9 @@
 , sslSupport ? false, openssl ? null
 , gnutlsSupport ? false, gnutls ? null
 , scpSupport ? false, libssh2 ? null
-, gssSupport ? false, gss ? null
+, gssSupport ? false, kerberos ? null
 , c-aresSupport ? false, c-ares ? null
+, brotliSupport ? false, brotli ? null
 }:
 
 assert http2Support -> nghttp2 != null;
@@ -19,16 +20,22 @@ assert !(gnutlsSupport && sslSupport);
 assert gnutlsSupport -> gnutls != null;
 assert scpSupport -> libssh2 != null;
 assert c-aresSupport -> c-ares != null;
+assert brotliSupport -> brotli != null;
+assert gssSupport -> kerberos != null;
 
 stdenv.mkDerivation rec {
-  name = "curl-7.54.0";
+  name = "curl-7.60.0";
 
   src = fetchurl {
-    url = "http://curl.haxx.se/download/${name}.tar.bz2";
-    sha256 = "01pz0air8xiwiww981z94980zgcbz8482jxy6b6afzsh7ksbl3pm";
+    urls = [
+      "https://github.com/curl/curl/releases/download/${lib.replaceStrings ["."] ["_"] name}/${name}.tar.bz2"
+      "https://curl.haxx.se/download/${name}.tar.bz2"
+    ];
+    sha256 = "16qyhy9alq2wk6zgqhh5dchr45f6nxaqzy3rh8rbx6dx0hignzc9";
   };
 
   outputs = [ "bin" "dev" "out" "man" "devdoc" ];
+  separateDebugInfo = stdenv.isLinux;
 
   enableParallelBuilding = true;
 
@@ -42,13 +49,14 @@ stdenv.mkDerivation rec {
     optional idnSupport libidn ++
     optional ldapSupport openldap ++
     optional zlibSupport zlib ++
-    optional gssSupport gss ++
+    optional gssSupport kerberos ++
     optional c-aresSupport c-ares ++
     optional sslSupport openssl ++
     optional gnutlsSupport gnutls ++
-    optional scpSupport libssh2;
+    optional scpSupport libssh2 ++
+    optional brotliSupport brotli;
 
-  # for the second line see http://curl.haxx.se/mail/tracker-2014-03/0087.html
+  # for the second line see https://curl.haxx.se/mail/tracker-2014-03/0087.html
   preConfigure = ''
     sed -e 's|/usr/bin|/no-such-path|g' -i.bak configure
     rm src/tool_hugehelp.c
@@ -63,12 +71,15 @@ stdenv.mkDerivation rec {
       ( if ldapSupport then "--enable-ldap" else "--disable-ldap" )
       ( if ldapSupport then "--enable-ldaps" else "--disable-ldaps" )
       ( if idnSupport then "--with-libidn=${libidn.dev}" else "--without-libidn" )
+      ( if brotliSupport then "--with-brotli" else "--without-brotli" )
     ]
     ++ stdenv.lib.optional c-aresSupport "--enable-ares=${c-ares}"
-    ++ stdenv.lib.optional gssSupport "--with-gssapi=${gss}";
+    ++ stdenv.lib.optional gssSupport "--with-gssapi=${kerberos.dev}";
 
-  CXX = "g++";
-  CXXCPP = "g++ -E";
+  CXX = "${stdenv.cc.targetPrefix}c++";
+  CXXCPP = "${stdenv.cc.targetPrefix}c++ -E";
+
+  doCheck = false; # expensive, fails
 
   postInstall = ''
     moveToOutput bin/curl-config "$dev"
@@ -95,7 +106,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A command line tool for transferring files with URL syntax";
-    homepage    = http://curl.haxx.se/;
+    homepage    = https://curl.haxx.se/;
     maintainers = with maintainers; [ lovek323 ];
     platforms   = platforms.all;
   };

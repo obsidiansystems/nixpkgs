@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   name = "cytoscape-${version}";
-  version = "3.5.1";
+  version = "3.6.1";
 
   src = fetchurl {
     url = "http://chianti.ucsd.edu/${name}/${name}.tar.gz";
-    sha256 = "1dvv0f7sc7q7lwmpd7xkcx86dd8lxh2il3wiwkij44gh7ni1qkfm";
+    sha256 = "1pkdilv1nw6vvdxk71bwjngr8yafrsqwaqvlakhp8yb342r1jd4s";
   };
 
   buildInputs = [jre makeWrapper];
@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage = "http://www.cytoscape.org";
+    homepage = http://www.cytoscape.org;
     description = "A general platform for complex network analysis and visualization";
     license = stdenv.lib.licenses.lgpl21;
     maintainers = [stdenv.lib.maintainers.mimadrid];

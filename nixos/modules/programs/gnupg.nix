@@ -21,31 +21,57 @@ in
 
     agent.enableSSHSupport = mkOption {
       type = types.bool;
-      default = true;
+      default = false;
       description = ''
         Enable SSH agent support in GnuPG agent. Also sets SSH_AUTH_SOCK
         environment variable correctly. This will disable socket-activation
         and thus always start a GnuPG agent per user session.
       '';
     };
+
+    agent.enableExtraSocket = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enable extra socket for GnuPG agent.
+      '';
+    };
+
+    agent.enableBrowserSocket = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enable browser socket for GnuPG agent.
+      '';
+    };
+
+    dirmngr.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enables GnuPG network certificate management daemon with socket-activation for every user session.
+      '';
+    };
   };
 
   config = mkIf cfg.agent.enable {
-    systemd.user.services.gpg-agent = {
-      serviceConfig = {
-        ExecStart = [
-          ""
-          ("${pkgs.gnupg}/bin/gpg-agent --supervised "
-            + optionalString cfg.agent.enableSSHSupport "--enable-ssh-support")
-        ];
-      };
-    };
-
     systemd.user.sockets.gpg-agent = {
       wantedBy = [ "sockets.target" ];
     };
 
     systemd.user.sockets.gpg-agent-ssh = mkIf cfg.agent.enableSSHSupport {
+      wantedBy = [ "sockets.target" ];
+    };
+
+    systemd.user.sockets.gpg-agent-extra = mkIf cfg.agent.enableExtraSocket {
+      wantedBy = [ "sockets.target" ];
+    };
+
+    systemd.user.sockets.gpg-agent-browser = mkIf cfg.agent.enableBrowserSocket {
+      wantedBy = [ "sockets.target" ];
+    };
+
+    systemd.user.sockets.dirmngr = mkIf cfg.dirmngr.enable {
       wantedBy = [ "sockets.target" ];
     };
 
@@ -66,7 +92,7 @@ in
     '');
 
     assertions = [
-      { assertion = cfg.agent.enableSSHSupport && !config.programs.ssh.startAgent;
+      { assertion = cfg.agent.enableSSHSupport -> !config.programs.ssh.startAgent;
         message = "You can't use ssh-agent and GnuPG agent with SSH support enabled at the same time!";
       }
     ];

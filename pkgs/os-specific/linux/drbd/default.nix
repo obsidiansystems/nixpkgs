@@ -1,7 +1,5 @@
 { stdenv, fetchurl, flex, systemd, perl }:
 
-assert stdenv.isLinux;
-
 stdenv.mkDerivation rec {
   name = "drbd-8.4.4";
 
@@ -18,13 +16,13 @@ stdenv.mkDerivation rec {
 
   preConfigure =
     ''
-      export PATH=${systemd.udev.bin}/sbin:$PATH
+      export PATH=${systemd}/sbin:$PATH
       substituteInPlace user/Makefile.in \
         --replace /sbin '$(sbindir)'
       substituteInPlace user/legacy/Makefile.in \
         --replace '$(DESTDIR)/lib/drbd' '$(DESTDIR)$(LIBDIR)'
       substituteInPlace user/drbdadm_usage_cnt.c --replace /lib/drbd $out/lib/drbd
-      substituteInPlace scripts/drbd.rules --replace /sbin/drbdadm $out/sbin/drbdadm
+      substituteInPlace scripts/drbd.rules --replace /usr/sbin/drbdadm $out/sbin/drbdadm
     '';
 
   makeFlags = "SHELL=${stdenv.shell}";

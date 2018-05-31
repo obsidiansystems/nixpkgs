@@ -1,14 +1,13 @@
 { stdenv, fetchurl, buildPackages, perl
+, buildPlatform, hostPlatform
+, fetchpatch
 , withCryptodev ? false, cryptodevHeaders
-, enableSSL2 ? false }:
+, enableSSL2 ? false
+}:
 
 with stdenv.lib;
 
 let
-
-  opensslCrossSystem = stdenv.cross.openssl.system or
-    (throw "openssl needs its platform name cross building");
-
   common = args@{ version, sha256, patches ? [] }: stdenv.mkDerivation rec {
     name = "openssl-${version}";
 
@@ -21,24 +20,46 @@ let
       (args.patches or [])
       ++ [ ./nix-ssl-cert-file.patch ]
       ++ optional (versionOlder version "1.1.0")
-          (if stdenv.isDarwin then ./use-etc-ssl-certs-darwin.patch else ./use-etc-ssl-certs.patch)
-      ++ optional stdenv.isCygwin ./1.0.1-cygwin64.patch
-      ++ optional
-           (versionOlder version "1.0.2" && (stdenv.isDarwin || (stdenv ? cross && stdenv.cross.libc == "libSystem")))
+          (if hostPlatform.isDarwin then ./use-etc-ssl-certs-darwin.patch else ./use-etc-ssl-certs.patch)
+      ++ optional (versionOlder version "1.0.2" && hostPlatform.isDarwin)
            ./darwin-arch.patch;
+
+  postPatch = if (versionAtLeast version "1.1.0" && stdenv.hostPlatform.isMusl) then ''
+    substituteInPlace crypto/async/arch/async_posix.h \
+      --replace '!defined(__ANDROID__) && !defined(__OpenBSD__)' \
+                '!defined(__ANDROID__) && !defined(__OpenBSD__) && 0'
+  '' else null;
 
     outputs = [ "bin" "dev" "out" "man" ];
     setOutputFlags = false;
+    separateDebugInfo = hostPlatform.isLinux;
 
     nativeBuildInputs = [ perl ];
     buildInputs = stdenv.lib.optional withCryptodev cryptodevHeaders;
 
-    # On x86_64-darwin, "./config" misdetects the system as
-    # "darwin-i386-cc".  So specify the system type explicitly.
-    configureScript =
-      if stdenv.system == "x86_64-darwin" then "./Configure darwin64-x86_64-cc"
-      else if stdenv.system == "x86_64-solaris" then "./Configure solaris64-x86_64-gcc"
-      else "./config";
+    # TODO(@Ericson2314): Improve with mass rebuild
+    configureScript = {
+        "x86_64-darwin"  = "./Configure darwin64-x86_64-cc";
+        "x86_64-solaris" = "./Configure solaris64-x86_64-gcc";
+      }.${hostPlatform.system} or (
+        if hostPlatform == buildPlatform
+          then "./config"
+        else if hostPlatform.isMinGW
+          then "./Configure mingw${toString hostPlatform.parsed.cpu.bits}"
+        else if hostPlatform.isLinux
+          then "./Configure linux-generic${toString hostPlatform.parsed.cpu.bits}"
+        else if hostPlatform.isiOS
+          then "./Configure ios${toString hostPlatform.parsed.cpu.bits}-cross"
+        else
+          throw "Not sure what configuration to use for ${hostPlatform.config}"
+      );
+
+    # TODO(@Ericson2314): Make unconditional on mass rebuild
+    ${if buildPlatform != hostPlatform then "configurePlatforms" else null} = [];
+
+    preConfigure = ''
+      patchShebangs Configure
+    '';
 
     configureFlags = [
       "shared"
@@ -47,12 +68,12 @@ let
     ] ++ stdenv.lib.optionals withCryptodev [
       "-DHAVE_CRYPTODEV"
       "-DUSE_CRYPTODEV_DIGESTS"
-    ] ++ stdenv.lib.optional enableSSL2 "enable-ssl2";
+    ] ++ stdenv.lib.optional enableSSL2 "enable-ssl2"
+      ++ stdenv.lib.optional (versionAtLeast version "1.1.0" && hostPlatform.isAarch64) "no-afalgeng";
 
     makeFlags = [ "MANDIR=$(man)/share/man" ];
 
-    # Parallel building is broken in OpenSSL.
-    enableParallelBuilding = false;
+    enableParallelBuilding = true;
 
     postInstall = ''
       # If we're building dynamic libraries, then don't install static
@@ -81,24 +102,8 @@ let
       fi
     '';
 
-    crossAttrs = {
-      # upstream patch: https://rt.openssl.org/Ticket/Display.html?id=2558
-      postPatch = ''
-         sed -i -e 's/[$][(]CROSS_COMPILE[)]windres/$(WINDRES)/' Makefile.shared
-      '';
-      preConfigure=''
-        # It's configure does not like --build or --host
-        export configureFlags="${concatStringsSep " " (configureFlags ++ [ opensslCrossSystem ])}"
-        # WINDRES and RANLIB need to be prefixed when cross compiling;
-        # the openssl configure script doesn't do that for us
-        export WINDRES=${stdenv.cross.config}-windres
-        export RANLIB=${stdenv.cross.config}-ranlib
-      '';
-      configureScript = "./Configure";
-    };
-
     meta = {
-      homepage = http://www.openssl.org/;
+      homepage = https://www.openssl.org/;
       description = "A cryptographic library that implements the SSL and TLS protocols";
       platforms = stdenv.lib.platforms.all;
       maintainers = [ stdenv.lib.maintainers.peti ];
@@ -109,13 +114,13 @@ let
 in {
 
   openssl_1_0_2 = common {
-    version = "1.0.2k";
-    sha256 = "1h6qi35w6hv6rd73p4cdgdzg732pdrfgpp37cgwz1v9a3z37ffbb";
+    version = "1.0.2o";
+    sha256 = "0kcy13l701054nhpbd901mz32v1kn4g311z0nifd83xs2jbmqgzc";
   };
 
   openssl_1_1_0 = common {
-    version = "1.1.0e";
-    sha256 = "0k47sdd9gs6yxfv6ldlgpld2lyzrkcv9kz4cf88ck04xjwc8dgjp";
+    version = "1.1.0h";
+    sha256 = "05x509lccqjscgyi935z809pwfm708islypwhmjnb6cyvrn64daq";
   };
 
 }

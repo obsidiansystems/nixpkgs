@@ -3,12 +3,12 @@
 i3.overrideDerivation (super : rec {
 
   name = "i3-gaps-${version}";
-  version = "4.13";
-  releaseDate = "2016-11-08";
+  version = "4.15.0.1";
+  releaseDate = "2018-03-13";
 
   src = fetchurl {
     url = "https://github.com/Airblader/i3/archive/${version}.tar.gz";
-    sha256 = "0w959nx2crn00fckqwb5y78vcr1j9mvq5lh25wyjszx04pjhf378";
+    sha256 = "16s6bink8yj3zix4vww64b745d5drf2vqjg8vz3pwzrark09hfal";
   };
 
   nativeBuildInputs = super.nativeBuildInputs ++ [ autoreconfHook ];

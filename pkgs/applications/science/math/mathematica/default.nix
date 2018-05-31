@@ -1,8 +1,9 @@
 { stdenv
 , coreutils
 , patchelf
-, requireFile
+, callPackage
 , alsaLib
+, dbus
 , fontconfig
 , freetype
 , gcc
@@ -12,10 +13,14 @@
 , opencv
 , openssl
 , unixODBC
+, xkeyboard_config
 , xorg
 , zlib
 , libxml2
 , libuuid
+, lang ? "en"
+, libGL
+, libGLU
 }:
 
 let
@@ -24,27 +29,22 @@ let
       "Linux"
     else
       throw "Mathematica requires i686-linux or x86_64 linux";
+
+  l10n =
+    with stdenv.lib;
+    with callPackage ./l10ns.nix {};
+    flip (findFirst (l: l.lang == lang)) l10ns
+      (throw "Language '${lang}' not supported");
 in
 stdenv.mkDerivation rec {
-  version = "11.0.1";
-
-  name = "mathematica-${version}";
-
-  src = requireFile rec {
-    name = "Mathematica_${version}_LINUX.sh";
-    message = '' 
-      This nix expression requires that ${name} is
-      already part of the store. Find the file on your Mathematica CD
-      and add it to the nix store with nix-store --add-fixed sha256 <FILE>.
-    '';
-    sha256 = "1qqwz8gbw74rnnyirpbdanwx3d25s4x0i4zc7bs6kp959x66cdkw";
-  };
+  inherit (l10n) version name src;
 
   buildInputs = [
     coreutils
     patchelf
     alsaLib
     coreutils
+    dbus
     fontconfig
     freetype
     gcc.cc
@@ -54,8 +54,12 @@ stdenv.mkDerivation rec {
     opencv
     openssl
     unixODBC
+    xkeyboard_config
     libxml2
     libuuid
+    zlib
+    libGL
+    libGLU
   ] ++ (with xorg; [
     libX11
     libXext
@@ -93,6 +97,18 @@ stdenv.mkDerivation rec {
 
     echo "=== Running MathInstaller ==="
     ./MathInstaller -auto -createdir=y -execdir=$out/bin -targetdir=$out/libexec/Mathematica -silent
+
+    # Fix library paths
+    cd $out/libexec/Mathematica/Executables
+    for path in mathematica MathKernel Mathematica WolframKernel wolfram math; do
+      sed -i -e 's#export LD_LIBRARY_PATH$#export LD_LIBRARY_PATH=${zlib}/lib:\''${LD_LIBRARY_PATH}#' $path
+    done
+
+    # Fix xkeyboard config path for Qt
+    for path in mathematica Mathematica; do
+      line=$(grep -n QT_PLUGIN_PATH $path | sed 's/:.*//')
+      sed -i -e "$line iexport QT_XKB_CONFIG_ROOT=\"${xkeyboard_config}/share/X11/xkb\"" $path
+    done
   '';
 
   preFixup = ''
@@ -133,7 +149,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "Wolfram Mathematica computational software system";
-    homepage = "http://www.wolfram.com/mathematica/";
+    homepage = http://www.wolfram.com/mathematica/;
     license = stdenv.lib.licenses.unfree;
   };
 }

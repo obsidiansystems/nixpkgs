@@ -1,17 +1,20 @@
-{ stdenv, lib, fetchurl, makeWrapper, jre }:
+{ stdenv, lib, fetchurl, makeWrapper, jre, gnused
+, disableRemoteLogging ? true
+}:
 
+with stdenv.lib;
 stdenv.mkDerivation rec {
   name = "ammonite-${version}";
-  version = "0.9.5";
+  version = "1.1.2";
   scalaVersion = "2.12";
 
   src = fetchurl {
     url = "https://github.com/lihaoyi/Ammonite/releases/download/${version}/${scalaVersion}-${version}";
-    sha256 = "1ni829qpdm5wflc1n827b9ywpv836r2068rmj9yd2nyh8b6q2him";
+    sha256 = "1balr7ya7xlyq32jwb0w9c4klnw13mdn2c5azkwngq5cp29yrfrc";
   };
 
   propagatedBuildInputs = [ jre ] ;
-  buildInputs = [ makeWrapper ] ;
+  buildInputs = [ makeWrapper gnused ] ;
 
   phases = "installPhase";
 
@@ -19,7 +22,9 @@ stdenv.mkDerivation rec {
     mkdir -p $out/bin
     cp ${src} $out/bin/amm
     chmod +x $out/bin/amm
-    wrapProgram $out/bin/amm --prefix PATH ":" ${jre}/bin ;
+    ${gnused}/bin/sed -i '0,/java/{s|java|${jre}/bin/java|}' $out/bin/amm
+  '' + optionalString (disableRemoteLogging) ''
+    ${gnused}/bin/sed -i '0,/ammonite.Main/{s|ammonite.Main|ammonite.Main --no-remote-logging|}' $out/bin/amm
   '';
 
   meta = {
@@ -33,6 +38,6 @@ stdenv.mkDerivation rec {
     homepage = http://www.lihaoyi.com/Ammonite/;
     license = lib.licenses.mit;
     platforms = lib.platforms.all;
-    maintainer = [ lib.maintainers.nequissimus ];
+    maintainers = [ lib.maintainers.nequissimus ];
   };
 }

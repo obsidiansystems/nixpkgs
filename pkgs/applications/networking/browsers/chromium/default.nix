@@ -1,4 +1,5 @@
 { newScope, stdenv, makeWrapper, makeDesktopItem, ed
+, glib, gtk3, gnome3, gsettings-desktop-schemas
 
 # package customization
 , channel ? "stable"
@@ -34,7 +35,7 @@ let
   };
 
   desktopItem = makeDesktopItem {
-    name = "chromium";
+    name = "chromium-browser";
     exec = "chromium %U";
     icon = "chromium";
     comment = "An open source web browser from Google";
@@ -62,10 +63,23 @@ let
 
   sandboxExecutableName = chromium.browser.passthru.sandboxExecutableName;
 
-in stdenv.mkDerivation {
-  name = "chromium${suffix}-${chromium.browser.version}";
+  version = chromium.browser.version;
 
-  buildInputs = [ makeWrapper ed ];
+  inherit (stdenv.lib) versionAtLeast;
+
+in stdenv.mkDerivation {
+  name = "chromium${suffix}-${version}";
+  inherit version;
+
+  buildInputs = [
+    makeWrapper ed
+
+    # needed for GSETTINGS_SCHEMAS_PATH
+    gsettings-desktop-schemas glib gtk3
+
+    # needed for XDG_ICON_DIRS
+    gnome3.defaultIconTheme
+  ];
 
   outputs = ["out" "sandbox"];
 
@@ -76,7 +90,7 @@ in stdenv.mkDerivation {
     mkdir -p "$out/bin"
 
     eval makeWrapper "${browserBinary}" "$out/bin/chromium" \
-      ${commandLineArgs} \
+      --add-flags ${escapeShellArg (escapeShellArg commandLineArgs)} \
       ${concatMapStringsSep " " getWrapperFlags chromium.plugins.enabled}
 
     ed -v -s "$out/bin/chromium" << EOF
@@ -92,6 +106,8 @@ in stdenv.mkDerivation {
     # libredirect causes chromium to deadlock on startup
     export LD_PRELOAD="\$(echo -n "\$LD_PRELOAD" | tr ':' '\n' | grep -v /lib/libredirect\\\\.so$ | tr '\n' ':')"
 
+    export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
+
     .
     w
     EOF
@@ -101,13 +117,19 @@ in stdenv.mkDerivation {
     ln -s "$out/bin/chromium" "$out/bin/chromium-browser"
 
     mkdir -p "$out/share/applications"
-    for f in '${chromium.browser}'/share/*; do
+    for f in '${chromium.browser}'/share/*; do # hello emacs */
       ln -s -t "$out/share/" "$f"
     done
     cp -v "${desktopItem}/share/applications/"* "$out/share/applications"
   '';
 
-  inherit (chromium.browser) meta packageName version;
+  inherit (chromium.browser) packageName;
+  meta = chromium.browser.meta // {
+    broken = if enableWideVine then
+          builtins.trace "WARNING: WideVine is not functional, please only use for testing"
+             true
+        else false;
+  };
 
   passthru = {
     inherit (chromium) upstream-info browser;

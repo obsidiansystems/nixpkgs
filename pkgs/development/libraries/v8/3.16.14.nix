@@ -1,12 +1,12 @@
-{ stdenv, lib, fetchurl, gyp, readline, python, which, icu, utillinux}:
+{ stdenv, lib, fetchurl, gyp, readline, python, which, icu, utillinux, cctools }:
 
 assert readline != null;
 
 let
-  arch = if stdenv.isArm
+  arch = if stdenv.isAarch32
     then (if stdenv.is64bit then "arm64" else "arm")
     else (if stdenv.is64bit then "x64" else "ia32");
-  armHardFloat = stdenv.isArm && (stdenv.platform.gcc.float or null) == "hard";
+  armHardFloat = stdenv.isAarch32 && (stdenv.platform.gcc.float or null) == "hard";
 in
 
 stdenv.mkDerivation rec {
@@ -24,9 +24,7 @@ stdenv.mkDerivation rec {
   '';
 
   configurePhase = stdenv.lib.optionalString stdenv.isDarwin ''
-    ln -s /usr/bin/xcodebuild $TMPDIR
-    ln -s /usr/bin/libtool $TMPDIR
-    export PATH=$TMPDIR:$PATH
+    export GYP_DEFINES="mac_deployment_target=$MACOSX_DEPLOYMENT_TARGET"
   '' + ''
     PYTHONPATH="tools/generate_shim_headers:$PYTHONPATH" \
       ${gyp}/bin/gyp \
@@ -41,12 +39,16 @@ stdenv.mkDerivation rec {
         ${lib.optionalString armHardFloat "-Dv8_use_arm_eabi_hardfloat=true"} \
         --depth=. -Ibuild/standalone.gypi \
         build/all.gyp
+  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+    sed -i 's@/usr/bin/env python@${python}/bin/python@g' out/gyp-mac-tool
   '';
 
   nativeBuildInputs = [ which ];
-  buildInputs = [ readline python icu ] ++ lib.optional stdenv.isLinux utillinux;
+  buildInputs = [ readline python icu ]
+                  ++ lib.optional stdenv.isLinux utillinux
+                  ++ lib.optional stdenv.isDarwin cctools;
 
-  NIX_CFLAGS_COMPILE = "-Wno-error";
+  NIX_CFLAGS_COMPILE = "-Wno-error -w";
 
   buildFlags = [
     "-C out"

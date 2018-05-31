@@ -1,26 +1,40 @@
-{lib, fetchurl, python, buildPythonPackage, isPy27, isPyPy, gfortran, nose, blas}:
+{lib, fetchPypi, python, buildPythonPackage, isPy27, isPyPy, gfortran, nose, blas, hostPlatform }:
 
 buildPythonPackage rec {
   pname = "numpy";
-  version = "1.12.1";
-  name = "${pname}-${version}";
+  version = "1.14.3";
 
-  src = fetchurl {
-    url = "mirror://pypi/n/numpy/numpy-${version}.zip";
-    sha256 = "a65266a4ad6ec8936a1bc85ce51f8600634a31a258b722c9274a80ff189d9542";
+  src = fetchPypi {
+    inherit pname version;
+    extension = "zip";
+    sha256 = "9016692c7d390f9d378fc88b7a799dc9caa7eb938163dda5276d3f3d6f75debf";
   };
 
   disabled = isPyPy;
   buildInputs = [ gfortran nose blas ];
 
   patches = lib.optionals (python.hasDistutilsCxxPatch or false) [
-    # See cpython 2.7 patches.
-    # numpy.distutils is used by cython during it's check phase
+    # We patch cpython/distutils to fix https://bugs.python.org/issue1222585
+    # Patching of numpy.distutils is needed to prevent it from undoing the
+    # patch to distutils.
     ./numpy-distutils-C++.patch
   ];
 
+  postPatch = lib.optionalString hostPlatform.isMusl ''
+    # Use fenv.h
+    sed -i \
+      numpy/core/src/npymath/ieee754.c.src \
+      numpy/core/include/numpy/ufuncobject.h \
+      -e 's/__GLIBC__/__linux__/'
+    # Don't use various complex trig functions
+    substituteInPlace numpy/core/src/private/npy_config.h \
+      --replace '#if defined(__GLIBC__)' "#if 1" \
+      --replace '#if !__GLIBC_PREREQ(2, 18)' "#if 1"
+  '';
+
   preConfigure = ''
     sed -i 's/-faltivec//' numpy/distutils/system_info.py
+    export NPY_NUM_BUILD_JOBS=$NIX_BUILD_CORES
   '';
 
   preBuild = ''
@@ -31,6 +45,8 @@ buildPythonPackage rec {
     library_dirs = ${blas}/lib
     EOF
   '';
+
+  enableParallelBuilding = true;
 
   checkPhase = ''
     runHook preCheck
@@ -55,7 +71,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "Scientific tools for Python";
-    homepage = "http://numpy.scipy.org/";
+    homepage = http://numpy.scipy.org/;
     maintainers = with lib.maintainers; [ fridh ];
   };
 }

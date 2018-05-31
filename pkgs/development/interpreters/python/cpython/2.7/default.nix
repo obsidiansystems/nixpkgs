@@ -1,4 +1,4 @@
-{ stdenv, fetchurl
+{ stdenv, hostPlatform, buildPlatform, buildPackages, fetchurl
 , bzip2
 , gdbm
 , fetchpatch
@@ -16,6 +16,8 @@
 , libffi
 , CF, configd, coreutils
 , python-setup-hook
+# Some proprietary libs assume UCS2 unicode, especially on darwin :(
+, ucsEncoding ? 4
 # For the Python package set
 , pkgs, packageOverrides ? (self: super: {})
 }:
@@ -29,7 +31,7 @@ with stdenv.lib;
 
 let
   majorVersion = "2.7";
-  minorVersion = "13";
+  minorVersion = "15";
   minorVersionSuffix = "";
   pythonVersion = majorVersion;
   version = "${majorVersion}.${minorVersion}${minorVersionSuffix}";
@@ -38,7 +40,7 @@ let
 
   src = fetchurl {
     url = "https://www.python.org/ftp/python/${majorVersion}.${minorVersion}/Python-${version}.tar.xz";
-    sha256 = "0cgpk3zk0fgpji59pb4zy9nzljr70qzgv1vpz5hq5xw2d2c47m9m";
+    sha256 = "0x2mvz9dp11wj7p5ccvmk9s0hzjk2fa1m462p395l4r6bfnb3n92";
   };
 
   hasDistutilsCxxPatch = !(stdenv.cc.isGNU or false);
@@ -56,8 +58,8 @@ let
       # if DETERMINISTIC_BUILD env var is set
       ./deterministic-build.patch
 
-      ./properly-detect-curses.patch
-
+    ] ++ optionals (x11Support && stdenv.isDarwin) [
+      ./use-correct-tcl-tk-on-darwin.patch
     ] ++ optionals stdenv.isLinux [
 
       # Disable the use of ldconfig in ctypes.util.find_library (since
@@ -67,9 +69,7 @@ let
       # libuuid, slowing down program startup a lot).
       ./no-ldconfig.patch
 
-      ./glibc-2.25-enosys.patch
-
-    ] ++ optionals stdenv.isCygwin [
+    ] ++ optionals hostPlatform.isCygwin [
       ./2.5.2-ctypes-util-find_library.patch
       ./2.5.2-tkinter-x11.patch
       ./2.6.2-ssl-threads.patch
@@ -88,7 +88,6 @@ let
       # only works for GCC and Apple Clang. This makes distutils to call C++
       # compiler when needed.
       ./python-2.7-distutils-C++.patch
-
     ];
 
   preConfigure = ''
@@ -109,26 +108,56 @@ let
   configureFlags = [
     "--enable-shared"
     "--with-threads"
-    "--enable-unicode=ucs4"
-  ] ++ optionals stdenv.isCygwin [
+    "--enable-unicode=ucs${toString ucsEncoding}"
+  ] ++ optionals (hostPlatform.isCygwin || hostPlatform.isAarch64) [
     "--with-system-ffi"
+  ] ++ optionals hostPlatform.isCygwin [
     "--with-system-expat"
     "ac_cv_func_bind_textdomain_codeset=yes"
   ] ++ optionals stdenv.isDarwin [
     "--disable-toolbox-glue"
-  ];
+  ] ++ optionals (hostPlatform != buildPlatform) [
+    "PYTHON_FOR_BUILD=${getBin buildPackages.python}/bin/python"
+    "ac_cv_buggy_getaddrinfo=no"
+    # Assume little-endian IEEE 754 floating point when cross compiling
+    "ac_cv_little_endian_double=yes"
+    "ac_cv_big_endian_double=no"
+    "ac_cv_mixed_endian_double=no"
+    "ac_cv_x87_double_rounding=yes"
+    "ac_cv_tanh_preserves_zero_sign=yes"
+    # Generally assume that things are present and work
+    "ac_cv_posix_semaphores_enabled=yes"
+    "ac_cv_broken_sem_getvalue=no"
+    "ac_cv_wchar_t_signed=yes"
+    "ac_cv_rshift_extends_sign=yes"
+    "ac_cv_broken_nice=no"
+    "ac_cv_broken_poll=no"
+    "ac_cv_working_tzset=yes"
+    "ac_cv_have_long_long_format=yes"
+    "ac_cv_have_size_t_format=yes"
+    "ac_cv_computed_gotos=yes"
+    "ac_cv_file__dev_ptmx=yes"
+    "ac_cv_file__dev_ptc=yes"
+  ]
+    # Never even try to use lchmod on linux,
+    # don't rely on detecting glibc-isms.
+  ++ optional hostPlatform.isLinux "ac_cv_func_lchmod=no";
 
-  postConfigure = if stdenv.isCygwin then ''
+  postConfigure = if hostPlatform.isCygwin then ''
     sed -i Makefile -e 's,PYTHONPATH="$(srcdir),PYTHONPATH="$(abs_srcdir),'
   '' else null;
 
   buildInputs =
     optional (stdenv ? cc && stdenv.cc.libc != null) stdenv.cc.libc ++
     [ bzip2 openssl zlib ]
-    ++ optionals stdenv.isCygwin [ expat libffi ]
+    ++ optional (hostPlatform.isCygwin || hostPlatform.isAarch64) libffi
+    ++ optional hostPlatform.isCygwin expat
     ++ [ db gdbm ncurses sqlite readline ]
     ++ optionals x11Support [ tcl tk xlibsWrapper libX11 ]
-    ++ optionals stdenv.isDarwin [ CF configd ];
+    ++ optionals stdenv.isDarwin ([ CF ] ++ optional (configd != null) configd);
+  nativeBuildInputs =
+    optionals (hostPlatform != buildPlatform)
+    [ buildPackages.stdenv.cc buildPackages.python ];
 
   mkPaths = paths: {
     C_INCLUDE_PATH = makeSearchPathOutput "dev" "include" paths;
@@ -142,13 +171,14 @@ in stdenv.mkDerivation {
     name = "python-${version}";
     pythonVersion = majorVersion;
 
-    inherit majorVersion version src patches buildInputs
+    inherit majorVersion version src patches buildInputs nativeBuildInputs
             preConfigure configureFlags;
 
     LDFLAGS = stdenv.lib.optionalString (!stdenv.isDarwin) "-lgcc_s";
     inherit (mkPaths buildInputs) C_INCLUDE_PATH LIBRARY_PATH;
 
-    NIX_CFLAGS_COMPILE = optionalString stdenv.isDarwin "-msse2";
+    NIX_CFLAGS_COMPILE = optionalString stdenv.isDarwin "-msse2"
+      + optionalString hostPlatform.isMusl " -DTHREAD_STACK_SIZE=0x100000";
     DETERMINISTIC_BUILD = 1;
 
     setupHook = python-setup-hook sitePackages;
@@ -162,7 +192,9 @@ in stdenv.mkDerivation {
         # needed for some packages, especially packages that backport
         # functionality to 2.x from 3.x
         for item in $out/lib/python${majorVersion}/test/*; do
-          if [[ "$item" != */test_support.py* ]]; then
+          if [[ "$item" != */test_support.py*
+             && "$item" != */test/support
+             && "$item" != */test/regrtest.py* ]]; then
             rm -rf "$item"
           else
             echo $item
@@ -183,21 +215,24 @@ in stdenv.mkDerivation {
         # Determinism: Windows installers were not deterministic.
         # We're also not interested in building Windows installers.
         find "$out" -name 'wininst*.exe' | xargs -r rm -f
-
+      '' + optionalString (stdenv.hostPlatform == stdenv.buildPlatform)
+      ''
         # Determinism: rebuild all bytecode
         # We exclude lib2to3 because that's Python 2 code which fails
         # We rebuild three times, once for each optimization level
         find $out -name "*.py" | $out/bin/python -m compileall -q -f -x "lib2to3" -i -
         find $out -name "*.py" | $out/bin/python -O -m compileall -q -f -x "lib2to3" -i -
         find $out -name "*.py" | $out/bin/python -OO -m compileall -q -f -x "lib2to3" -i -
+      '' + optionalString hostPlatform.isCygwin ''
+        cp libpython2.7.dll.a $out/lib
       '';
 
     passthru = let
       pythonPackages = callPackage ../../../../../top-level/python-packages.nix {python=self; overrides=packageOverrides;};
     in rec {
-      inherit libPrefix sitePackages x11Support hasDistutilsCxxPatch;
+      inherit libPrefix sitePackages x11Support hasDistutilsCxxPatch ucsEncoding;
       executable = libPrefix;
-      buildEnv = callPackage ../../wrapper.nix { python = self; };
+      buildEnv = callPackage ../../wrapper.nix { python = self; inherit (pythonPackages) requiredPythonModules; };
       withPackages = import ../../with-packages.nix { inherit buildEnv pythonPackages;};
       pkgs = pythonPackages;
       isPy2 = true;
@@ -207,8 +242,10 @@ in stdenv.mkDerivation {
 
     enableParallelBuilding = true;
 
+    doCheck = false; # expensive, and fails
+
     meta = {
-      homepage = "http://python.org";
+      homepage = http://python.org;
       description = "A high-level dynamically-typed programming language";
       longDescription = ''
         Python is a remarkably powerful dynamic programming language that
@@ -221,7 +258,7 @@ in stdenv.mkDerivation {
       '';
       license = stdenv.lib.licenses.psfl;
       platforms = stdenv.lib.platforms.all;
-      maintainers = with stdenv.lib.maintainers; [ chaoflow domenkozar ];
+      maintainers = with stdenv.lib.maintainers; [ fridh ];
       # Higher priority than Python 3.x so that `/bin/python` points to `/bin/python2`
       # in case both 2 and 3 are installed.
       priority = -100;

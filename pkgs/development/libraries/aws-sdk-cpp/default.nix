@@ -3,6 +3,7 @@
   apis ? ["*"]
 , # Whether to enable AWS' custom memory management.
   customMemoryManagement ? true
+, darwin
 }:
 
 let
@@ -14,23 +15,30 @@ let
         else throw "Unsupported system!";
 in stdenv.mkDerivation rec {
   name = "aws-sdk-cpp-${version}";
-  version = "1.0.127";
+  version = "1.4.40";
 
   src = fetchFromGitHub {
     owner = "awslabs";
     repo = "aws-sdk-cpp";
     rev = version;
-    sha256 = "1p06rkvi6mm4jylk5j7gji2c52qbls3i0yqg3hgs9iys4nd1p14r";
+    sha256 = "16n5p29pf062mfsn7q8q8hw0ppxb02a0kkakd0vjrybqflpgf42j";
   };
 
   # FIXME: might be nice to put different APIs in different outputs
   # (e.g. libaws-cpp-sdk-s3.so in output "s3").
   outputs = [ "out" "dev" ];
+  separateDebugInfo = stdenv.isLinux;
 
-  buildInputs = [ cmake curl ];
+  nativeBuildInputs = [ cmake curl ];
+  buildInputs = [ zlib curl openssl ]
+    ++ lib.optionals (stdenv.isDarwin &&
+                        ((builtins.elem "text-to-speech" apis) ||
+                         (builtins.elem "*" apis)))
+         (with darwin.apple_sdk.frameworks; [ CoreAudio AudioToolbox ]);
 
   cmakeFlags =
     lib.optional (!customMemoryManagement) "-DCUSTOM_MEMORY_MANAGEMENT=0"
+    ++ lib.optional (stdenv.buildPlatform != stdenv.hostPlatform) "-DENABLE_TESTING=OFF"
     ++ lib.optional (apis != ["*"])
       "-DBUILD_ONLY=${lib.concatStringsSep ";" apis}";
 
@@ -45,9 +53,12 @@ in stdenv.mkDerivation rec {
       done
     '';
 
-  NIX_LDFLAGS = lib.concatStringsSep " " (
-    (map (pkg: "-rpath ${lib.getOutput "lib" pkg}/lib"))
-      [ curl openssl zlib stdenv.cc.cc ]);
+  preConfigure =
+    ''
+      rm aws-cpp-sdk-core-tests/aws/auth/AWSCredentialsProviderTest.cpp
+    '';
+
+  NIX_CFLAGS_COMPILE = [ "-Wno-error=noexcept-type" ];
 
   meta = {
     description = "A C++ interface for Amazon Web Services";

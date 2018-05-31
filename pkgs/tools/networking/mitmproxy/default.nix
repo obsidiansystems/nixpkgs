@@ -1,32 +1,47 @@
-{ stdenv, fetchFromGitHub, python3Packages }:
+{ stdenv, fetchFromGitHub, python3Packages, glibcLocales }:
 
-python3Packages.buildPythonPackage rec {
-  baseName = "mitmproxy";
-  name = "${baseName}-${version}";
-  version = "2.0.0";
+with python3Packages;
+
+buildPythonPackage rec {
+  pname = "mitmproxy";
+  version = "3.0.4";
 
   src = fetchFromGitHub {
-    owner = baseName;
-    repo = baseName;
-    rev = "v${version}";
-    sha256 = "17gvr642skz4a23966lckdbrkh6mx31shi8hmakkvi91sa869i30";
+    owner  = pname;
+    repo   = pname;
+    rev    = "v${version}";
+    sha256 = "10l761ds46r1p2kjxlgby9vdxbjjlgq72s6adjypghi41s3qf034";
   };
 
-  propagatedBuildInputs = with python3Packages; [
-    blinker click certifi construct cryptography
-    cssutils editorconfig h2 html2text hyperframe
-    jsbeautifier kaitaistruct passlib pyasn1 pyopenssl
-    pyparsing pyperclip requests ruamel_yaml tornado
-    urwid watchdog brotlipy sortedcontainers
+  postPatch = ''
+    # remove dependency constraints
+    sed 's/>=\([0-9]\.\?\)\+\( \?, \?<\([0-9]\.\?\)\+\)\?//' -i setup.py
+  '';
+
+  checkPhase = ''
+    export HOME=$(mktemp -d)
+    export LC_CTYPE=en_US.UTF-8
+    # test_echo resolves hostnames
+    pytest -k 'not test_echo and not test_find_unclaimed_URLs '
+  '';
+
+  propagatedBuildInputs = [
+    blinker click certifi cryptography
+    h2 hyperframe kaitaistruct passlib
+    pyasn1 pyopenssl pyparsing pyperclip
+    ruamel_yaml tornado urwid brotlipy
+    sortedcontainers ldap3 wsproto
   ];
 
-  # Tests fail due to an error with a decorator
-  doCheck = false;
+  checkInputs = [
+    beautifulsoup4 flask pytest
+    requests glibcLocales
+  ];
 
   meta = with stdenv.lib; {
     description = "Man-in-the-middle proxy";
-    homepage = "http://mitmproxy.org/";
-    license = licenses.mit;
-    maintainers = with maintainers; [ fpletz ];
+    homepage    = https://mitmproxy.org/;
+    license     = licenses.mit;
+    maintainers = with maintainers; [ fpletz kamilchm ];
   };
 }

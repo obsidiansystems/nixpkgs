@@ -8,16 +8,17 @@
 # Should use buildPythonPackage here somehow
 stdenv.mkDerivation rec {
   pname = "setuptools";
-  version = "36.0.1";
+  version = "39.0.1";
   name = "${python.libPrefix}-${pname}-${version}";
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "e17c4687fddd6d70a6604ac0ad25e33324cec71b5137267dd5c45e103c4b288a";
+    sha256 = "bec7badf0f60e7fc8153fac47836edc41b74e5d541d7692e614e635720d6a7c7";
   };
 
-  buildInputs = [ python wrapPython unzip ];
+  nativeBuildInputs = [ unzip wrapPython ];
+  buildInputs = [ python ];
   doCheck = false;  # requires pytest
   installPhase = ''
       dst=$out/${python.sitePackages}
@@ -31,8 +32,8 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Utilities to facilitate the installation of Python packages";
-    homepage = http://pypi.python.org/pypi/setuptools;
-    license = with licenses; [ psfl zpt20 ];
+    homepage = https://pypi.python.org/pypi/setuptools;
+    license = with licenses; [ psfl zpl20 ];
     platforms = platforms.all;
     priority = 10;
   };

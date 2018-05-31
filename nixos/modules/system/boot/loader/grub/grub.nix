@@ -40,7 +40,7 @@ let
     { splashImage = f cfg.splashImage;
       grub = f grub;
       grubTarget = f (grub.grubTarget or "");
-      shell = "${pkgs.stdenv.shell}";
+      shell = "${pkgs.runtimeShell}";
       fullName = (builtins.parseDrvName realGrub.name).name;
       fullVersion = (builtins.parseDrvName realGrub.name).version;
       grubEfi = f grubEfi;
@@ -64,11 +64,21 @@ let
       )) + ":" + (makeSearchPathOutput "bin" "sbin" [
         pkgs.mdadm pkgs.utillinux
       ]);
+      font = if lib.last (lib.splitString "." cfg.font) == "pf2"
+             then cfg.font
+             else "${convertedFont}";
     });
 
   bootDeviceCounters = fold (device: attr: attr // { "${device}" = (attr."${device}" or 0) + 1; }) {}
     (concatMap (args: args.devices) cfg.mirroredBoots);
 
+  convertedFont = (pkgs.runCommand "grub-font-converted.pf2" {}
+           (builtins.concatStringsSep " "
+             ([ "${realGrub}/bin/grub-mkfont"
+               cfg.font
+               "--output" "$out"
+             ] ++ (optional (cfg.fontSize!=null) "--size ${toString cfg.fontSize}")))
+         );
 in
 
 {
@@ -100,7 +110,7 @@ in
 
       device = mkOption {
         default = "";
-        example = "/dev/hda";
+        example = "/dev/disk/by-id/wwn-0x500001234567890a";
         type = types.str;
         description = ''
           The device on which the GRUB boot loader will be installed.
@@ -113,7 +123,7 @@ in
 
       devices = mkOption {
         default = [];
-        example = [ "/dev/hda" ];
+        example = [ "/dev/disk/by-id/wwn-0x500001234567890a" ];
         type = types.listOf types.str;
         description = ''
           The devices on which the boot loader, GRUB, will be
@@ -125,8 +135,8 @@ in
       mirroredBoots = mkOption {
         default = [ ];
         example = [
-          { path = "/boot1"; devices = [ "/dev/sda" ]; }
-          { path = "/boot2"; devices = [ "/dev/sdb" ]; }
+          { path = "/boot1"; devices = [ "/dev/disk/by-id/wwn-0x500001234567890a" ]; }
+          { path = "/boot2"; devices = [ "/dev/disk/by-id/wwn-0x500009876543210a" ]; }
         ];
         description = ''
           Mirror the boot configuration to multiple partitions and install grub
@@ -168,7 +178,7 @@ in
 
             devices = mkOption {
               default = [ ];
-              example = [ "/dev/sda" "/dev/sdb" ];
+              example = [ "/dev/disk/by-id/wwn-0x500001234567890a" "/dev/disk/by-id/wwn-0x500009876543210a" ];
               type = types.listOf types.str;
               description = ''
                 The path to the devices which will have the GRUB MBR written.
@@ -276,7 +286,7 @@ in
       extraInitrd = mkOption {
         type = types.nullOr types.path;
         default = null;
-        example = "/boot/extra_initrafms.gz";
+        example = "/boot/extra_initramfs.gz";
         description = ''
           The path to a second initramfs to be supplied to the kernel.
           This ramfs will not be copied to the store, so that it can
@@ -298,10 +308,40 @@ in
         type = types.nullOr types.path;
         example = literalExample "./my-background.png";
         description = ''
-          Background image used for GRUB.  It must be a 640x480,
+          Background image used for GRUB.
+          Set to <literal>null</literal> to run GRUB in text mode.
+
+          <note><para>
+          For grub 1:
+          It must be a 640x480,
           14-colour image in XPM format, optionally compressed with
-          <command>gzip</command> or <command>bzip2</command>.  Set to
-          <literal>null</literal> to run GRUB in text mode.
+          <command>gzip</command> or <command>bzip2</command>.
+          </para></note>
+
+          <note><para>
+          For grub 2:
+          File must be one of .png, .tga, .jpg, or .jpeg. JPEG images must
+          not be progressive.
+          The image will be scaled if necessary to fit the screen.
+          </para></note>
+        '';
+      };
+
+      font = mkOption {
+        type = types.nullOr types.path;
+        default = "${realGrub}/share/grub/unicode.pf2";
+        description = ''
+          Path to a TrueType, OpenType, or pf2 font to be used by Grub.
+        '';
+      };
+
+      fontSize = mkOption {
+        type = types.nullOr types.int;
+        example = literalExample 16;
+        default = null;
+        description = ''
+          Font size for the grub menu. Ignored unless <literal>font</literal>
+          is set to a ttf or otf font.
         '';
       };
 
@@ -489,7 +529,7 @@ in
           sha256 = "14kqdx2lfqvh40h6fjjzqgff1mwk74dmbjvmqphi6azzra7z8d59";
         }
         # GRUB 1.97 doesn't support gzipped XPMs.
-        else "${pkgs.nixos-artwork}/share/artwork/gnome/Gnome_Dark.png");
+        else "${pkgs.nixos-artwork.wallpapers.gnome-dark}/share/artwork/gnome/Gnome_Dark.png");
     }
 
     (mkIf cfg.enable {
@@ -508,9 +548,9 @@ in
             btrfsprogs = pkgs.btrfs-progs;
           };
         in pkgs.writeScript "install-grub.sh" (''
-        #!${pkgs.stdenv.shell}
+        #!${pkgs.runtimeShell}
         set -e
-        export PERL5LIB=${makePerlPath (with pkgs.perlPackages; [ FileSlurp XMLLibXML XMLSAX ListCompare ])}
+        export PERL5LIB=${makePerlPath (with pkgs.perlPackages; [ FileSlurp XMLLibXML XMLSAX XMLSAXBase ListCompare ])}
         ${optionalString cfg.enableCryptodisk "export GRUB_ENABLE_CRYPTODISK=y"}
       '' + flip concatMapStrings cfg.mirroredBoots (args: ''
         ${pkgs.perl}/bin/perl ${install-grub-pl} ${grubConfig args} $@

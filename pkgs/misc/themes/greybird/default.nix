@@ -3,19 +3,19 @@
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "greybird";
-  version = "3.22.3";
+  version = "3.22.7";
 
   src = fetchFromGitHub {
     owner = "shimmerproject";
     repo = "${pname}";
     rev = "v${version}";
-    sha256 = "0hz8q2sf2kcxixzw088rny6zmhfls5z49zlhm8m9013wph799a8c";
+    sha256 = "118k0bb780h54i2vn5my5r6vbkk134899xwp4aigw5a289xzryvb";
   };
 
   nativeBuildInputs = [ autoreconfHook sass glib libxml2 gdk_pixbuf librsvg ];
 
-  buildInputs = [ gtk-engine-murrine ];
-  
+  propagatedUserEnvPkgs = [ gtk-engine-murrine ];
+
   meta = {
     description = "Grey and blue theme (Gtk, Xfce, Emerald, Metacity, Mutter, Unity)";
     homepage = https://github.com/shimmerproject/Greybird;

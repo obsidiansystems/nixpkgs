@@ -1,11 +1,11 @@
 { stdenv, fetchurl }:
 
 stdenv.mkDerivation rec {
-  name = "hdparm-9.52";
+  name = "hdparm-9.56";
 
   src = fetchurl {
     url = "mirror://sourceforge/hdparm/${name}.tar.gz";
-    sha256 = "1djgxhfadd865dcrl6dp7dvjxpaisy7mk17mbdbglwg24ga9qhn3";
+    sha256 = "1np42qyhb503khvacnjcl3hb1dqly68gj0a1xip3j5qhbxlyvybg";
 
   };
 
@@ -15,7 +15,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A tool to get/set ATA/SATA drive parameters under Linux";
-    homepage = http://sourceforge.net/projects/hdparm/;
+    homepage = https://sourceforge.net/projects/hdparm/;
     platforms = platforms.linux;
     license = licenses.bsd2;
     maintainers = [ maintainers.fuuzetsu ];

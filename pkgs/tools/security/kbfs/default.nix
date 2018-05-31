@@ -2,18 +2,18 @@
 
 buildGoPackage rec {
   name = "kbfs-${version}";
-  version = "20170209.d1db463";
+  version = "1.0.44";
 
   goPackagePath = "github.com/keybase/kbfs";
-  subPackages = [ "kbfsfuse" ];
+  subPackages = [ "kbfsfuse" "kbfsgit/git-remote-keybase" ];
 
   dontRenameImports = true;
 
   src = fetchFromGitHub {
     owner = "keybase";
     repo = "kbfs";
-    rev = "d1db46315d9271f21ca2700a84ca19767e638296";
-    sha256 = "12i2m370r27mmn37s55krdkhr5k8kpl3x8y3gzg7w5zn2wiw8i1g";
+    rev = "v${version}";
+    sha256 = "1vjgzif8ki9xrlcghpzkvqwfwvaq63llf52s03m3d2vkyigmgp78";
   };
 
   buildFlags = [ "-tags production" ];
@@ -22,6 +22,6 @@ buildGoPackage rec {
     homepage = https://www.keybase.io;
     description = "The Keybase FS FUSE driver";
     platforms = platforms.linux;
-    maintainers = with maintainers; [ bennofs ];
+    maintainers = with maintainers; [ bennofs np ];
   };
 }

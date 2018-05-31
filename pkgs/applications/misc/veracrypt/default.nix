@@ -1,4 +1,4 @@
-{ fetchurl, stdenv, pkgconfig, nasm, fuse, wxGTK30, devicemapper, makeself,
+{ fetchurl, stdenv, pkgconfig, yasm, fuse, wxGTK30, devicemapper, makeself,
   wxGUI ? true
 }:
 
@@ -6,21 +6,20 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   name = "veracrypt-${version}";
-  version = "1.19";
+  version = "1.22";
 
   src = fetchurl {
-    url = "https://launchpad.net/veracrypt/trunk/${version}/+download/VeraCrypt_${version}_Source.tar.gz";
-    sha256 = "111xs1zmic82lpn5spn0ca33q0g4za04a2k4cvjwdb7k3vcicq6v";
+    url = "https://launchpad.net/veracrypt/trunk/${version}/+download/VeraCrypt_${version}_Source.tar.bz2";
+    sha256 = "0w5qyxnx03vn93ach1kb995w2mdg43s82gf1isbk206sxp00qk4y";
   };
 
-  # The source archive appears to be compressed twice ...
   unpackPhase =
     ''
-      gzip -dc $src | tar xz
-      cd Vera*/src
+      tar xjf $src
+      cd src
     '';
 
-  nativeBuildInputs = [ makeself nasm pkgconfig ];
+  nativeBuildInputs = [ makeself yasm pkgconfig ];
   buildInputs = [ fuse devicemapper ]
     ++ optional wxGUI wxGTK30;
   makeFlags = optionalString (!wxGUI) "NOGUI=1";
@@ -37,7 +36,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "Free Open-Source filesystem on-the-fly encryption";
-    homepage = https://veracrypt.codeplex.com/;
+    homepage = https://www.veracrypt.fr/;
     license = "VeraCrypt License";
     maintainers = with maintainers; [ dsferruzza ];
     platforms = platforms.linux;

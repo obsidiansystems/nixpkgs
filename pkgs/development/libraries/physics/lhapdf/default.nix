@@ -1,19 +1,15 @@
-{ stdenv, fetchurl, boost, python2 }:
+{ stdenv, fetchurl, python2 }:
 
 stdenv.mkDerivation rec {
   name = "lhapdf-${version}";
-  version = "6.1.6";
+  version = "6.2.1";
 
   src = fetchurl {
     url = "http://www.hepforge.org/archive/lhapdf/LHAPDF-${version}.tar.gz";
-    sha256 = "1sgbaxv8clcfy4d96fkwfyqcd4b29i0hwv32ry4vy69j5qiki0f2";
+    sha256 = "0bi02xcmq5as0wf0jn6i3hx0qy0hj61m02sbrbzd1gwjhpccwmvd";
   };
 
-  buildInputs = [ boost python2 ];
-
-  patches = [ ./distutils-c++.patch ];
-
-  configureFlags = "--with-boost=${boost.dev}";
+  buildInputs = [ python2 ];
 
   enableParallelBuilding = true;
 

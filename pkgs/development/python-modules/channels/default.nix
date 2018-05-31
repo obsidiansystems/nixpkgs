@@ -1,14 +1,14 @@
-{ stdenv, buildPythonPackage, fetchurl,
+{ stdenv, buildPythonPackage, fetchPypi,
   asgiref, django, daphne
 }:
 buildPythonPackage rec {
   pname = "channels";
   name = "${pname}-${version}";
-  version = "1.1.3";
+  version = "2.0.2";
 
-  src = fetchurl {
-    url = "mirror://pypi/c/channels/${name}.tar.gz";
-    sha256 = "182war437i6wsxwf2v4szn8ig0nkpinpn4n27fxhh5q8w832hj93";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "5d41e0f2aa40f9755f36c2c1dd83748b6793732190d577922e06294a3b37fd92";
   };
 
   # Files are missing in the distribution

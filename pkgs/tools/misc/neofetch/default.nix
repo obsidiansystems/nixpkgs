@@ -1,26 +1,21 @@
-{ stdenv, fetchFromGitHub }:
+{ stdenv, fetchFromGitHub, fetchpatch }:
 
 stdenv.mkDerivation rec {
   name = "neofetch-${version}";
-  version = "3.0.1";
+  version = "4.0.2";
   src = fetchFromGitHub {
     owner = "dylanaraps";
     repo = "neofetch";
     rev = version;
-    sha256 = "0ccdgyn9m7vbrmjlsxdwv7cagsdg8hy8x4n1mx334pkqvl820jjn";
+    sha256 = "0c0x05ca8lp74928nix4pvd243l95lav35r21mpkbagf72z284d2";
   };
-
-  patchPhase = ''
-    substituteInPlace ./neofetch \
-    --replace "/usr/share" "$out/share"
-  '';
 
   dontBuild = true;
 
 
   makeFlags = [
-    "DESTDIR=$(out)"
-    "PREFIX="
+    "PREFIX=$(out)"
+    "SYSCONFDIR=$(out)/etc"
   ];
 
   meta = with stdenv.lib; {
@@ -28,6 +23,6 @@ stdenv.mkDerivation rec {
     homepage = https://github.com/dylanaraps/neofetch;
     license = licenses.mit;
     platforms = platforms.all;
-    maintainers = with maintainers; [ alibabzo ];
+    maintainers = with maintainers; [ alibabzo konimex ];
   };
 }

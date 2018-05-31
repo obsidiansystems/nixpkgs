@@ -1,32 +1,36 @@
-{ kdeDerivation, kdeWrapper, fetchurl, lib
-, ecm, kdoctools
-, kconfig, kinit, kpmcore
-, eject, libatasmart }:
+{ mkDerivation, fetchurl, lib
+, extra-cmake-modules, kdoctools, wrapGAppsHook
+, kconfig, kcrash, kinit, kpmcore
+, eject, libatasmart , utillinux, makeWrapper, qtbase
+}:
 
 let
   pname = "partitionmanager";
-  unwrapped = kdeDerivation rec {
-    name = "${pname}-${version}";
-    version = "3.0.1";
+in mkDerivation rec {
+  name = "${pname}-${version}";
+  version = "3.3.1";
 
-    src = fetchurl {
-      url = "mirror://kde/stable/${pname}/${version}/src/${name}.tar.xz";
-      sha256 = "08sb9xa7dvvgha3k2xm1srl339przxpxd2y5bh1lnx6k1x7dk410";
-    };
-
-    meta = with lib; {
-      description = "KDE Partition Manager";
-      license = licenses.gpl2;
-      maintainers = with maintainers; [ peterhoeg ];
-    };
-    nativeBuildInputs = [ ecm kdoctools ];
-    # refer to kpmcore for the use of eject
-    buildInputs = [ eject libatasmart ];
-    propagatedBuildInputs = [ kconfig kinit kpmcore ];
-    enableParallelBuilding = true;
+  src = fetchurl {
+    url = "mirror://kde/stable/${pname}/${version}/src/${name}.tar.xz";
+    sha256 = "0jhggb4xksb0k0mj752n6pz0xmccnbzlp984xydqbz3hkigra1si";
   };
 
-in kdeWrapper {
-  inherit unwrapped;
-  targets = [ "bin/partitionmanager" ];
+  enableParallelBuilding = true;
+
+  nativeBuildInputs = [ extra-cmake-modules kdoctools wrapGAppsHook makeWrapper ];
+
+  # refer to kpmcore for the use of eject
+  buildInputs = [ eject libatasmart utillinux ];
+  propagatedBuildInputs = [ kconfig kcrash kinit kpmcore ];
+
+  postInstall = ''
+    wrapProgram "$out/bin/partitionmanager" --prefix QT_PLUGIN_PATH : "${kpmcore}/lib/qt-5.${lib.versions.minor qtbase.version}/plugins"
+  '';
+
+  meta = with lib; {
+    description = "KDE Partition Manager";
+    license = licenses.gpl2;
+    homepage = https://www.kde.org/applications/system/kdepartitionmanager/;
+    maintainers = with maintainers; [ peterhoeg ma27 ];
+  };
 }

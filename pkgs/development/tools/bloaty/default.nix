@@ -1,21 +1,26 @@
-{ stdenv, binutils, fetchgit }:
+{ stdenv, binutils, cmake, zlib, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
-  version = "2016.12.28";
+  version = "2018-05-22";
   name = "bloaty-${version}";
 
-  src = fetchgit {
-    url = "https://github.com/google/bloaty.git";
-    rev = "2234386bcee7297dfa1b6d8a5d20f95ea4ed9bb0";
-    sha256 = "0cfsjgbp9r16d6qi8v4k609bbhjff4vhdiapfkhr34z1cik1md4l";
+  src = fetchFromGitHub {
+    owner = "google";
+    repo = "bloaty";
+    rev = "054788b091ccfd43b05b9817062139145096d440";
+    sha256 = "0pmv66137ipzsjjdz004n61pz3aipjhh3b0w0y1406clqpwkvpjm";
     fetchSubmodules = true;
   };
 
+  nativeBuildInputs = [ cmake ];
+
+  buildInputs = [ zlib ];
+
   enableParallelBuilding = true;
 
-  configurePhase = ''
-    sed -i 's,c++filt,${binutils}/bin/c++filt,' src/bloaty.cc
-  '';
+  doCheck = true;
+
+  checkPhase = "ctest";
 
   installPhase = ''
     install -Dm755 {.,$out/bin}/bloaty

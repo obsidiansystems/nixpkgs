@@ -3,7 +3,7 @@
 
 buildGoPackage rec {
   name = "coyim-${version}";
-  version = "v0.3.7_1";
+  version = "0.3.7_1";
 
   goPackagePath = "github.com/twstrike/coyim";
 
@@ -16,9 +16,10 @@ buildGoPackage rec {
 
   nativeBuildInputs = [ pkgconfig wrapGAppsHook glib cairo gdk_pixbuf gnome3.gtk gnome3.defaultIconTheme ];
 
-  meta = {
+  meta = with stdenv.lib; {
     description = "a safe and secure chat client";
     homepage = https://coy.im/;
-    license = stdenv.lib.licenses.gpl3;
+    license = licenses.gpl3;
+    platforms = platforms.linux;
   };
 }

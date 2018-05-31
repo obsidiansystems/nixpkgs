@@ -9,8 +9,6 @@ with stdenv;
 
   buildInputs = [ bzip2 zlib autoconf automake cmake gnumake help2man texinfo libtool cppzmq libarchive avro-cpp jansson zeromq openssl pam libiodbc kerberos gcc boost libcxx which ];
 
-  propagateBuildInputs = [ boost ];
-
   cmakeFlags = [
     "-DIRODS_EXTERNALS_FULLPATH_CLANG=${stdenv.cc}"
     "-DIRODS_EXTERNALS_FULLPATH_CLANG_RUNTIME=${stdenv.cc}"
@@ -49,7 +47,7 @@ with stdenv;
       important in data management. The development infrastructure supports exhaustive
       testing on supported platforms; plug-in support for microservices, storage resources,
       drivers, and databases; and extensive documentation, training and support services.'';
-    homepage = http://irods.org;
+    homepage = https://irods.org;
     license = stdenv.lib.licenses.bsd3;
     maintainers = [ stdenv.lib.maintainers.bzizou ];
     platforms = stdenv.lib.platforms.all;

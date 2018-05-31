@@ -7,7 +7,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Implements double cryptographic ratchet and Megolm ratchet";
     license = stdenv.lib.licenses.asl20;
-    homepage = "https://matrix.org/git/olm/about";
+    homepage = https://matrix.org/git/olm/about;
   };
 
   src = fetchurl {
@@ -17,6 +17,9 @@ stdenv.mkDerivation rec {
 
   doCheck = true;
   checkTarget = "test";
+
+  # requires optimisation but memory operations are compiled with -O0
+  hardeningDisable = ["fortify"];
 
   installFlags = "PREFIX=$(out)";
 }

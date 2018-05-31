@@ -6,9 +6,9 @@
 let
   plexPass = throw "Plex pass has been removed at upstream's request; please unset nixpkgs.config.plex.pass";
   plexpkg = if enablePlexPass then plexPass else {
-    version = "1.5.5.3634";
-    vsnHash = "995f1dead";
-    sha256 = "0zk2zv7r4mf582gfbv4ahxzl8pbspzkf3514qmqhhx2z4grng49h";
+    version = "1.13.0.5023";
+    vsnHash = "31d3c0c65";
+    sha256 = "b94d571bcd47bc3201fd7f54b910f5693cabd1b543d5d0b4705668b7b7c24602";
   };
 
 in stdenv.mkDerivation rec {
@@ -74,7 +74,7 @@ in stdenv.mkDerivation rec {
     homepage = http://plex.tv/;
     license = licenses.unfree;
     platforms = platforms.linux;
-    maintainers = with stdenv.lib.maintainers; [ colemickens forkk thoughtpolice pjones ];
+    maintainers = with stdenv.lib.maintainers; [ colemickens forkk thoughtpolice pjones lnl7 ];
     description = "Media / DLNA server";
     longDescription = ''
       Plex is a media server which allows you to store your media and play it

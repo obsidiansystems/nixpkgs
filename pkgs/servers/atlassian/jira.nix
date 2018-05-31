@@ -1,12 +1,15 @@
-{ stdenv, fetchurl }:
+{ stdenv, lib, fetchurl
+, enableSSO ? false
+, crowdProperties ? null
+}:
 
 stdenv.mkDerivation rec {
   name = "atlassian-jira-${version}";
-  version = "7.3.4";
+  version = "7.9.2";
 
   src = fetchurl {
     url = "https://downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-${version}.tar.gz";
-    sha256 = "0xkwf8n37hwv52rl3dbqkacr1fyxz4bd7gkcmpg0wshnxmyq4vg7";
+    sha256 = "05976h6033v2w7d05qnigxmsrm33bg7gmgyzpvis8910fkxrhvhh";
   };
 
   phases = [ "unpackPhase" "buildPhase" "installPhase" "fixupPhase" ];
@@ -17,6 +20,14 @@ stdenv.mkDerivation rec {
     rm -r logs; ln -sf /run/atlassian-jira/logs/ .
     rm -r work; ln -sf /run/atlassian-jira/work/ .
     rm -r temp; ln -sf /run/atlassian-jira/temp/ .
+  '' + lib.optionalString enableSSO ''
+    substituteInPlace atlassian-jira/WEB-INF/classes/seraph-config.xml \
+      --replace com.atlassian.jira.security.login.JiraSeraphAuthenticator \
+                com.atlassian.jira.security.login.SSOSeraphAuthenticator
+  '' + lib.optionalString (crowdProperties != null) ''
+    cat <<EOF > atlassian-jira/WEB-INF/classes/crowd.properties
+    ${crowdProperties}
+    EOF
   '';
 
   installPhase = ''

@@ -68,11 +68,11 @@ stdenv.mkDerivation rec {
       network are rewarded with better service.
     '';
 
-    homepage = http://gnunet.org/;
+    homepage = https://gnunet.org/;
 
     license = licenses.gpl2Plus;
 
     maintainers = with maintainers; [ viric vrthra ];
-    platforms = platforms.gnu;
+    platforms = platforms.gnu ++ platforms.linux;
   };
 }

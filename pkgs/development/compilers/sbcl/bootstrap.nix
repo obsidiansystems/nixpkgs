@@ -65,13 +65,13 @@ stdenv.mkDerivation rec {
       --add-flags "--core $out/share/sbcl/sbcl.core"
   '';
 
-  postFixup = stdenv.lib.optionalString (!stdenv.isArm && stdenv.isLinux) ''
+  postFixup = stdenv.lib.optionalString (!stdenv.isAarch32 && stdenv.isLinux) ''
     patchelf --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) $out/share/sbcl/sbcl
   '';
 
   meta = with stdenv.lib; {
     description = "Lisp compiler";
-    homepage = "http://www.sbcl.org";
+    homepage = http://www.sbcl.org;
     license = licenses.publicDomain; # and FreeBSD
     maintainers = [maintainers.raskin maintainers.tohl];
     platforms = attrNames options;

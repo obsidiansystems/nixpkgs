@@ -1,5 +1,5 @@
-{ stdenv, fetchurl, pkgconfig, gnutls, jansson, liburcu, lmdb, libcap_ng, libidn
-, systemd, nettle, libedit, zlib, libiconv, fetchpatch
+{ stdenv, fetchurl, pkgconfig, gnutls, liburcu, lmdb, libcap_ng, libidn
+, systemd, nettle, libedit, zlib, libiconv, libintl
 }:
 
 let inherit (stdenv.lib) optional optionals; in
@@ -7,28 +7,24 @@ let inherit (stdenv.lib) optional optionals; in
 # Note: ATM only the libraries have been tested in nixpkgs.
 stdenv.mkDerivation rec {
   name = "knot-dns-${version}";
-  version = "2.4.2";
+  version = "2.6.7";
 
   src = fetchurl {
     url = "http://secure.nic.cz/files/knot-dns/knot-${version}.tar.xz";
-    sha256 = "37da7fcf1f194bd6376c63d8c4fa28a21899b56a3f3b63dba7095740a5752c52";
+    sha256 = "1c2a004b05c161f7b36d5eeccebd9d4cdf60aa09930a7cc766514e468ca92243";
   };
 
   outputs = [ "bin" "out" "dev" ];
 
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    gnutls jansson liburcu libidn
+    gnutls liburcu libidn
     nettle libedit
-    libiconv
+    libiconv lmdb libintl
     # without sphinx &al. for developer documentation
   ]
-    # Use embedded lmdb there for now, as detection is broken on Darwin somehow.
-    ++ optionals stdenv.isLinux [ libcap_ng systemd lmdb ]
+    ++ optionals stdenv.isLinux [ libcap_ng systemd ]
     ++ optional stdenv.isDarwin zlib; # perhaps due to gnutls
-
-  # Not ideal but seems to work on Linux.
-  configureFlags = optional stdenv.isLinux "--with-lmdb=${stdenv.lib.getLib lmdb}";
 
   enableParallelBuilding = true;
 
@@ -36,7 +32,7 @@ stdenv.mkDerivation rec {
 
   #doCheck = true; problems in combination with dynamic linking
 
-  postInstall = ''rm -r "$out"/var'';
+  postInstall = ''rm -r "$out"/var "$out"/lib/*.la'';
 
   meta = with stdenv.lib; {
     description = "Authoritative-only DNS server from .cz domain registry";
@@ -46,4 +42,3 @@ stdenv.mkDerivation rec {
     maintainers = [ maintainers.vcunat ];
   };
 }
-

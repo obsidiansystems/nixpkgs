@@ -17,6 +17,8 @@ stdenv.mkDerivation rec {
   patches = [
     ./darwin.patch
     ./r242056.patch
+    # glibc 2.26 fix
+    ./xlocale-glibc-2.26.patch
   ];
 
   buildInputs = [ cmake libcxxabi ] ++ lib.optional stdenv.isDarwin fixDarwinDylibNames;
@@ -31,7 +33,10 @@ stdenv.mkDerivation rec {
 
   linkCxxAbi = stdenv.isLinux;
 
-  setupHook = ./setup-hook.sh;
+  setupHooks = [
+    ../../../../../build-support/setup-hooks/role.bash
+    ./setup-hook.sh
+  ];
 
   meta = {
     homepage = http://libcxx.llvm.org/;

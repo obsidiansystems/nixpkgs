@@ -1,7 +1,8 @@
-{ lib, stdenv, fetchurl, fetchpatch, pkgconfig, libtool
+{ lib, stdenv, fetchFromGitHub, fetchpatch, pkgconfig, libtool
 , bzip2, zlib, libX11, libXext, libXt, fontconfig, freetype, ghostscript, libjpeg
 , lcms2, openexr, libpng, librsvg, libtiff, libxml2, openjpeg, libwebp
 , ApplicationServices
+, buildPlatform, hostPlatform
 }:
 
 let
@@ -9,11 +10,12 @@ let
     if stdenv.system == "i686-linux" then "i686"
     else if stdenv.system == "x86_64-linux" || stdenv.system == "x86_64-darwin" then "x86-64"
     else if stdenv.system == "armv7l-linux" then "armv7l"
+    else if stdenv.system == "aarch64-linux" then "aarch64"
     else throw "ImageMagick is not supported on this platform.";
 
   cfg = {
-    version = "7.0.5-7";
-    sha256 = "11k53193az0bvdhp4gz2g9p8fb6r5fr1h74dnfx6ijfnfj80hbgp";
+    version = "7.0.7-35";
+    sha256 = "1gn4frzxa1v712pcwwkmi0m2a6gbrg2564dbxxr7130zc66licpz";
     patches = [];
   };
 in
@@ -22,13 +24,10 @@ stdenv.mkDerivation rec {
   name = "imagemagick-${version}";
   inherit (cfg) version;
 
-  src = fetchurl {
-    urls = [
-      "mirror://imagemagick/releases/ImageMagick-${version}.tar.xz"
-      # the original source above removes tarballs quickly
-      "http://distfiles.macports.org/ImageMagick/ImageMagick-${version}.tar.xz"
-      "https://bintray.com/homebrew/mirror/download_file?file_path=imagemagick-${version}.tar.xz"
-    ];
+  src = fetchFromGitHub {
+    owner = "ImageMagick";
+    repo = "ImageMagick";
+    rev = cfg.version;
     inherit (cfg) sha256;
   };
 
@@ -47,7 +46,7 @@ stdenv.mkDerivation rec {
       [ "--with-gs-font-dir=${ghostscript}/share/ghostscript/fonts"
         "--with-gslib"
       ]
-    ++ lib.optionals (stdenv.cross.libc or null == "msvcrt")
+    ++ lib.optionals hostPlatform.isMinGW
       [ "--enable-static" "--disable-shared" ] # due to libxml2 being without DLLs ATM
     ;
 
@@ -57,13 +56,13 @@ stdenv.mkDerivation rec {
     [ zlib fontconfig freetype ghostscript
       libpng libtiff libxml2
     ]
-    ++ lib.optionals (stdenv.cross.libc or null != "msvcrt")
+    ++ lib.optionals (!hostPlatform.isMinGW)
       [ openexr librsvg openjpeg ]
     ++ lib.optional stdenv.isDarwin ApplicationServices;
 
   propagatedBuildInputs =
     [ bzip2 freetype libjpeg lcms2 ]
-    ++ lib.optionals (stdenv.cross.libc or null != "msvcrt")
+    ++ lib.optionals (!hostPlatform.isMinGW)
       [ libX11 libXext libXt libwebp ]
     ;
 

@@ -1,8 +1,8 @@
 { stdenv, lib, callPackage, fetchurl, unzip, atomEnv, makeDesktopItem,
-  makeWrapper, libXScrnSaver, libxkbfile }:
+  makeWrapper, libXScrnSaver, libxkbfile, libsecret }:
 
 let
-  version = "1.12.1";
+  version = "1.23.1";
   channel = "stable";
 
   plat = {
@@ -12,15 +12,16 @@ let
   }.${stdenv.system};
 
   sha256 = {
-    "i686-linux" = "0i4zqxbq7bm2afzyny3a53sq1fghlz5an1z8fkqh5i3029s635h9";
-    "x86_64-linux" = "0kwmfiyb70if4svamnivbc9w65c14j3lrn5vysqkc4b8hlk4r75i";
-    "x86_64-darwin" = "1dgs4k4m885qzammhj0x9k6pd8rayxn61iq3fiazp0w8v5bhl4l5";
+    "i686-linux" = "0vqaxyg6r6mfm1gz8j7wxgg426hjsmv2ybyi8rfjcm9s8d23y9n6";
+    "x86_64-linux" = "0zycl8zqf5yiqq6k6mr28a20yg37whb8iw527pavvm74knzx3lgk";
+    "x86_64-darwin" = "03r2cvim7swq1fjxh6m9f7rifww3hddnyzpzniqb5132nnq4mrmc";
   }.${stdenv.system};
 
   archive_fmt = if stdenv.system == "x86_64-darwin" then "zip" else "tar.gz";
 
   rpath = lib.concatStringsSep ":" [
     atomEnv.libPath
+    "${lib.makeLibraryPath [libsecret]}/libsecret-1.so.0"
     "${lib.makeLibraryPath [libXScrnSaver]}/libXss.so.1"
     "${lib.makeLibraryPath [libxkbfile]}/libxkbfile.so.1"
     "$out/lib/vscode"
@@ -47,8 +48,8 @@ in
     };
 
     buildInputs = if stdenv.system == "x86_64-darwin"
-      then [ unzip makeWrapper libXScrnSaver ]
-      else [ makeWrapper libXScrnSaver libxkbfile ];
+      then [ unzip makeWrapper libXScrnSaver libsecret ]
+      else [ makeWrapper libXScrnSaver libxkbfile libsecret ];
 
     installPhase =
       if stdenv.system == "x86_64-darwin" then ''
@@ -58,6 +59,9 @@ in
       '' else ''
         mkdir -p $out/lib/vscode $out/bin
         cp -r ./* $out/lib/vscode
+
+        substituteInPlace $out/lib/vscode/bin/code --replace '"$CLI" "$@"' '"$CLI" "--skip-getting-started" "$@"'
+
         ln -s $out/lib/vscode/bin/code $out/bin
 
         mkdir -p $out/share/applications
@@ -72,16 +76,22 @@ in
         --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
         --set-rpath "${rpath}" \
         $out/lib/vscode/code
+
+      patchelf \
+        --set-rpath "${rpath}" \
+        $out/lib/vscode/resources/app/node_modules.asar.unpacked/keytar/build/Release/keytar.node
+
+      ln -s ${lib.makeLibraryPath [libsecret]}/libsecret-1.so.0 $out/lib/vscode/libsecret-1.so.0
     '';
 
     meta = with stdenv.lib; {
       description = ''
         Open source source code editor developed by Microsoft for Windows,
-        Linux and OS X
+        Linux and macOS
       '';
       longDescription = ''
         Open source source code editor developed by Microsoft for Windows,
-        Linux and OS X. It includes support for debugging, embedded Git
+        Linux and macOS. It includes support for debugging, embedded Git
         control, syntax highlighting, intelligent code completion, snippets,
         and code refactoring. It is also customizable, so users can change the
         editor's theme, keyboard shortcuts, and preferences

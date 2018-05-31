@@ -1,33 +1,28 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''nibbles'';
-  version = ''20170403-git'';
+  version = ''20180430-git'';
+
+  parasites = [ "nibbles/tests" ];
 
   description = ''A library for accessing octet-addressed blocks of data in big- and little-endian orders'';
 
-  deps = [ ];
+  deps = [ args."rt" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/nibbles/2017-04-03/nibbles-20170403-git.tgz'';
-    sha256 = ''0bg7jwhqhm3qmpzk21gjv50sl0grdn68d770cqfs7in62ny35lk4'';
+    url = ''http://beta.quicklisp.org/archive/nibbles/2018-04-30/nibbles-20180430-git.tgz'';
+    sha256 = ''1z79x7w0qp66vdxq7lac1jkc56brmpy0x0wmm9flf91d8y9lh34g'';
   };
 
-  overrides = x: {
-    postInstall = ''
-      find "$out/lib/common-lisp/" -name '*.asd' | grep -iv '/nibbles[.]asd${"$"}' |
-        while read f; do
-          env -i \
-          NIX_LISP="$NIX_LISP" \
-          NIX_LISP_PRELAUNCH_HOOK="nix_lisp_run_single_form '(progn
-            (asdf:load-system :$(basename "$f" .asd))
-            (asdf:perform (quote asdf:compile-bundle-op) :$(basename "$f" .asd))
-            (ignore-errors (asdf:perform (quote asdf:deliver-asd-op) :$(basename "$f" .asd)))
-            )'" \
-            "$out"/bin/*-lisp-launcher.sh ||
-          mv "$f"{,.sibling}; done || true
-    '';
-  };
+  packageName = "nibbles";
+
+  asdFilesToKeep = ["nibbles.asd"];
+  overrides = x: x;
 }
-/* (SYSTEM nibbles DESCRIPTION A library for accessing octet-addressed blocks of data in big- and little-endian orders SHA256
-    0bg7jwhqhm3qmpzk21gjv50sl0grdn68d770cqfs7in62ny35lk4 URL http://beta.quicklisp.org/archive/nibbles/2017-04-03/nibbles-20170403-git.tgz MD5
-    5683a0a5510860a036b2a272036cda87 NAME nibbles TESTNAME NIL FILENAME nibbles DEPS NIL DEPENDENCIES NIL VERSION 20170403-git SIBLINGS NIL) */
+/* (SYSTEM nibbles DESCRIPTION
+    A library for accessing octet-addressed blocks of data in big- and little-endian orders
+    SHA256 1z79x7w0qp66vdxq7lac1jkc56brmpy0x0wmm9flf91d8y9lh34g URL
+    http://beta.quicklisp.org/archive/nibbles/2018-04-30/nibbles-20180430-git.tgz
+    MD5 8d8d1cc72ce11253d01854219ea20a06 NAME nibbles FILENAME nibbles DEPS
+    ((NAME rt FILENAME rt)) DEPENDENCIES (rt) VERSION 20180430-git SIBLINGS NIL
+    PARASITES (nibbles/tests)) */

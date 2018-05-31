@@ -1,21 +1,21 @@
-{ stdenv, lib, fetchurl, dpkg, gtk2, atk, glib, pango, gdk_pixbuf, cairo
+{ stdenv, lib, fetchurl, dpkg, atk, glib, pango, gdk_pixbuf, gnome3, gtk2, cairo
 , freetype, fontconfig, dbus, libXi, libXcursor, libXdamage, libXrandr
 , libXcomposite, libXext, libXfixes, libXrender, libX11, libXtst, libXScrnSaver
-, GConf, nss, nspr, alsaLib, cups, expat, libudev, libpulseaudio }:
+, libxcb, nss, nspr, alsaLib, cups, expat, libudev, libpulseaudio }:
 
 let
   libPath = stdenv.lib.makeLibraryPath [
-    stdenv.cc.cc gtk2 atk glib pango gdk_pixbuf cairo freetype fontconfig dbus
-    libXi libXcursor libXdamage libXrandr libXcomposite libXext libXfixes
-    libXrender libX11 libXtst libXScrnSaver GConf nss nspr alsaLib cups expat libudev libpulseaudio
+    stdenv.cc.cc gtk2 gnome3.gconf atk glib pango gdk_pixbuf cairo freetype fontconfig dbus
+    libXi libXcursor libXdamage libXrandr libXcomposite libXext libXfixes libxcb
+    libXrender libX11 libXtst libXScrnSaver nss nspr alsaLib cups expat libudev libpulseaudio
   ];
 in
 stdenv.mkDerivation rec {
-  version = "1.3.1";
+  version = "2.0.0";
   name = "hyper-${version}";
   src = fetchurl {
-    url = "https://github.com/zeit/hyper/releases/download/${version}/hyper_${version}.deb";
-    sha256 = "1i1rnq10a9kid8lggrd1gp9g08v98la8idnyk4kx4vn0svqy7nvl";
+    url = "https://github.com/zeit/hyper/releases/download/${version}/hyper_${version}_amd64.deb";
+    sha256 = "04241kjy65pnp5q9z901910rmvcx18x0qaqfl31i0l4c2xj83ws0";
   };
   buildInputs = [ dpkg ];
   unpackPhase = ''
@@ -36,6 +36,6 @@ stdenv.mkDerivation rec {
     homepage    = https://hyper.is/;
     maintainers = with maintainers; [ puffnfresh ];
     license     = licenses.mit;
-    platforms   = [ "i686-linux" "x86_64-linux" ];
+    platforms   = [ "x86_64-linux" ];
   };
 }

@@ -1,18 +1,18 @@
-{ stdenv, fetchurl, ocaml, findlib, ocamlbuild, opam, topkg
+{ stdenv, fetchurl, ocaml, findlib, ocamlbuild, topkg
 , astring, fmt, fpath, logs, rresult
 }:
 
 stdenv.mkDerivation rec {
 	name = "ocaml${ocaml.version}-bos-${version}";
-	version = "0.1.4";
+	version = "0.1.6";
 	src = fetchurl {
 		url = "http://erratique.ch/software/bos/releases/bos-${version}.tbz";
-		sha256 = "1ly66lysk4w6mdy4k1n3ynlpfpq7lw4wshcpzgx58v6x613w5s7q";
+		sha256 = "1z9sbziqddf770y94pd0bffsp1wdr1v3kp2p00pr27adv7h7dgls";
 	};
 
 	unpackCmd = "tar xjf $src";
 
-	buildInputs = [ ocaml findlib ocamlbuild opam topkg ];
+	buildInputs = [ ocaml findlib ocamlbuild topkg ];
 	propagatedBuildInputs = [ astring fmt fpath logs rresult ];
 
 	inherit (topkg) buildPhase installPhase;

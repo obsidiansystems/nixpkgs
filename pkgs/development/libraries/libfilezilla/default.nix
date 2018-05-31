@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   name = "libfilezilla-${version}";
-  version = "0.9.2";
+  version = "0.12.2";
 
   src = fetchurl {
     url = "http://download.filezilla-project.org/libfilezilla/${name}.tar.bz2";
-    sha256 = "1qrvddjqz5jv6920gcfqsrsjksi2845hn96g0z3vpcsm6nifhqn1";
+    sha256 = "1v461hwdk74whp89s490dj1z18gfqf9bz9140m5f11rsvrpid33p";
   };
 
   meta = with stdenv.lib; {

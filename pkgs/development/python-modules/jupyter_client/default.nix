@@ -1,30 +1,33 @@
 { lib
 , buildPythonPackage
 , fetchPypi
-, nose
 , traitlets
 , jupyter_core
 , pyzmq
 , dateutil
 , isPyPy
 , py
+, ipykernel
+, ipython
+, mock
+, pytest
+, tornado
 }:
 
 buildPythonPackage rec {
   pname = "jupyter_client";
-  version = "5.0.1";
-  name = "${pname}-${version}";
+  version = "5.2.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1fe573880b5ca4469ed0bece098f4b910c373d349e12525e1ea3566f5a14536b";
+    sha256 = "27befcf0446b01e29853014d6a902dd101ad7d7f94e2252b1adca17c3466b761";
   };
 
-  buildInputs = [ nose ];
-  propagatedBuildInputs = [traitlets jupyter_core pyzmq dateutil] ++ lib.optional isPyPy py;
+  checkInputs = [ ipykernel ipython mock pytest ];
+  propagatedBuildInputs = [traitlets jupyter_core pyzmq dateutil tornado ] ++ lib.optional isPyPy py;
 
   checkPhase = ''
-    nosetests -v
+    py.test
   '';
 
   # Circular dependency with ipykernel

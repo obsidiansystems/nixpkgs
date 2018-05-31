@@ -1,17 +1,16 @@
-{ stdenv, fetchurl, cmake, qmakeHook, makeQtWrapper, qtbase, perl, python, php }:
+{ stdenv, fetchurl, cmake, qmake, qtbase, perl, python, php, kcachegrind, fetchpatch }:
 
-stdenv.mkDerivation rec {
-  name = "qcachegrind-${version}";
-  version = "16.12.3";
+let
+  name = stdenv.lib.replaceStrings ["kcachegrind"] ["qcachegrind"] kcachegrind.name;
 
-  src = fetchurl {
-    url = "http://download.kde.org/stable/applications/${version}/src/kcachegrind-${version}.tar.xz";
-    sha256 = "109y94nz96izzsjjdpj9c6g344rcr86srp5w0433mssbyvym4x7q";
-  };
+in stdenv.mkDerivation rec {
+  inherit name;
+
+  src = kcachegrind.src;
 
   buildInputs = [ qtbase perl python php ];
 
-  nativeBuildInputs = [ qmakeHook makeQtWrapper ];
+  nativeBuildInputs = [ qmake ];
 
   postInstall = ''
      mkdir -p $out/bin
@@ -25,13 +24,11 @@ stdenv.mkDerivation rec {
     mkdir -p $out/Applications
     cp cgview/cgview.app/Contents/MacOS/cgview $out/bin
     cp -a qcachegrind/qcachegrind.app $out/Applications
-    wrapQtProgram $out/Applications/qcachegrind.app/Contents/MacOS/qcachegrind
   '' else ''
     install qcachegrind/qcachegrind cgview/cgview -t "$out/bin"
-    wrapQtProgram "$out/bin/qcachegrind"
     install -Dm644 qcachegrind/qcachegrind.desktop -t "$out/share/applications"
-    install -Dm644 kcachegrind/hi32-app-kcachegrind.png "$out/share/icons/hicolor/32x32/apps/kcachegrind.png"
-    install -Dm644 kcachegrind/hi48-app-kcachegrind.png "$out/share/icons/hicolor/48x48/apps/kcachegrind.png"
+    install -Dm644 kcachegrind/32-apps-kcachegrind.png "$out/share/icons/hicolor/32x32/apps/kcachegrind.png"
+    install -Dm644 kcachegrind/48-apps-kcachegrind.png "$out/share/icons/hicolor/48x48/apps/kcachegrind.png"
   '');
 
   meta = with stdenv.lib; {

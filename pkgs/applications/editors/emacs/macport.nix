@@ -4,26 +4,26 @@
 }:
 
 stdenv.mkDerivation rec {
-  emacsVersion = "25.2";
+  emacsVersion = "26.1";
   emacsName = "emacs-${emacsVersion}";
-  macportVersion = "6.3";
+  macportVersion = "7.0";
   name = "emacs-mac-${emacsVersion}-${macportVersion}";
 
   builder = ./builder.sh;
 
   src = fetchurl {
-    url = "mirror:///gnu/emacs/${emacsName}.tar.xz";
-    sha256 = "1ykkq0xl28ljdg61bm6gzy04ww86ajms98gix72qg6cpr6a53dar";
+    url = "mirror://gnu/emacs/${emacsName}.tar.xz";
+    sha256 = "0b6k1wq44rc8gkvxhi1bbjxbz3cwg29qbq8mklq2az6p1hjgrx0w";
   };
 
   macportSrc = fetchurl {
     url = "ftp://ftp.math.s.chiba-u.ac.jp/emacs/${emacsName}-mac-${macportVersion}.tar.gz";
-    sha256 = "1dz11frk3ya3842lb89ixzpns9bz5f9njxdkyvjy75gfymqfhhzv";
+    sha256 = "02dbasiv1szvlzi0avb7bi9xwpw2lssj3kzbn8pi5vmziqhvgfhz";
   };
 
   hiresSrc = fetchurl {
-    url = "ftp://ftp.math.s.chiba-u.ac.jp/emacs/emacs-hires-icons-2.0.tar.gz";
-    sha256 = "1ari8n3y1d4hdl9npg3c3hk27x7cfkwfgyhgzn1vlqkrdah4z434";
+    url = "ftp://ftp.math.s.chiba-u.ac.jp/emacs/emacs-hires-icons-3.0.tar.gz";
+    sha256 = "0f2wzdw2a3ac581322b2y79rlj3c9f33ddrq9allj97r1si6v5xk";
   };
 
   enableParallelBuilding = true;

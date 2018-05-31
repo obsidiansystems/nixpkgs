@@ -3,15 +3,16 @@
 
 stdenv.mkDerivation rec {
   name = "accountsservice-${version}";
-  version = "0.6.43";
+  version = "0.6.49";
 
   src = fetchurl {
-    url = "http://www.freedesktop.org/software/accountsservice/accountsservice-${version}.tar.xz";
-    sha256 = "1k6n9079001sgcwlkq0bz6mkn4m8y4dwf6hs1qm85swcld5ajfzd";
+    url = "https://www.freedesktop.org/software/accountsservice/accountsservice-${version}.tar.xz";
+    sha256 = "032ndvs18gla49dvc9vg35cwczg0wpv2wscp1m3yjfdqdpams7i5";
   };
 
-  buildInputs = [ pkgconfig glib intltool libtool makeWrapper
-                  gobjectIntrospection polkit systemd ];
+  nativeBuildInputs = [ pkgconfig makeWrapper ];
+
+  buildInputs = [ glib intltool libtool gobjectIntrospection polkit systemd ];
 
   configureFlags = [ "--with-systemdsystemunitdir=$(out)/etc/systemd/system"
                      "--localstatedir=/var" ];
@@ -37,7 +38,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "D-Bus interface for user account query and manipulation";
-    homepage = http://www.freedesktop.org/wiki/Software/AccountsService;
+    homepage = https://www.freedesktop.org/wiki/Software/AccountsService;
     license = licenses.gpl3;
     maintainers = with maintainers; [ pSub ];
     platforms = with platforms; linux;

@@ -1,10 +1,11 @@
-{ stdenv, fetchurl, patchelf, bash
+{ stdenv, fetchurl, patchelf, makeWrapper
 
 # Linked dynamic libraries.
 , glib, fontconfig, freetype, pango, cairo, libX11, libXi, atk, gconf, nss, nspr
 , libXcursor, libXext, libXfixes, libXrender, libXScrnSaver, libXcomposite, libxcb
 , alsaLib, libXdamage, libXtst, libXrandr, expat, cups
-, dbus_libs, gtk2, gtk3, gdk_pixbuf, gcc-unwrapped
+, dbus_libs, gtk2, gtk3, gdk_pixbuf, gcc-unwrapped, at-spi2-atk
+, kerberos
 
 # command line arguments which are always set e.g "--disable-gpu"
 , commandLineArgs ? ""
@@ -31,16 +32,21 @@
 
 # Only needed for getting information about upstream binaries
 , chromium
+
+, gsettings-desktop-schemas
+, gnome2, gnome3
 }:
 
 with stdenv.lib;
-
-with chromium.upstream-info;
 
 let
   opusWithCustomModes = libopus.override {
     withCustomModes = true;
   };
+
+  version = chromium.upstream-info.version;
+  gtk = if (versionAtLeast version "59.0.0.0") then gtk3 else gtk2;
+  gnome = if (versionAtLeast version "59.0.0.0") then gnome3 else gnome2;
 
   deps = [
     glib fontconfig freetype pango cairo libX11 libXi atk gconf nss nspr
@@ -51,9 +57,10 @@ let
     libexif
     liberation_ttf curl utillinux xdg_utils wget
     flac harfbuzz icu libpng opusWithCustomModes snappy speechd
-    bzip2 libcap
+    bzip2 libcap at-spi2-atk
+    kerberos
   ] ++ optional pulseSupport libpulseaudio
-    ++ (if (versionAtLeast version "59.0.0.0") then [gtk3] else [gtk2]);
+    ++ [ gtk ];
 
   suffix = if channel != "stable" then "-" + channel else "";
 
@@ -62,9 +69,17 @@ in stdenv.mkDerivation rec {
 
   name = "google-chrome${suffix}-${version}";
 
-  src = binary;
+  src = chromium.upstream-info.binary;
 
-  buildInputs = [ patchelf ];
+  buildInputs = [
+    patchelf makeWrapper
+
+    # needed for GSETTINGS_SCHEMAS_PATH
+    gsettings-desktop-schemas glib gtk
+
+    # needed for XDG_ICON_DIRS
+    gnome.defaultIconTheme
+  ];
 
   unpackPhase = ''
     ar x $src
@@ -105,13 +120,11 @@ in stdenv.mkDerivation rec {
       mv "$icon_file" "$logo_output_path/google-$appname.png"
     done
 
-    cat > $exe << EOF
-    #!${bash}/bin/sh
-    export LD_LIBRARY_PATH=$rpath\''${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}
-    export PATH=$binpath\''${PATH:+:\$PATH}
-    $out/share/google/$appname/google-$appname ${commandLineArgs} "\$@"
-    EOF
-    chmod +x $exe
+    makeWrapper "$out/share/google/$appname/google-$appname" "$exe" \
+      --prefix LD_LIBRARY_PATH : "$rpath" \
+      --prefix PATH            : "$binpath" \
+      --prefix XDG_DATA_DIRS   : "$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH" \
+      --add-flags ${escapeShellArg commandLineArgs}
 
     for elf in $out/share/google/$appname/{chrome,chrome-sandbox,nacl_helper}; do
       patchelf --set-rpath $rpath $elf
@@ -124,6 +137,6 @@ in stdenv.mkDerivation rec {
     homepage = https://www.google.com/chrome/browser/;
     license = licenses.unfree;
     maintainers = [ maintainers.msteen ];
-    platforms = platforms.linux;
+    platforms = [ "x86_64-linux" ];
   };
 }

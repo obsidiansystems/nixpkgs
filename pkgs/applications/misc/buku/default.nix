@@ -1,16 +1,29 @@
-{ stdenv, pythonPackages, fetchFromGitHub,
-}:
+{ stdenv, python3, fetchFromGitHub, fetchpatch }:
 
-with pythonPackages; buildPythonApplication rec {
-  version = "2.9";
-  name = "buku-${version}";
+with python3.pkgs; buildPythonApplication rec {
+  version = "3.7";
+  pname = "buku";
 
   src = fetchFromGitHub {
     owner = "jarun";
     repo = "buku";
     rev = "v${version}";
-    sha256 = "0ylq0j5w8jvzys4bj9m08bfr1sgf8h2b4fiax6hs6lcwn2882jbr";
+    sha256 = "0qc6xkrhf2phaj9fhym19blr4rr2vllvnyljjz909xr4vsynvb41";
   };
+
+  patches = fetchpatch {
+    url = https://github.com/jarun/Buku/commit/495d6eac4d9371e8ce6d3f601e2bb9e5e74962b4.patch;
+    sha256 = "0py4l5qcgdzqr0iqmcc8ddld1bspk8iwypz4dcr88y70j86588gk";
+  };
+
+  checkInputs = [
+    pytestcov
+    pytest-catchlog
+    hypothesis
+    pytest
+    pylint
+    flake8
+  ];
 
   propagatedBuildInputs = [
     cryptography
@@ -19,20 +32,32 @@ with pythonPackages; buildPythonApplication rec {
     urllib3
   ];
 
-  phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
+  preCheck = ''
+    # Fixes two tests for wrong encoding
+    export PYTHONIOENCODING=utf-8
+
+    # Disables a test which requires internet
+    substituteInPlace tests/test_bukuDb.py \
+      --replace "@pytest.mark.slowtest" "@unittest.skip('skipping')" \
+      --replace "self.assertEqual(shorturl, 'http://tny.im/yt')" "" \
+      --replace "self.assertEqual(url, 'https://www.google.com')" ""
+  '';
 
   installPhase = ''
     make install PREFIX=$out
-  '';
 
-  doCheck = false;
+    mkdir -p $out/share/zsh/site-functions $out/share/bash-completion/completions $out/share/fish/vendor_completions.d
+    cp auto-completion/zsh/* $out/share/zsh/site-functions
+    cp auto-completion/bash/* $out/share/bash-completion/completions
+    cp auto-completion/fish/* $out/share/fish/vendor_completions.d
+  '';
 
   meta = with stdenv.lib; {
     description = "Private cmdline bookmark manager";
     homepage = https://github.com/jarun/Buku;
     license = licenses.gpl3;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ matthiasbeyer infinisil ];
+    maintainers = with maintainers; [ infinisil ];
   };
 }
 

@@ -1,6 +1,5 @@
 { stdenv, lib, fetchgit, fetchurl, makeWrapper,
-  ocaml, unzip, ncurses, curl,
-  aspcudSupport ? !stdenv.isDarwin, aspcud
+  ocaml, unzip, ncurses, curl, aspcud
 }:
 
 assert lib.versionAtLeast ocaml.version "3.12.1";
@@ -48,7 +47,7 @@ in stdenv.mkDerivation rec {
   name = "opam-${version}";
   version = "1.2.2";
 
-  buildInputs = [ unzip curl ncurses ocaml makeWrapper];
+  buildInputs = [ unzip curl ncurses ocaml makeWrapper ];
 
   src = srcs.opam;
 
@@ -72,12 +71,10 @@ in stdenv.mkDerivation rec {
   # Dirty, but apparently ocp-build requires a TERM
   makeFlags = ["TERM=screen"];
 
-  postInstall =
-    if aspcudSupport then ''
-      wrapProgram $out/bin/opam \
-        --suffix PATH : ${aspcud}/bin
-    ''
-    else "";
+  postInstall = ''
+    wrapProgram $out/bin/opam \
+      --suffix PATH : ${aspcud}/bin:${unzip}/bin:${curl}/bin
+  '';
 
   doCheck = false;
 

@@ -1,4 +1,4 @@
-{ fetchurl, stdenv, perl, bison, flex, pkgconfig, glib, libxml2, libintlOrEmpty }:
+{ fetchurl, stdenv, perl, bison, flex, pkgconfig, glib, libxml2, libintl }:
 
 stdenv.mkDerivation rec {
   name = "gstreamer-0.10.36";
@@ -13,8 +13,9 @@ stdenv.mkDerivation rec {
 
   outputs = [ "out" "dev" ];
 
-  buildInputs = [ perl bison flex pkgconfig ];
-  propagatedBuildInputs = [ glib libxml2 ] ++ libintlOrEmpty;
+  nativeBuildInputs = [ pkgconfig libintl ];
+  buildInputs = [ perl bison flex ];
+  propagatedBuildInputs = [ glib libxml2 ];
 
   patchPhase = ''
     sed -i -e 's/^   /\t/' docs/gst/Makefile.in docs/libs/Makefile.in docs/plugins/Makefile.in
@@ -39,7 +40,7 @@ stdenv.mkDerivation rec {
   setupHook = ./setup-hook.sh;
 
   meta = {
-    homepage = http://gstreamer.freedesktop.org;
+    homepage = https://gstreamer.freedesktop.org;
 
     description = "Library for constructing graphs of media-handling components";
 

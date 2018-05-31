@@ -1,20 +1,29 @@
-{ lib, stdenv, fetchurl, interactive ? false, readline ? null, ncurses ? null }:
+{ stdenv, fetchurl, zlib, interactive ? false, readline ? null, ncurses ? null }:
 
 assert interactive -> readline != null && ncurses != null;
 
-stdenv.mkDerivation {
-  name = "sqlite-3.17.0";
+with stdenv.lib;
 
+let
+  archiveVersion = import ./archive-version.nix stdenv.lib;
+in
+
+stdenv.mkDerivation rec {
+  name = "sqlite-${version}";
+  version = "3.23.1";
+
+  # NB! Make sure to update analyzer.nix src (in the same directory).
   src = fetchurl {
-    url = "http://sqlite.org/2017/sqlite-autoconf-3170000.tar.gz";
-    sha256 = "0k472gq0p706jq4529p60znvw02hdf172qxgbdv59q0n7anqbr54";
+    url = "https://sqlite.org/2018/sqlite-autoconf-${archiveVersion version}.tar.gz";
+    sha256 = "09ggapjhqjb2pzk0wkfczil77plijg3d77m2bpzlwx2y7ql2p14j";
   };
 
   outputs = [ "bin" "dev" "out" ];
+  separateDebugInfo = stdenv.isLinux;
 
-  buildInputs = lib.optionals interactive [ readline ncurses ];
+  buildInputs = [ zlib ] ++ optionals interactive [ readline ncurses ];
 
-  configureFlags = [ "--enable-threadsafe" ] ++ lib.optional interactive "--enable-readline";
+  configureFlags = [ "--enable-threadsafe" ] ++ optional interactive "--enable-readline";
 
   NIX_CFLAGS_COMPILE = [
     "-DSQLITE_ENABLE_COLUMN_METADATA"
@@ -30,6 +39,8 @@ stdenv.mkDerivation {
     "-DSQLITE_ENABLE_UNLOCK_NOTIFY"
     "-DSQLITE_SOUNDEX"
     "-DSQLITE_SECURE_DELETE"
+    "-DSQLITE_MAX_VARIABLE_NUMBER=250000"
+    "-DSQLITE_MAX_EXPR_DEPTH=10000"
   ];
 
   # Test for features which may not be available at compile time
@@ -56,9 +67,10 @@ stdenv.mkDerivation {
   '';
 
   meta = {
-    homepage = http://www.sqlite.org/;
     description = "A self-contained, serverless, zero-configuration, transactional SQL database engine";
-    platforms = stdenv.lib.platforms.unix;
-    maintainers = with stdenv.lib.maintainers; [ eelco np ];
+    downloadPage = http://sqlite.org/download.html;
+    homepage = http://www.sqlite.org/;
+    maintainers = with maintainers; [ eelco np ];
+    platforms = platforms.unix;
   };
 }

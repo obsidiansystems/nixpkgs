@@ -1,6 +1,6 @@
-{ stdenv, fetchurl, makeDesktopItem
-, xorg, gtk2, atk, glib, pango, gdk_pixbuf, cairo, freetype, fontconfig
-, gnome2, dbus, nss, nspr, alsaLib, cups, expat, udev, libnotify }:
+{ stdenv, fetchurl, makeDesktopItem, makeWrapper, autoPatchelfHook
+, xorg, atk, glib, pango, gdk_pixbuf, cairo, freetype, fontconfig, gtk2
+, gnome3, dbus, nss, nspr, alsaLib, cups, expat, udev, libnotify, xdg_utils }:
 
 let
   bits = if stdenv.system == "x86_64-linux" then "x64"
@@ -28,25 +28,21 @@ in stdenv.mkDerivation rec {
   # don't remove runtime deps
   dontPatchELF = true;
 
-  deps = (with xorg; [
+  nativeBuildInputs = [ autoPatchelfHook makeWrapper ];
+  buildInputs = (with xorg; [
     libXi libXcursor libXdamage libXrandr libXcomposite libXext libXfixes
     libXrender libX11 libXtst libXScrnSaver
   ]) ++ [
     gtk2 atk glib pango gdk_pixbuf cairo freetype fontconfig dbus
-    gnome2.GConf nss nspr alsaLib cups expat stdenv.cc.cc
-  # runtime deps
-  ] ++ [
-    udev libnotify
+    gnome3.gconf nss nspr alsaLib cups expat stdenv.cc.cc
   ];
+  runtimeDependencies = [ udev.lib libnotify ];
 
   unpackPhase = ''
     tar xzf $src
   '';
 
   installPhase = ''
-    patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" Franz
-    patchelf --set-rpath "$out/opt/franz:${stdenv.lib.makeLibraryPath deps}" Franz
-
     mkdir -p $out/bin $out/opt/franz
     cp -r * $out/opt/franz
     ln -s $out/opt/franz/Franz $out/bin
@@ -59,13 +55,14 @@ in stdenv.mkDerivation rec {
 
   postFixup = ''
     paxmark m $out/opt/franz/Franz
+    wrapProgram $out/opt/franz/Franz --prefix PATH : ${xdg_utils}/bin
   '';
 
   meta = with stdenv.lib; {
     description = "A free messaging app that combines chat & messaging services into one application";
-    homepage = http://meetfranz.com;
+    homepage = https://meetfranz.com;
     license = licenses.free;
-    maintainers = [ stdenv.lib.maintainers.gnidorah ];
+    maintainers = [ maintainers.gnidorah ];
     platforms = ["i686-linux" "x86_64-linux"];
     hydraPlatforms = [];
   };

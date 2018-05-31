@@ -6,6 +6,7 @@ with lib;
 let
 
   cfg = config.hardware.pulseaudio;
+  alsaCfg = config.sound;
 
   systemWide = cfg.enable && cfg.systemWide;
   nonSystemWide = cfg.enable && !cfg.systemWide;
@@ -44,7 +45,7 @@ let
   uid = ids.uids.pulseaudio;
   gid = ids.gids.pulseaudio;
 
-  stateDir = "/var/run/pulse";
+  stateDir = "/run/pulse";
 
   # Create pulse/client.conf even if PulseAudio is disabled so
   # that we can disable the autospawn feature in programs that
@@ -76,6 +77,7 @@ let
     ctl.!default {
       type pulse
     }
+    ${alsaCfg.extraConfig}
   '');
 
 in {
@@ -99,7 +101,8 @@ in {
           each user that tries to use the sound system. The server runs
           with user privileges. This is the recommended and most secure
           way to use PulseAudio. If true, one system-wide PulseAudio
-          server is launched on boot, running as the user "pulse".
+          server is launched on boot, running as the user "pulse", and
+          only users in the "audio" group will have access to the server.
           Please read the PulseAudio documentation for more details.
         '';
       };
@@ -211,18 +214,26 @@ in {
     (mkIf cfg.enable {
       environment.systemPackages = [ overriddenPackage ];
 
+      sound.enable = true;
+
       environment.etc = [
         { target = "asound.conf";
           source = alsaConf; }
 
         { target = "pulse/daemon.conf";
           source = writeText "daemon.conf" (lib.generators.toKeyValue {} cfg.daemon.config); }
+
+        { target = "openal/alsoft.conf";
+          source = writeText "alsoft.conf" "drivers=pulse"; }
+
+        { target = "libao.conf";
+          source = writeText "libao.conf" "default_driver=pulse"; }
       ];
 
       # Allow PulseAudio to get realtime priority using rtkit.
       security.rtkit.enable = true;
 
-      systemd.packages = [ cfg.package ];
+      systemd.packages = [ overriddenPackage ];
     })
 
     (mkIf hasZeroconf {

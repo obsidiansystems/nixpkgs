@@ -1,7 +1,7 @@
 { stdenv, fetchurl, fftwSinglePrec, libxslt, lv2, pkgconfig }:
 
 stdenv.mkDerivation rec {
-  name = "swh-lv2-v${version}";
+  name = "swh-lv2-${version}";
   version = "1.0.16";
 
   src = fetchurl {
@@ -14,7 +14,8 @@ stdenv.mkDerivation rec {
     sed -e "s#PREFIX = /usr/local#PREFIX = $out#" -i Makefile
   '';
 
-  buildInputs = [ fftwSinglePrec lv2 pkgconfig ];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ fftwSinglePrec lv2 ];
 
   installPhase = "make install-system";
 

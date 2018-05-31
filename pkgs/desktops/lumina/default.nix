@@ -1,35 +1,38 @@
-{ stdenv, fetchFromGitHub, fluxbox, xscreensaver, desktop_file_utils, numlockx,
-  xorg, qtbase, qtsvg, qtmultimedia, qtx11extras, qmakeHook, qttools, oxygen-icons5
+{ stdenv, fetchFromGitHub, fluxbox, xscreensaver, desktop-file-utils,
+  numlockx, xorg, qtbase, qtsvg, qtmultimedia, qtx11extras, qmake,
+  qttools, poppler_qt5, wrapGAppsHook
 }:
 
 stdenv.mkDerivation rec {
   name = "lumina-${version}";
-  version = "1.2.0-p1";
+  version = "1.4.0-p1";
 
   src = fetchFromGitHub {
     owner = "trueos";
     repo = "lumina";
     rev = "v${version}";
-    sha256 = "0k16lcpxp9avwkadbbyqficd1wxsmwian5ji38wyax76v22yq7p6";
+    sha256 = "0jin0a2s6pjbpw7w1bz67dgqp0xlpw1a7nh8zv0qwdf954zczanp";
   };
 
   nativeBuildInputs = [
-    qmakeHook
+    qmake
     qttools
+    wrapGAppsHook
   ];
 
   buildInputs = [
     xorg.libxcb
+    xorg.libXdamage
     xorg.xcbutilwm
     xorg.xcbutilimage
     qtbase
     qtsvg
     qtmultimedia
     qtx11extras
-    oxygen-icons5
+    poppler_qt5
     fluxbox
     xscreensaver
-    desktop_file_utils
+    desktop-file-utils
     numlockx
   ];
 
@@ -45,12 +48,24 @@ stdenv.mkDerivation rec {
   '';
 
   postPatch = ''
+    # Fix location of poppler-qt5.h
+    substituteInPlace src-qt5/desktop-utils/lumina-pdf/mainUI.h \
+      --replace '#include <poppler-qt5.h>' '#include <poppler/qt5/poppler-qt5.h>'
+
+    # Fix plugin dir
+    substituteInPlace src-qt5/core/lumina-theme-engine/lthemeengine.pri \
+      --replace "\$\$[QT_INSTALL_PLUGINS]" "$out/$qtPluginPrefix"
+
     # Fix location of fluxbox styles
     substituteInPlace src-qt5/core-utils/lumina-config/pages/page_fluxbox_settings.cpp \
       --replace 'LOS::AppPrefix()+"share/fluxbox' "\"${fluxbox}/share/fluxbox"
   '';
 
-  qmakeFlags = [ "LINUX_DISTRO=NixOS" "CONFIG+=WITH_I18N" ];
+  qmakeFlags = [
+    "LINUX_DISTRO=NixOS"
+    "CONFIG+=WITH_I18N"
+    "LRELEASE=${stdenv.lib.getDev qttools}/bin/lrelease"
+  ];
 
   enableParallelBuilding = true;
 
