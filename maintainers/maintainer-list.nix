@@ -2770,6 +2770,11 @@
     github = "nocoolnametom";
     name = "Tom Doggett";
   };
+  nonfreeblob = {
+    email = "nonfreeblob@yandex.com";
+    github = "nonfreeblob";
+    name ="nonfreeblob";
+  };
   notthemessiah = {
     email = "brian.cohen.88@gmail.com";
     github = "notthemessiah";
@@ -3535,6 +3540,11 @@
     email = "freshdried@gmail.com";
     github = "sleexyz";
     name = "Sean Lee";
+  };
+  smaret = {
+    email = "sebastien.maret@icloud.com";
+    github = "smaret";
+    name = "Sébastien Maret";
   };
   smironov = {
     email = "grrwlf@gmail.com";
