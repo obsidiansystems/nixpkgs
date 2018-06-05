@@ -24,6 +24,22 @@ self: super: {
   ghci = null;
   haskeline = null;
   hpc = null;
+
+  # A few things for hspec*:
+  #
+  #   1. Break cycles for test
+  #
+  #   2. https://github.com/hspec/hspec/pull/355 The buildTool will be properly
+  #      cabal2nixed when run on the patched cabal file.
+  hspec = let
+    breakCycles = super.hspec_2_5_3.override { stringbuilder = dontCheck self.stringbuilder; };
+  in addTestToolDepend breakCycles self.hspec-meta;
+  hspec-core = let
+    breakCycles = super.hspec-core_2_5_3.override { silently = dontCheck self.silently; temporary = dontCheck self.temporary; };
+  in addTestToolDepend breakCycles self.hspec-meta;
+  hspec-discover = addTestToolDepend super.hspec-discover_2_5_3 self.hspec-meta;
+  hspec-smallcheck = addTestToolDepend self.hspec-smallcheck_0_5_2 self.hspec-meta;
+
   integer-gmp = null;
   mtl = null;
   parsec = null;
@@ -58,5 +74,17 @@ self: super: {
   # https://github.com/jaor/xmobar/issues/356
   xmobar = super.xmobar.overrideScope (self: super: { hinotify = self.hinotify_0_3_9; });
   hinotify_0_3_9 = dontCheck (doJailbreak super.hinotify_0_3_9); # allow async 2.2.x
+
+  # Older versions don't compile.
+  base-compat = self.base-compat_0_10_1;
+  brick = self.brick_0_37_1;
+  dhall = self.dhall_1_14_0;
+  dhall_1_13_0 = doJailbreak super.dhall_1_14_0;  # support ansi-terminal 0.8.x
+  HaTeX = self.HaTeX_3_19_0_0;
+  hpack = addTestBuildDepend self.hpack_0_28_2 super.hspec-discover;
+  matrix = self.matrix_0_3_6_1;
+  pandoc = self.pandoc_2_2_1;
+  pandoc-types = self.pandoc-types_1_17_5_1;
+  wl-pprint-text = self.wl-pprint-text_1_2_0_0;
 
 }
