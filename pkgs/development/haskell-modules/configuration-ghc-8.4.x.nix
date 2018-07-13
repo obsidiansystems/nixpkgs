@@ -81,7 +81,6 @@ self: super: {
   dhall = self.dhall_1_14_0;
   dhall_1_13_0 = doJailbreak super.dhall_1_14_0;  # support ansi-terminal 0.8.x
   HaTeX = self.HaTeX_3_19_0_0;
-  hpack = addTestBuildDepend self.hpack_0_28_2 super.hspec-discover;
   matrix = self.matrix_0_3_6_1;
   pandoc = self.pandoc_2_2_1;
   pandoc-types = self.pandoc-types_1_17_5_1;
