@@ -308,6 +308,7 @@ stdenv.mkDerivation ({
     # Basic configuration
     [
       "--enable-lto"
+      "--disable-libstdcxx"
       "--disable-libstdcxx-pch"
       "--without-included-gettext"
       "--with-system-zlib"
