@@ -1,4 +1,4 @@
-{ lowPrio, newScope, stdenv, targetPlatform, cmake, libstdcxxHook
+{ lowPrio, newScope, stdenv, targetPlatform, cmake
 , libxml2, python2, isl, fetchurl, overrideCC, wrapCCWith
 , darwin
 , buildLlvmTools # tools, but from the previous stage, for cross
@@ -49,7 +49,6 @@ let
     libstdcxxClang = wrapCCWith rec {
       cc = tools.clang-unwrapped;
       extraPackages = [
-        libstdcxxHook
         targetLlvmLibraries.compiler-rt
       ];
       extraBuildCommands = mkExtraBuildCommands cc;

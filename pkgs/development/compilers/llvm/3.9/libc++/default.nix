@@ -35,12 +35,12 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  linkCxxAbi = stdenv.isLinux;
-
-  setupHooks = [
-    ../../../../../build-support/setup-hooks/role.bash
-    ./setup-hook.sh
-  ];
+  postFixup = ''
+    mkdir -p $out/nix-support
+    echo "include include/c++/v1" > $out/nix-support/nix-cflags-compile-include-dirs
+    echo "-stdlib=libc++" ${stdenv.lib.optionalString stdenv.isLinux "-lc++abi"} \
+      > $out/nix-support/nix-cflags-link
+  '';
 
   meta = {
     homepage = http://libcxx.llvm.org/;

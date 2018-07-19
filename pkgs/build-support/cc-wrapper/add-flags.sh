@@ -7,8 +7,6 @@
 var_templates_list=(
     NIX+CFLAGS_COMPILE
     NIX+CFLAGS_LINK
-    NIX+CXXSTDLIB_COMPILE
-    NIX+CXXSTDLIB_LINK
 )
 var_templates_bool=(
     NIX+ENFORCE_NO_NATIVE

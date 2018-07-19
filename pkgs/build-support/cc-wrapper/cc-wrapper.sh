@@ -124,13 +124,6 @@ if [ "$NIX_@infixSalt@_ENFORCE_NO_NATIVE" = 1 ]; then
     params=(${rest+"${rest[@]}"})
 fi
 
-if [[ "$isCpp" = 1 ]]; then
-    if [[ "$cppInclude" = 1 ]]; then
-        NIX_@infixSalt@_CFLAGS_COMPILE+=" ${NIX_@infixSalt@_CXXSTDLIB_COMPILE-@default_cxx_stdlib_compile@}"
-    fi
-    NIX_@infixSalt@_CFLAGS_LINK+=" $NIX_@infixSalt@_CXXSTDLIB_LINK"
-fi
-
 source @out@/nix-support/add-hardening.sh
 
 # Add the flags for the C compiler proper.

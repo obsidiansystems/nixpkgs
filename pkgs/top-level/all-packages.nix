@@ -6322,10 +6322,6 @@ with pkgs;
     stripped = false;
   }));
 
-  libstdcxxHook = makeSetupHook
-    { substitutions = { gcc = gcc-unwrapped; }; }
-    ../development/compilers/gcc/libstdc++-hook.sh;
-
   # Can't just overrideCC, because then the stdenv-cross mkDerivation will be
   # thrown away. TODO: find a better solution for this.
   crossLibcStdenv = buildPackages.makeStdenvCross {

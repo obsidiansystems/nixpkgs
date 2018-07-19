@@ -1,4 +1,4 @@
-{ newScope, stdenv, libstdcxxHook, cmake, libxml2, python2, isl, fetchurl
+{ newScope, stdenv, cmake, libxml2, python2, isl, fetchurl
 , overrideCC, wrapCCWith, darwin
 , buildLlvmTools # tools, but from the previous stage, for cross
 , targetLlvmLibraries # libraries, but from the next stage, for cross
@@ -32,7 +32,6 @@ let
 
     libstdcxxClang = wrapCCWith {
       cc = tools.clang-unwrapped;
-      extraPackages = [ libstdcxxHook ];
     };
 
     libcxxClang = wrapCCWith {

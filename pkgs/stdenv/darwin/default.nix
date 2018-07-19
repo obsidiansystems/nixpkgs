@@ -168,13 +168,17 @@ in rec {
             ln -s ${bootstrapTools}/lib/libc++.dylib $out/lib/libc++.dylib
             ln -s ${bootstrapTools}/include/c++      $out/include/c++
           '';
-          linkCxxAbi = false;
-          setupHook = ../../development/compilers/llvm/3.9/libc++/setup-hook.sh;
+          preFixup = ''
+            mkdir -p "$out/nix-support"
+            echo "include include/c++/v1" > $out/nix-support/nix-cflags-compile-include-dirs
+            echo "-stdlib=libc++" > $out/nix-support/nix-cflags-link
+          '';
         };
 
         libcxxabi = stdenv.mkDerivation {
           name = "bootstrap-stage0-libcxxabi";
-          buildCommand = ''
+          phases = [ "installPhase" "fixupPhase" ];
+          installPhase = ''
             mkdir -p $out/lib
             ln -s ${bootstrapTools}/lib/libc++abi.dylib $out/lib/libc++abi.dylib
           '';
