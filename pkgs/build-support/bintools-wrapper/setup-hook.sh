@@ -15,13 +15,20 @@ bintoolsWrapper_addLDVars () {
     local role_post role_pre
     getHostRoleEnvHook
 
-    if [[ -d "$1/lib64" && ! -L "$1/lib64" ]]; then
-        export NIX_${role_pre}LDFLAGS+=" -L$1/lib64"
+    local -a dirs=()
+    if [[ -f "$1/nix-support/nix-ldflags-link-dirs" ]]; then
+        dirs+=($(< "$1/nix-support/nix-ldflags-link-dirs"))
+    else
+        if [[ -d "$1/lib64" && ! -L "$1/lib64" ]]; then
+            dirs+=("lib64")
+        fi
+        if [[ -d "$1/lib" ]]; then
+            dirs+=("lib")
+        fi
     fi
-
-    if [[ -d "$1/lib" ]]; then
-        export NIX_${role_pre}LDFLAGS+=" -L$1/lib"
-    fi
+    for dir in ${dirs[@]+"${dirs[@]}"}; do
+        export NIX_${role_pre}LDFLAGS+=" -L$1/$dir"
+    done
 }
 
 # See ../setup-hooks/role.bash

@@ -70,12 +70,28 @@ ccWrapper_addCVars () {
     local role_post role_pre
     getHostRoleEnvHook
 
-    if [[ -d "$1/include" ]]; then
-        export NIX_${role_pre}CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
+    local -a dirs=()
+    if [[ -f "$1/nix-support/nix-cflags-compile-include-dirs" ]]; then
+        dirs+=($(< "$1/nix-support/nix-cflags-compile-include-dirs"))
+    elif [[ -d "$1/include" ]]; then
+        dirs+=("include")
     fi
+    for dir in ${dirs[@]+"${dirs[@]}"}; do
+        export NIX_${role_pre}CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/$dir"
+    done
 
-    if [[ -d "$1/Library/Frameworks" ]]; then
-        export NIX_${role_pre}CFLAGS_COMPILE+=" -F$1/Library/Frameworks"
+    dirs=()
+    if [[ -f "$1/nix-support/nix-cflags-compile-frameworks" ]]; then
+        dirs=($(< "$1/nix-support/nix-cflags-compile-framworks"))
+    elif [[ -d "$1/Library/Frameworks" ]]; then
+        dirs=("Library/Frameworks")
+    fi
+    for dir in ${dirs[@]+"${dirs[@]}"}; do
+        export NIX_${role_pre}CFLAGS_COMPILE+=" -F$1/$dir"
+    done
+
+    if [[ -f "$1/nix-support/nix-cflags-link" ]]; then
+        export NIX_${role_pre}CFLAGS_Link+=" $(< "$1/nix-support/nix-cflags-link")"
     fi
 }
 
