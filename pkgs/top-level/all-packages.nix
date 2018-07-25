@@ -8018,6 +8018,8 @@ with pkgs;
 
   librarian-puppet-go = callPackage ../development/tools/librarian-puppet-go { };
 
+  libatomic = callPackage ../development/libraries/gcc/libatomic { };
+
   libgcc = callPackage ../development/libraries/gcc/libgcc { };
 
   libstdcxx5 = callPackage ../development/libraries/gcc/libstdc++/5.nix { };
