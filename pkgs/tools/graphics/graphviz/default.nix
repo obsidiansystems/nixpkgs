@@ -33,9 +33,7 @@ stdenv.mkDerivation rec {
                     cmd/mingle/Makefile.in plugin/gdiplus/Makefile.in; do
       substituteInPlace "$foo" --replace "-lstdc++" "-lc++"
     done
-  '') + ''
-      substituteInPlace "plugin/xlib/vimdot.sh" --replace "/usr/bin/vim" "\$(command -v vim)"
-  '';
+  '');
 
   preBuild = ''
     sed -e 's@am__append_5 *=.*@am_append_5 =@' -i lib/gvc/Makefile
@@ -44,7 +42,6 @@ stdenv.mkDerivation rec {
   # "command -v" is POSIX, "which" is not
   postInstall = stdenv.lib.optionalString (xorg != null) ''
     sed -i 's|`which lefty`|"'$out'/bin/lefty"|' $out/bin/dotty
-    sed -i 's|which|command -v|' $out/bin/vimdot
   '';
 
   meta = {
