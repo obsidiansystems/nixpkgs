@@ -43,13 +43,13 @@ in
     version = "1.1.0-beta.5";
 
     src =
-      if stdenv.system == "x86_64-linux" then
+      if stdenv.hostPlatform.system == "x86_64-linux" then
         fetchurl {
           url = "https://updates.signal.org/desktop/apt/pool/main/s/signal-desktop-beta/signal-desktop-beta_${version}_amd64.deb";
           sha256 = "1kllym2iazp9i5afrh0vmsqqlh5b8i6f929p5yhl8bl4zd17zwpx";
         }
       else
-        throw "Signal for Desktop is not currently supported on ${stdenv.system}";
+        throw "Signal for Desktop is not currently supported on ${stdenv.hostPlatform.system}";
 
     phases = [ "unpackPhase" "installPhase" ];
     nativeBuildInputs = [ dpkg ];
