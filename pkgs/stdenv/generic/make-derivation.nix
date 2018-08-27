@@ -209,8 +209,8 @@ rec {
 
           # This parameter is sometimes a string, sometimes null, and sometimes a list, yuck
           configureFlags = let inherit (lib) optional elem; in
-            (/**/ if lib.isString configureFlags then [configureFlags]
-             else if configureFlags == null      then []
+            (/**/ if lib.isString configureFlags then builtins.trace "String `configureFlags` is deprecated. After 18.09 it must be a list." [configureFlags]
+             else if configureFlags == null      then builtins.trace "Null `configureFlags` is deprecated. Please use the empty list, `[]`" []
              else                                     configureFlags)
             ++ optional (elem "build"  configurePlatforms) "--build=${stdenv.buildPlatform.config}"
             ++ optional (elem "host"   configurePlatforms) "--host=${stdenv.hostPlatform.config}"
