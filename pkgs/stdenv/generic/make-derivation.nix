@@ -207,11 +207,7 @@ rec {
           propagatedBuildInputs       = lib.elemAt (lib.elemAt propagatedDependencies 1) 1;
           depsTargetTargetPropagated  = lib.elemAt (lib.elemAt propagatedDependencies 2) 0;
 
-          # This parameter is sometimes a string, sometimes null, and sometimes a list, yuck
-          configureFlags = let inherit (lib) optional elem; in
-            (/**/ if lib.isString configureFlags then builtins.trace "String `configureFlags` is deprecated. After 18.09 it must be a list." [configureFlags]
-             else if configureFlags == null      then builtins.trace "Null `configureFlags` is deprecated. Please use the empty list, `[]`" []
-             else                                     configureFlags)
+          configureFlags = let inherit (lib) optional elem; in configureFlags
             ++ optional (elem "build"  configurePlatforms) "--build=${stdenv.buildPlatform.config}"
             ++ optional (elem "host"   configurePlatforms) "--host=${stdenv.hostPlatform.config}"
             ++ optional (elem "target" configurePlatforms) "--target=${stdenv.targetPlatform.config}";

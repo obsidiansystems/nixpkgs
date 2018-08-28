@@ -77,24 +77,6 @@ let
     inherit stdenv;
   };
 
-  # The old identifiers for cross-compiling. These should eventually be removed,
-  # and the packages that rely on them refactored accordingly.
-  platformCompat = self: super: {
-    buildPlatform = builtins.trace
-      "top-level `buildPlatform` is deprecated and will be removed after 18.09. Please use `stdenv.buildPlatform`."
-      super.stdenv.buildPlatform;
-    hostPlatform = builtins.trace
-      "top-level `hostPlatform` is deprecated and will be removed after 18.09. Please use `stdenv.hostPlatform`."
-      super.stdenv.hostPlatform;
-    targetPlatform = builtins.trace
-      "top-level `targetPlatform` is deprecated and will be removed after 18.09. Please use `stdenv.targetPlatform`."
-      super.stdenv.targetPlatform;
-    system = builtins.trace
-      ("top-level `system` is deprecated and will be removed after 18.09."
-       + " `stdenv.buildPlatform.system` is its literal replacement, but you probably want `stdenv.hostPlatform.system` instead.")
-      super.stdenv.buildPlatform.system;
-  };
-
   splice = self: super: import ./splice.nix lib self (buildPackages != null);
 
   allPackages = self: super:
@@ -170,7 +152,6 @@ let
   # previous bootstrapping phases which have already been overlayed.
   toFix = lib.foldl' (lib.flip lib.extends) (self: {}) ([
     stdenvBootstappingAndPlatforms
-    platformCompat
     stdenvAdapters
     trivialBuilders
     splice
