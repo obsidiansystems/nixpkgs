@@ -11,7 +11,10 @@
 { nixpkgs ? { outPath = (import ../../lib).cleanSource ../..; revCount = 1234; shortRev = "abcdef"; revision = "0000000000000000000000000000000000000000"; }
 , officialRelease ? false
   # The platforms for which we build Nixpkgs.
-, supportedSystems ? [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" ]
+, supportedSystems ? [  "x86_64-linux" "x86_64-darwin" "aarch64-linux" ]
+, supportedCrossSystems ? [
+  [ "x86_64-linux" (import ../../lib).systems.examples.armv7l-hf-multiplatform ]
+]
 , limitedSupportedSystems ? [ "i686-linux" ]
   # Strip most of attributes when evaluating to spare memory usage
 , scrubJobs ? true
@@ -19,7 +22,7 @@
 , nixpkgsArgs ? { config = { allowUnfree = false; inHydra = true; }; }
 }:
 
-with import ./release-lib.nix { inherit supportedSystems scrubJobs nixpkgsArgs; };
+with import ./release-lib.nix { inherit supportedSystems supportedCrossSystems scrubJobs nixpkgsArgs; };
 
 let
 

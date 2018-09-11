@@ -1,4 +1,6 @@
 { supportedSystems
+, # Each in the form [ build-system host-config ]
+  supportedCrossSystems ? []
 , packageSet ? (import ../..)
 , scrubJobs ? true
 , # Attributes passed to nixpkgs. Don't build packages marked as unfree.
@@ -67,6 +69,14 @@ rec {
     else if candidate != null && lib.matchAttrs crossSystem candidate.crossSystem
       then candidate.pkgsFor
     else mkPkgsFor crossSystem; # uncached fallback
+
+
+  # Same as the above but for build->host cross pairs
+  supporteMatchesFor = supportedPlatforms: metaPatterns: let
+      anyMatch = elabed:
+        lib.any (lib.meta.platformMatch (builtins.elemAt 1 elabed) metaPatterns;
+      matchingPlatforms = lib.filter anyMatch supportedPlatforms;
+    in map (builtins.elemAt 0) matchingPlatforms;
 
 
   # Given a list of 'meta.platforms'-style patterns, return the sublist of
