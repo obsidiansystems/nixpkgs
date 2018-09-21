@@ -8987,6 +8987,8 @@ with pkgs;
 
   box2d = callPackage ../development/libraries/box2d { };
 
+  btchip-c-api = callPackage ../development/libraries/btchip-c-api { };
+
   buddy = callPackage ../development/libraries/buddy { };
 
   bulletml = callPackage ../development/libraries/bulletml { };
