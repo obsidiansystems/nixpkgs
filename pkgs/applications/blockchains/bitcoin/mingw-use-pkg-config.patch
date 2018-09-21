@@ -1,0 +1,14 @@
+diff --git a/tmp/nix-build-bitcoind-0.18.1-x86_64-w64-mingw32.drv-0/bitcoin-0.18.1/configure.ac b/configure.ac
+index 0f65bce5650..8a3a3caffa9 100644
+--- a/tmp/nix-build-bitcoind-0.18.1-x86_64-w64-mingw32.drv-0/bitcoin-0.18.1/configure.ac
++++ b/configure.ac
+@@ -458,9 +458,6 @@ use_pkgconfig=yes
+ case $host in
+   *mingw*)
+ 
+-     #pkgconfig does more harm than good with MinGW
+-     use_pkgconfig=no
+-
+      TARGET_OS=windows
+      AC_CHECK_LIB([mingwthrd],      [main],, AC_MSG_ERROR(libmingwthrd missing))
+      AC_CHECK_LIB([kernel32],      [main],, AC_MSG_ERROR(libkernel32 missing))

@@ -17,8 +17,8 @@
 , qrencode
 , libevent
 , nixosTests
-, withGui
-, withWallet ? true
+, withGui ? stdenv.hostPlatform.isLinux
+, withWallet ? !stdenv.hostPlatform.isWindows
 }:
 
 with lib;
@@ -42,12 +42,19 @@ stdenv.mkDerivation rec {
     sha256 = "caff23449220cf45753f312cefede53a9eac64000bb300797916526236b6a1e0";
   };
 
+  patches = [
+    ./mingw-use-pkg-config.patch
+  ];
+
   nativeBuildInputs =
     [ pkg-config autoreconfHook ]
     ++ optional stdenv.isDarwin hexdump
     ++ optional withGui wrapQtAppsHook;
-  buildInputs = [ boost zlib zeromq miniupnpc libevent ]
-    ++ optionals stdenv.isLinux [ util-linux ]
+  buildInputs = [
+    boost
+  ] ++ optionals (!stdenv.hostPlatform.isWindows) [
+    zlib zeromq miniupnpc libevent 
+  ] ++ optionals stdenv.isLinux [ util-linux ]
     ++ optionals withWallet [ db48 sqlite ]
     ++ optionals withGui [ qtbase qttools qrencode ];
 
@@ -99,6 +106,10 @@ stdenv.mkDerivation rec {
     changelog = "https://bitcoincore.org/en/releases/${version}/";
     maintainers = with maintainers; [ prusnak roconnor ];
     license = licenses.mit;
-    platforms = platforms.unix;
+    # bitcoin needs hexdump to build, which doesn't seem to build on darwin at the moment.
+    broken = stdenv.hostPlatform.isDarwin
+      || !(withGui -> withWallet)
+      || (withGui && !stdenv.hostPlatform.isLinux);
+    platforms = platforms.all;
   };
 }
