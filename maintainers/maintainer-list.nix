@@ -7421,6 +7421,11 @@
     githubId = 1246959;
     name = "Raquel García";
   };
+  rafaelgg = {
+    email = "rafael.garcia.gallego@mail.com";
+    github = "rafaelgg";
+    name = "Rafael Garcia";
+  };
   ragge = {
     email = "r.dahlen@gmail.com";
     github = "ragnard";
@@ -7444,6 +7449,12 @@
     name = "Lorenzo Miglietta";
     github = "ranfdev";
     githubId = 23294184;
+  };
+  raquelgb = {
+    email = "rachgb@mail.com";
+    github = "raquelgb";
+    githubId = 1246959;
+    name = "Raquel Garcia";
   };
   rardiol = {
     email = "ricardo.ardissone@gmail.com";
