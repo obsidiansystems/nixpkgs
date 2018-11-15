@@ -29437,7 +29437,7 @@ in
   newlib = callPackage ../development/misc/newlib { };
   newlibCross = callPackage ../development/misc/newlib {
     stdenv = crossLibcStdenv;
-    };
+  };
 
   omnisharp-roslyn = callPackage ../development/tools/omnisharp-roslyn { };
 
@@ -29530,4 +29530,6 @@ in
   lc3tools = callPackage ../development/tools/lc3tools {};
 
   zktree = callPackage ../applications/misc/zktree {};
+
+  turtl-server = callPackage ../servers/turtl-server {};
 }
