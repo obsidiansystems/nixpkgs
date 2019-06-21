@@ -7630,7 +7630,7 @@
  {
   "ename": "bui",
   "commit": "38b7c9345de75a707b4a73e8bb8e2f213e4fd739",
-  "sha256": "0a4g55k02hi3cwvk4d35lk2x5kc4fabskl2025i83hx0rqw4w3f1",
+  "sha256": "1d2q1k28a1llknmhb2qiklf1npm9ldzp3cflc50drpmg37331mqd",
   "fetcher": "github",
   "repo": "alezost/bui.el",
   "unstable": {

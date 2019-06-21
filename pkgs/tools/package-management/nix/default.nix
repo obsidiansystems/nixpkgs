@@ -81,6 +81,7 @@ common =
         '' +
         # Unpack the Rust crates.
         lib.optionalString is24 ''
+          mkdir nix-rust
           tar xvf ${crates} -C nix-rust/
           mv nix-rust/nix-vendored-crates* nix-rust/vendor
         '' +

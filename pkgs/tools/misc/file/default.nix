@@ -6,8 +6,8 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     urls = [
-      "ftp://ftp.astron.com/pub/file/${pname}-${version}.tar.gz"
       "https://distfiles.macports.org/file/${pname}-${version}.tar.gz"
+      "https://www.astron.com/pub/file/${pname}-${version}.tar.gz"
     ];
     sha256 = "0d7s376b4xqymnrsjxi3nsv3f5v89pzfspzml2pcajdk5by2yg2r";
   };

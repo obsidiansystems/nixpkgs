@@ -89,12 +89,7 @@
 
 , ... } @ attrs:
 
-
 # Keep extra attributes from `attrs`, e.g., `patchPhase', etc.
-if disabled
-then throw "${name} not supported for interpreter ${python.executable}"
-else
-
 let
   inherit (python) stdenv;
 
@@ -103,6 +98,14 @@ let
   ]) // {
 
   name = namePrefix + name;
+
+  # If a package is marked as disabled, only assert a failure when the user
+  # tries to build it. This allows patching it in an overlay to fix it.
+  preUnpack = ''
+    if [ "$disabled" -eq 1 ]; then
+        echo "$name not supported for interpreter ${python.executable}"
+    fi
+  '';
 
   nativeBuildInputs = [
     python
