@@ -86,10 +86,12 @@ in
   # extra disk space and compile time.
   enableLibraryForGhci ? false
 , buildTests ? doCheck
+, buildBenchmarks ? doBenchmark
 } @ args:
 
 assert editedCabalFile != null -> revision != null;
 assert doCheck -> buildTests; # We can build tests without running them, but we can't run them without building them
+assert doBenchmark -> buildBenchmarks; # We can build benchmarks without running them, but we can't run them without building them
 
 # --enable-static does not work on windows. This is a bug in GHC.
 # --enable-static will pass -staticlib to ghc, which only works for mach-o and elf.
@@ -173,7 +175,7 @@ let
     (optionalString (versionOlder "8.4" ghc.version) (enableFeature enableStaticLibraries "static"))
     (optionalString (isGhcjs || versionOlder "7.4" ghc.version) (enableFeature enableSharedExecutables "executable-dynamic"))
     (optionalString (isGhcjs || versionOlder "7" ghc.version) (enableFeature buildTests "tests"))
-    (enableFeature doBenchmark "benchmarks")
+    (enableFeature buildBenchmarks "benchmarks")
     "--enable-library-vanilla"  # TODO: Should this be configurable?
     (enableFeature enableLibraryForGhci "library-for-ghci")
   ] ++ optionals (enableDeadCodeElimination && (stdenv.lib.versionOlder "8.0.1" ghc.version)) [
@@ -198,19 +200,19 @@ let
   isHaskellPkg = x: x ? isHaskellLibrary;
 
   allPkgconfigDepends = pkgconfigDepends ++ libraryPkgconfigDepends ++ executablePkgconfigDepends ++
-                        optionals buildTests testPkgconfigDepends ++ optionals doBenchmark benchmarkPkgconfigDepends;
+                        optionals buildTests testPkgconfigDepends ++ optionals buildBenchmarks benchmarkPkgconfigDepends;
 
   depsBuildBuild = [ nativeGhc ];
   nativeBuildInputs = [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
                       setupHaskellDepends ++
                       buildTools ++ libraryToolDepends ++ executableToolDepends ++
                       optionals buildTests testToolDepends ++
-                      optionals doBenchmark benchmarkToolDepends;
+                      optionals buildBenchmarks benchmarkToolDepends;
   propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryFrameworkDepends;
   otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableFrameworkDepends ++
                      allPkgconfigDepends ++
                      optionals buildTests (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testFrameworkDepends) ++
-                     optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkFrameworkDepends);
+                     optionals buildBenchmarks (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkFrameworkDepends);
 
 
   allBuildInputs = propagatedBuildInputs ++ otherBuildInputs ++ depsBuildBuild ++ nativeBuildInputs;
