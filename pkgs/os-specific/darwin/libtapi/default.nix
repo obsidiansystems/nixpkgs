@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, cmake, python }:
+{ lib, stdenv, fetchFromGitHub, cmake, python, clang_6 }:
 
 stdenv.mkDerivation {
   name = "libtapi";
@@ -6,10 +6,11 @@ stdenv.mkDerivation {
     owner = "tpoechtrager";
     repo = "apple-libtapi";
     rev = "cd9885b97fdff92cc41e886bba4a404c42fdf71b";
-    sha256 = "1lnl1af9sszp9wxfk0wljrpdmwcx83j0w5c0y4qw4pqrdkdgwks0";
+    sha256 = "1a19h39a48agvnmal99n9j1fjadiqwib7hfzmn342wmgh9z3vk0g";
   };
 
   nativeBuildInputs = [ cmake python ];
+  buildInputs = [ clang_6.cc ];
 
   preConfigure = ''
     cd src/llvm
