@@ -30,12 +30,7 @@ let
 
     outputs = [ "out" "dev" ];
 
-    nativeBuildInputs = [ autoconf automake ]
-
-      # TODO: remove on next hash change, libtool is unnecessary with autoreconfHook
-      ++ stdenv.lib.optional (stdenv.targetPlatform == stdenv.hostPlatform) libtool
-
-      ++ [ autoreconfHook ];
+    nativeBuildInputs = [ autoconf automake libtool autoreconfHook ];
     buildInputs = [ libuuid ]
       ++ stdenv.lib.optionals stdenv.isDarwin [ libcxxabi libobjc ]
       ++ stdenv.lib.optional enableTapiSupport libtapi;
@@ -91,7 +86,7 @@ let
 
     # TODO: this builds an ld without support for LLVM's LTO. We need to teach it, but that's rather
     # hairy to handle during bootstrap. Perhaps it could be optional?
-    preConfigure = ''
+    preConfigure = stdenv.lib.optionalString (stdenv.hostPlatform == stdenv.targetPlatform) ''
       sh autogen.sh
     '';
 
