@@ -1,5 +1,6 @@
 { stdenv, buildPackages, buildHaskellPackages, ghc
-, jailbreak-cabal, hscolour, cpphs, nodejs, shellFor
+, jailbreak-cabal, hscolour, cpphs, nodejs
+, ghcWithHoogle, ghcWithPackages
 }:
 
 let
@@ -199,21 +200,28 @@ let
                         optionals doCheck testPkgconfigDepends ++ optionals doBenchmark benchmarkPkgconfigDepends;
 
   depsBuildBuild = [ nativeGhc ];
-  nativeBuildInputs = [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
-                      setupHaskellDepends ++
-                      buildTools ++ libraryToolDepends ++ executableToolDepends ++
-                      optionals doCheck testToolDepends ++
-                      optionals doBenchmark benchmarkToolDepends;
+  collectedToolDepends =
+    buildTools ++ libraryToolDepends ++ executableToolDepends ++
+    optionals doCheck testToolDepends ++
+    optionals doBenchmark benchmarkToolDepends;
+  nativeBuildInputs =
+    [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
+    setupHaskellDepends ++ collectedToolDepends;
   propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryFrameworkDepends;
-  otherBuildInputs = extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableFrameworkDepends ++
-                     allPkgconfigDepends ++
-                     optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testFrameworkDepends) ++
-                     optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkFrameworkDepends);
-
-
-  allBuildInputs = propagatedBuildInputs ++ otherBuildInputs ++ depsBuildBuild ++ nativeBuildInputs;
-  isHaskellPartition =
-    stdenv.lib.partition isHaskellPkg allBuildInputs;
+  otherBuildInputsHaskell =
+    optionals doCheck (testDepends ++ testHaskellDepends) ++
+    optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends);
+  otherBuildInputsSystem =
+    extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableFrameworkDepends ++
+    allPkgconfigDepends ++
+    optionals doCheck (testSystemDepends ++ testFrameworkDepends) ++
+    optionals doBenchmark (benchmarkSystemDepends ++ benchmarkFrameworkDepends);
+  # TODO next rebuild just define as `otherBuildInputsHaskell ++ otherBuildInputsSystem`
+  otherBuildInputs =
+    extraLibraries ++ librarySystemDepends ++ executableSystemDepends ++ executableFrameworkDepends ++
+    allPkgconfigDepends ++
+    optionals doCheck (testDepends ++ testHaskellDepends ++ testSystemDepends ++ testFrameworkDepends) ++
+    optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkFrameworkDepends);
 
   setupCommand = "./Setup";
 
@@ -454,17 +462,48 @@ stdenv.mkDerivation ({
     runHook postInstall
   '';
 
-  passthru = passthru // {
+  passthru = passthru // rec {
 
     inherit pname version;
 
     compiler = ghc;
 
-
     getBuildInputs = {
-      inherit propagatedBuildInputs otherBuildInputs allPkgconfigDepends;
-      haskellBuildInputs = isHaskellPartition.right;
-      systemBuildInputs = isHaskellPartition.wrong;
+      inherit
+        buildDepends
+        buildTools
+        executableFrameworkDepends
+        executableHaskellDepends
+        executablePkgconfigDepends
+        executableSystemDepends
+        executableToolDepends
+        extraLibraries
+        libraryFrameworkDepends
+        libraryHaskellDepends
+        libraryPkgconfigDepends
+        librarySystemDepends
+        libraryToolDepends
+        pkgconfigDepends
+        setupHaskellDepends
+        ;
+    } // stdenv.lib.optionalAttrs doCheck {
+      inherit
+        testDepends
+        testFrameworkDepends
+        testHaskellDepends
+        testPkgconfigDepends
+        testSystemDepends
+        testToolDepends
+        ;
+    } // stdenv.lib.optionalAttrs doBenchmark {
+      inherit
+        benchmarkDepends
+        benchmarkFrameworkDepends
+        benchmarkHaskellDepends
+        benchmarkPkgconfigDepends
+        benchmarkSystemDepends
+        benchmarkToolDepends
+        ;
     };
 
     isHaskellLibrary = isLibrary;
@@ -477,13 +516,47 @@ stdenv.mkDerivation ({
     # TODO: fetch the self from the fixpoint instead
     haddockDir = self: if doHaddock then "${docdir self.doc}/html" else null;
 
-    env = shellFor {
-      packages = p: [ drv ];
-      inherit shellHook;
-    };
+    envFunc = { withHoogle ? false, ... } @ args:
+      let
+        name = "ghc-shell-for-${drv.name}";
 
+        withPackages = if withHoogle then ghcWithHoogle else ghcWithPackages;
+
+        ghcEnvForBuild = buildHaskellPackages.ghcWithPackages (_: setupHaskellDepends);
+        ghcEnv = withPackages (_:
+          otherBuildInputsHaskell ++
+          propagatedBuildInputs ++
+          stdenv.lib.optionals (!isCross) setupHaskellDepends);
+
+        ghcCommandCaps = stdenv.lib.toUpper ghcCommand';
+
+        mkDrvArgs = builtins.removeAttrs args [ "withHoogle" ];
+      in stdenv.mkDerivation (mkDrvArgs // {
+        name = mkDrvArgs.name or name;
+
+        depsBuildBuild = stdenv.lib.optional isCross ghcEnvForBuild;
+        nativeBuildInputs =
+          [ ghcEnv ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
+          collectedToolDepends ++
+          mkDrvArgs.nativeBuildInputs or [];
+        buildInputs =
+          otherBuildInputsSystem ++
+          mkDrvArgs.buildInputs or [];
+        phases = ["installPhase"];
+        installPhase = "echo $nativeBuildInputs $buildInputs > $out";
+        LANG = "en_US.UTF-8";
+        LOCALE_ARCHIVE = stdenv.lib.optionalString (stdenv.hostPlatform.libc == "glibc") "${buildPackages.glibcLocales}/lib/locale/locale-archive";
+        "NIX_${ghcCommandCaps}" = "${ghcEnv}/bin/${ghcCommand}";
+        "NIX_${ghcCommandCaps}PKG" = "${ghcEnv}/bin/${ghcCommand}-pkg";
+        # TODO: is this still valid?
+        "NIX_${ghcCommandCaps}_DOCDIR" = "${ghcEnv}/share/doc/ghc/html";
+        "NIX_${ghcCommandCaps}_LIBDIR" = if ghc.isHaLVM or false
+          then "${ghcEnv}/lib/HaLVM-${ghc.version}"
+          else "${ghcEnv}/lib/${ghcCommand}-${ghc.version}";
+      });
+
+    env = envFunc { inherit shellHook; };
   };
-
   meta = { inherit homepage license platforms; }
          // optionalAttrs broken               { inherit broken; }
          // optionalAttrs (description != "")  { inherit description; }
