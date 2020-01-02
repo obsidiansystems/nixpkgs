@@ -266,8 +266,8 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     #     })
     #
     #     # shell.nix
-    #     let pkgs = (import ./.) {} in
-    #     pkgs.shellFor {
+    #     let pkgs = import <nixpkgs> {} in
+    #     (import ./.).shellFor {
     #       packages = p: [p.frontend p.backend p.common];
     #       withHoogle = true;
     #       buildInputs = [ pkgs.python ];
