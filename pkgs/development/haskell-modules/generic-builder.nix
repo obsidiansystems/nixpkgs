@@ -536,9 +536,15 @@ stdenv.mkDerivation ({
 
         withPackages = if withHoogle then ghcWithHoogle else ghcWithPackages;
 
-        # We use the ghcWithPackages function from buildHaskellPackages if we
-        # are cross-compiling the derivation
-        ghcEnvForBuild = buildHaskellPackages.ghcWithPackages (_: setupHaskellDepends);
+        # We use the `ghcWithPackages` function from `buildHaskellPackages` if we
+        # want a shell for the sake of cross compiling a package. In the native case
+        # we don't use this at all, and instead put the setupDepends in the main
+        # `ghcWithPackages`. This way we don't have two wrapper scripts called `ghc`
+        # shadowing each other on the PATH.
+        ghcEnvForBuild =
+          assert isCross;
+          buildHaskellPackages.ghcWithPackages (_: setupHaskellDepends);
+
         ghcEnv = withPackages (_:
           otherBuildInputsHaskell ++
           propagatedBuildInputs ++
