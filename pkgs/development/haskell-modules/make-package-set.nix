@@ -255,7 +255,8 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     # packages themselves. Using nix-shell on this derivation will
     # give you an environment suitable for developing the listed
     # packages with an incremental tool like cabal-install.
-    #
+    # In addition to the "packages" arg and "withHoogle" arg, anything that
+    # can be passed into stdenv.mkDerivation can be included in the input attrset
     #     # default.nix
     #     with import <nixpkgs> {};
     #     haskellPackages.extend (haskell.lib.packageSourceOverrides {
@@ -265,9 +266,11 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     #     })
     #
     #     # shell.nix
-    #     (import ./.).shellFor {
+    #     let pkgs = (import ./.) {} in
+    #     pkgs.shellFor {
     #       packages = p: [p.frontend p.backend p.common];
     #       withHoogle = true;
+    #       buildInputs = [ pkgs.python ];
     #     }
     #
     #     -- cabal.project
@@ -277,32 +280,39 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     #       common/
     #
     #     bash$ nix-shell --run "cabal new-build all"
+    #     bash$ nix-shell --run "python"
     shellFor = { packages, withHoogle ? false, ... } @ args:
       let
-        selected = packages self;
+        combinedPackageFor = packages:
+          let
+            selected = packages self;
 
-        pname = if pkgs.lib.length selected == 1
-          then (pkgs.lib.head selected).name
-          else "packages";
+            pname = if pkgs.lib.length selected == 1
+              then (pkgs.lib.head selected).name
+              else "packages";
 
-        # If `packages = [ a b ]` and `a` depends on `b`, don't build `b`,
-        # because cabal will end up ignoring that built version, assuming
-        # new-style commands.
-        combinedPackages = pkgs.lib.filter
-          (input: pkgs.lib.all (p: input.outPath or null != p.outPath) selected);
+            # If `packages = [ a b ]` and `a` depends on `b`, don't build `b`,
+            # because cabal will end up ignoring that built version, assuming
+            # new-style commands.
+            combinedPackages = pkgs.lib.filter
+              (input: pkgs.lib.all (p: input.outPath or null != p.outPath) selected);
 
-        packageInputs = pkgs.lib.zipAttrsWith
-          (_: pkgs.lib.concatMap combinedPackages)
-          (map getBuildInputs selected);
+            # Returns an attrset containing a combined list packages' inputs for each
+            # stage of the build process
+            packageInputs = pkgs.lib.zipAttrsWith
+              (_: pkgs.lib.concatMap combinedPackages)
+              (map getBuildInputs selected);
 
-        genericBuilderArgs = {
-          inherit pname;
-          version = "0";
-          license = null;
-        } // packageInputs;
+            genericBuilderArgs = {
+              inherit pname;
+              version = "0";
+              license = null;
+            } // packageInputs;
 
-        mkDrvArgs = builtins.removeAttrs args [ "packages" ];
-      in (self.mkDerivation genericBuilderArgs).envFunc mkDrvArgs;
+          in builtins.trace (builtins.attrNames packageInputs) self.mkDerivation genericBuilderArgs;
+
+        envFuncArgs = builtins.removeAttrs args [ "packages" ];
+      in (combinedPackageFor packages).envFunc envFuncArgs;
 
     ghc = ghc // {
       withPackages = self.ghcWithPackages;

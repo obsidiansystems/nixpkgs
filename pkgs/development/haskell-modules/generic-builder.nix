@@ -516,12 +516,28 @@ stdenv.mkDerivation ({
     # TODO: fetch the self from the fixpoint instead
     haddockDir = self: if doHaddock then "${docdir self.doc}/html" else null;
 
+    #  Creates a derivation containing all of the necessary dependencies for building the
+    #  parent derivation. The attribute set that it takes as input can be viewed as:
+    #
+    #     { withHoogle } // { attributes passed into stdenv.mkDerivation }
+    #
+    #  The derivation that it builds contains no outpaths because it is meant for use
+    #  as an environment
+    #
+    #    # Example use
+    #    # Creates a shell with all of the dependencies required to build the "hello" package,
+    #    # and with python:
+    #
+    #    > nix-shell -E 'with (import <nixpkgs> {}); \ 
+    #    >    haskell.packages.ghc865.hello.envFunc { buildInputs = [ python ]; }'
     envFunc = { withHoogle ? false, ... } @ args:
       let
         name = "ghc-shell-for-${drv.name}";
 
         withPackages = if withHoogle then ghcWithHoogle else ghcWithPackages;
 
+        # We use the ghcWithPackages function from buildHaskellPackages if we
+        # are cross-compiling the derivation
         ghcEnvForBuild = buildHaskellPackages.ghcWithPackages (_: setupHaskellDepends);
         ghcEnv = withPackages (_:
           otherBuildInputsHaskell ++
