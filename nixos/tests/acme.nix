@@ -62,7 +62,7 @@ in import ./make-test-python.nix {
       };
     };
 
-    webserver = { nodes, config, pkgs, lib, ... }: let parentConfig = config; in {
+    webserver = { nodes, config, pkgs, lib, ... }: {
       imports = [ commonConfig ];
       networking.firewall.allowedTCPPorts = [ 80 443 ];
       networking.nameservers = lib.mkForce [
@@ -94,6 +94,7 @@ in import ./make-test-python.nix {
           systemd.services."acme-b.example.com" = {
             wants = [ "acme-finished-b.example.com.target" ];
             before = [ "acme-finished-b.example.com.target" ];
+            after = [ "nginx.service" ];
           };
           services.nginx.virtualHosts."b.example.com" = {
             enableACME = true;

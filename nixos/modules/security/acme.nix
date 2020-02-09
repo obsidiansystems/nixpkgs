@@ -313,9 +313,7 @@ in
                             chown '${data.user}:${data.group}' *.pem
                           fi
 
-                          echo post stuff
                           ${data.postRun}
-                          echo done
                         '';
                       in
                         "+${script}";
