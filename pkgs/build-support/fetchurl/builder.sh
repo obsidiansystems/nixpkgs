@@ -87,6 +87,13 @@ set -o noglob
 
 urls2=
 for url in $urls; do
+    # PDT mirror in artifactory for github
+    if [[ "$url" == https://github.com/*/archive/* || "$url" == https://github.com/*/releases/* ]]; then
+        artifactqa=$(echo $url | sed 's|https://|http://artifactsqa.pdtpartners.com/artifactory/|')
+        urls2="$artifactqa $url"
+    fi
+    # End PDT hackery
+
     if test "${url:0:9}" != "mirror://"; then
         urls2="$urls2 $url"
     else

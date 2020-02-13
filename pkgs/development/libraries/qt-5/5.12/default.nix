@@ -35,7 +35,7 @@ let
 
   stdenvActual = if stdenv.cc.isClang then llvmPackages_5.stdenv else stdenv;
 
-  mirror = "https://download.qt.io";
+  mirror = "http://artifactsqa.pdtpartners.com/artifactory/download.qt.io";
   srcs = import ./srcs.nix { inherit fetchurl; inherit mirror; } // {
     # Community port of the now unmaintained upstream qtwebkit.
     qtwebkit = {

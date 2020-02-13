@@ -110,6 +110,8 @@ let
       # should be switching to the tlnet-final versions
       # (https://tug.org/historic/).
       urlPrefixes = args.urlPrefixes or [
+        # PDT: Check artifactory first
+        http://artifactsqa.pdtpartners.com/artifactory/ftp.math.utah.edu/pub/tex/historic/systems/texlive/2019/tlnet-final/archive
         # tlnet-final snapshot
         http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2019/tlnet-final/archive
         ftp://tug.org/texlive/historic/2019/tlnet-final/archive

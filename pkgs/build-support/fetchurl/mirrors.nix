@@ -2,7 +2,13 @@
 
   # Content-addressable Nix mirrors.
   hashedMirrors = [
-    http://tarballs.nixos.org
+    # Currently beta testing the PDT hashed mirror; will move to artifacts prod and/or S3 once stable
+    "http://artifactsqa.pdtpartners.com/artifactory/ftp-public/hashed-mirror/"
+    "http://tarballs.nixos.org"
+    # TODO: Add an artifactory mirror of softwareheritage.org, then consider cherry-picking the improvement to the hashed-mirror scanner that are half-implemented here:
+    # https://github.com/NixOS/nixpkgs/pull/53787
+    # Would look something like this:
+    # http://artifactsqa.pdtpartners.com/archive.softwareheritage.org/api/1/content/@outputHashAlgo@:@outputHash_base16@/raw/
   ];
 
   # Mirrors for mirror://site/filename URIs, where "site" is
@@ -39,6 +45,7 @@
   gnu = [
     # This one redirects to a (supposedly) nearby and (supposedly) up-to-date
     # mirror.
+    http://artifactsqa.pdtpartners.com/artifactory/ftpmirror.gnu.org/
     https://ftpmirror.gnu.org/
 
     http://ftp.nluug.nl/pub/gnu/
@@ -74,6 +81,7 @@
 
   # kernel.org's /pub (/pub/{linux,software}) tree.
   kernel = [
+    http://artifactsqa.pdtpartners.com/artifactory/mirrors.mit.edu/kernel/
     http://cdn.kernel.org/pub/
     http://www.all.kernel.org/pub/
     http://ramses.wh2.tu-dresden.de/pub/mirrors/kernel.org/
@@ -84,6 +92,7 @@
 
   # Mirrors from https://download.kde.org/extra/download-mirrors.html
   kde = [
+    http://artifactsqa.pdtpartners.com/artifactory/mirrors.mit.edu/kde/
     "https://download.kde.org/download.php?url="
     https://ftp.gwdg.de/pub/linux/kde/
     https://mirrors.ocf.berkeley.edu/kde/
@@ -171,6 +180,7 @@
 
   # CPAN mirrors.
   cpan = [
+    http://artifactsqa.pdtpartners.com/artifactory/cpan.perl.org/
     https://cpan.metacpan.org/
     https://cpan.perl.org/
     http://backpan.perl.org/  # for old releases
@@ -283,6 +293,7 @@
 
   # X.org.
   xorg = [
+    http://artifactsqa.pdtpartners.com/artifactory/xorg.freedesktop.org/releases/
     https://xorg.freedesktop.org/releases/
     https://ftp.x.org/archive/
   ];
@@ -331,6 +342,7 @@
 
   # Hackage mirrors
   hackage = [
+    http://artifactsqa.pdtpartners.com/artifactory/hackage.haskell.org/package/
     http://hackage.haskell.org/package/
     http://hdiff.luite.com/packages/archive/package/
     http://hackage.fpcomplete.com/package/
@@ -411,6 +423,7 @@
 
   # Python PyPI mirrors
   pypi = [
+    http://artifactsqa.pdtpartners.com/artifactory/files.pythonhosted.org/packages/source/
     https://files.pythonhosted.org/packages/source/
     # pypi.io is a more semantic link, but atm it’s referencing
     # files.pythonhosted.org over two redirects
