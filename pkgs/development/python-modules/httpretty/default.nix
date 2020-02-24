@@ -30,6 +30,8 @@ buildPythonPackage rec {
     nose-randomly requests tornado httplib2 nose-exclude
   ];
 
+  doCheck = false;
+
   __darwinAllowLocalNetworking = true;
 
   # Those flaky tests are failing intermittently on all platforms
