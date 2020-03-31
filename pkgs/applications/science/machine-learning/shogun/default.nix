@@ -2,7 +2,11 @@
 # data, compression
 , bzip2, curl, hdf5, json_c, lzma, lzo, protobuf, snappy
 # maths
+<<<<<<< HEAD
 , openblasCompat, eigen, nlopt, lp_solve, colpack
+=======
+, blas, lapack, eigen, nlopt, lp_solve, colpack, glpk
+>>>>>>> 1c8aba8... treewide: use blas and lapack
 # libraries
 , libarchive, libxml2
 # extra support
@@ -13,6 +17,36 @@
 assert pythonSupport -> pythonPackages != null;
 assert opencvSupport -> opencv != null;
 
+<<<<<<< HEAD
+=======
+assert (!blas.is64bit) && (!lapack.is64bit);
+
+let
+  pname = "shogun";
+  version = "6.1.4";
+  rxcppVersion = "4.0.0";
+  gtestVersion = "1.8.0";
+  srcs = {
+    toolbox = fetchFromGitHub {
+      owner = pname + "-toolbox";
+      repo = pname;
+      rev = pname + "_" + version;
+      sha256 = "38aULxK50wQ2+/ERosSpRyBmssmYSGv5aaWfWSlrSRc=";
+      fetchSubmodules = true;
+    };
+    # we need the packed archive
+    rxcpp = fetchurl {
+      url = "https://github.com/Reactive-Extensions/RxCpp/archive/v${rxcppVersion}.tar.gz";
+      sha256 = "0y2isr8dy2n1yjr9c5570kpc9lvdlch6jv0jvw000amwn5d3krsh";
+    };
+    gtest = fetchurl {
+      url = "https://github.com/google/googletest/archive/release-${gtestVersion}.tar.gz";
+      sha256 = "1n5p1m2m3fjrjdj752lf92f9wq3pl5cbsfrb49jqbg52ghkz99jq";
+    };
+  };
+in
+
+>>>>>>> 1c8aba8... treewide: use blas and lapack
 stdenv.mkDerivation rec {
   pname = "shogun";
   version = "6.0.0";
@@ -40,8 +74,13 @@ stdenv.mkDerivation rec {
   CCACHE_DIR=".ccache";
 
   buildInputs = with lib; [
+<<<<<<< HEAD
       openblasCompat bzip2 ccache cmake colpack curl ctags eigen hdf5 json_c lp_solve lzma lzo
       protobuf nlopt snappy swig (libarchive.dev) libxml2
+=======
+      blas lapack bzip2 cmake colpack curl ctags eigen hdf5 json_c lp_solve lzma lzo
+      protobuf nlopt snappy swig (libarchive.dev) libxml2 lapack glpk
+>>>>>>> 1c8aba8... treewide: use blas and lapack
     ]
     ++ optionals (pythonSupport) (with pythonPackages; [ python ply numpy ])
     ++ optional  (opencvSupport) opencv;

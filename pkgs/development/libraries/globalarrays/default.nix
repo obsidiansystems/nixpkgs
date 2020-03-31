@@ -1,5 +1,5 @@
 { stdenv, fetchpatch, fetchFromGitHub, autoreconfHook
-, openblas, gfortran, openssh, openmpi
+, blas, gfortran, openssh, openmpi
 } :
 
 let
@@ -29,7 +29,7 @@ in stdenv.mkDerivation {
   })];
 
   nativeBuildInputs = [ autoreconfHook ];
-  buildInputs = [ openmpi openblas gfortran openssh ];
+  buildInputs = [ openmpi blas gfortran openssh ];
 
   preConfigure = ''
     configureFlagsArray+=( "--enable-i8" \
@@ -37,7 +37,7 @@ in stdenv.mkDerivation {
                            "--with-mpi3" \
                            "--enable-eispack" \
                            "--enable-underscoring" \
-                           "--with-blas8=${openblas}/lib -lopenblas" )
+                           "--with-blas8=${blas}/lib -lblas" )
   '';
 
   enableParallelBuilding = true;
@@ -50,5 +50,3 @@ in stdenv.mkDerivation {
     platforms = platforms.linux;
   };
 }
-
-

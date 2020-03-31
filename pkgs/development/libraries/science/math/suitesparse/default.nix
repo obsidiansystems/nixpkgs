@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, gfortran, openblas, cmake, fixDarwinDylibNames
+{ stdenv, fetchurl, gfortran, blas, lapack, cmake, fixDarwinDylibNames
 , gnum4
 , enableCuda  ? false, cudatoolkit
 }:
@@ -58,7 +58,7 @@ stdenv.mkDerivation rec {
     make library        \
         BLAS=-lopenblas \
         LAPACK=""       \
-        ${stdenv.lib.optionalString openblas.blas64 "CFLAGS=-DBLAS64"}
+        ${stdenv.lib.optionalString blas.is64bit "CFLAGS=-DBLAS64"}
 
     # Build libsuitesparse.so which bundles all the individual libraries.
     # Bundling is done by building the static libraries, extracting objects from
@@ -125,7 +125,7 @@ stdenv.mkDerivation rec {
     gnum4
   ] ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
-  buildInputs = [ openblas gfortran.cc.lib ]
+  buildInputs = [ blas lapack gfortran.cc.lib ]
     ++ stdenv.lib.optional enableCuda cudatoolkit;
 
   meta = with stdenv.lib; {

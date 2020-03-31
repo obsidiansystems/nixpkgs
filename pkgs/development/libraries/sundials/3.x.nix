@@ -2,15 +2,13 @@
 , cmake
 , fetchurl
 , python
-, liblapack
+, blas, lapack
 , gfortran
 , lapackSupport ? true }:
 
-let liblapackShared = liblapack.override {
-  shared = true;
-};
+assert (!blas.is64bit) && (!lapack.is64bit);
 
-in stdenv.mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "sundials";
   version = "3.2.1";
 
@@ -35,7 +33,7 @@ in stdenv.mkDerivation rec {
   ] ++ stdenv.lib.optionals (lapackSupport) [
     "-DSUNDIALS_INDEX_TYPE=int32_t"
     "-DLAPACK_ENABLE=ON"
-    "-DLAPACK_LIBRARIES=${liblapackShared}/lib/liblapack${stdenv.hostPlatform.extensions.sharedLibrary};${liblapackShared}/lib/libblas${stdenv.hostPlatform.extensions.sharedLibrary}"
+    "-DLAPACK_LIBRARIES=${lapack}/lib/lapack${stdenv.hostPlatform.extensions.sharedLibrary};${blas}/lib/blas${stdenv.hostPlatform.extensions.sharedLibrary}"
   ];
 
   # flaky tests, and patch in https://github.com/LLNL/sundials/pull/21 doesn't apply cleanly for sundials_3

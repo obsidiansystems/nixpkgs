@@ -1,21 +1,11 @@
 { stdenv, fetchurl, gfortran, readline, ncurses, perl, flex, texinfo, qhull
 , libsndfile, portaudio, libX11, graphicsmagick, pcre, pkgconfig, libGL, libGLU, fltk
-, fftw, fftwSinglePrec, zlib, curl, qrupdate, openblas, arpack, libwebp, gl2ps
+, fftw, fftwSinglePrec, zlib, curl, qrupdate, blas, lapack, arpack, libwebp, gl2ps
 , qt ? null, qscintilla ? null, ghostscript ? null, llvm ? null, hdf5 ? null,glpk ? null
 , suitesparse ? null, gnuplot ? null, jdk ? null, python ? null, overridePlatforms ? null
 }:
 
-let
-  suitesparseOrig = suitesparse;
-  qrupdateOrig = qrupdate;
-in
-# integer width is determined by openblas, so all dependencies must be built
-# with exactly the same openblas
-let
-  suitesparse =
-    if suitesparseOrig != null then suitesparseOrig.override { inherit openblas; } else null;
-  qrupdate = if qrupdateOrig != null then qrupdateOrig.override { inherit openblas; } else null;
-in
+assert (!blas.is64bit) && (!lapack.is64bit);
 
 stdenv.mkDerivation rec {
   version = "5.2.0";
@@ -26,7 +16,7 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = [ gfortran readline ncurses perl flex texinfo qhull
-    graphicsmagick pcre pkgconfig fltk zlib curl openblas libsndfile fftw
+    graphicsmagick pcre pkgconfig fltk zlib curl blas lapack libsndfile fftw
     fftwSinglePrec portaudio qrupdate arpack libwebp gl2ps ]
     ++ (stdenv.lib.optional (qt != null) qt)
     ++ (stdenv.lib.optional (qscintilla != null) qscintilla)
@@ -53,17 +43,19 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   # See https://savannah.gnu.org/bugs/?50339
-  F77_INTEGER_8_FLAG = if openblas.blas64 then "-fdefault-integer-8" else "";
+  F77_INTEGER_8_FLAG = if blas.is64bit then "-fdefault-integer-8" else "";
 
-  configureFlags =
-    [ "--enable-readline"
-      "--enable-dl"
-      "--with-blas=openblas"
-      "--with-lapack=openblas"
-    ]
-    ++ stdenv.lib.optional openblas.blas64 "--enable-64"
-    ++ stdenv.lib.optionals stdenv.isDarwin ["--with-x=no"]
-    ;
+  configureFlags = [
+    "--with-blas=blas"
+    "--with-lapack=lapack"
+    (if blas.is64bit then "--enable-64" else "--disable-64")
+  ]
+    ++ (if stdenv.isDarwin then [ "--enable-link-all-dependencies" ] else [ ])
+    ++ stdenv.lib.optionals enableReadline [ "--enable-readline" ]
+    ++ stdenv.lib.optionals stdenv.isDarwin [ "--with-x=no" ]
+    ++ stdenv.lib.optionals enableQt [ "--with-qt=5" ]
+    ++ stdenv.lib.optionals enableJIT [ "--enable-jit" ]
+  ;
 
   # Keep a copy of the octave tests detailed results in the output
   # derivation, because someone may care

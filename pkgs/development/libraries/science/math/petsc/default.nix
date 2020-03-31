@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
     sha256 = "1iy49gagxncx09d88kxnwkj876p35683mpfk33x37165si6xqy4z";
   };
 
-  nativeBuildInputs = [ blas gfortran.cc.lib liblapack python ];
+  nativeBuildInputs = [ blas gfortran.cc.lib lapack python ];
 
   prePatch = stdenv.lib.optionalString stdenv.isDarwin ''
     substituteInPlace config/install.py \
@@ -29,8 +29,8 @@ stdenv.mkDerivation rec {
       "--with-cxx=0"
       "--with-fc=0"
       "--with-mpi=0"
-      "--with-blas-lib=[${blas}/lib/libblas.a,${gfortran.cc.lib}/lib/libgfortran.a]"
-      "--with-lapack-lib=[${liblapack}/lib/liblapack.a,${gfortran.cc.lib}/lib/libgfortran.a]"
+      "--with-blas-lib=[${blas}/lib/libblas.so,${gfortran.cc.lib}/lib/libgfortran.a]"
+      "--with-lapack-lib=[${lapack}/lib/liblapack.so,${gfortran.cc.lib}/lib/libgfortran.a]"
     )
   '';
 
