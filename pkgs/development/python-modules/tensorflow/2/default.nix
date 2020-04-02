@@ -5,6 +5,7 @@
 # Python libraries
 , numpy, tensorflow-tensorboard_2, backports_weakref, mock, enum34, absl-py
 , future, setuptools, wheel, keras-preprocessing, keras-applications, google-pasta
+, google-auth-oauthlib
 , functools32
 , opt-einsum
 , termcolor, grpcio, six, wrapt, protobuf, tensorflow-estimator_2
@@ -61,11 +62,13 @@ let
     ];
   };
 
+  python-protobuf-3_8 = python.pkgs.protobuf.override  { protobuf = pkgs.protobuf3_8; };
+
   # Needed for _some_ system libraries, grep INCLUDEDIR.
   includes_joined = symlinkJoin {
     name = "tensorflow-deps-merged";
     paths = [
-      pkgs.protobuf
+      pkgs.protobuf3_8
       jsoncpp
     ];
   };
@@ -76,23 +79,30 @@ let
   variant = if cudaSupport then "-gpu" else "";
   pname = "tensorflow${variant}";
 
-  pythonEnv = python.withPackages (_:
+  overwrittenPython = python.override {
+    packageOverrides = _: super: {
+      protobuf = super.protobuf.override ({ protobuf = pkgs.protobuf3_8; });
+    };
+  };
+
+  pythonEnv = overwrittenPython.withPackages (p:
     [ # python deps needed during wheel build time (not runtime, see the buildPythonPackage part for that)
-      numpy
-      keras-preprocessing
-      protobuf
-      wrapt
-      gast
-      astor
-      absl-py
-      termcolor
-      keras-applications
-      setuptools
-      wheel
+      p.numpy
+      p.keras-preprocessing
+      # (protobuf.override { protobuf = pkgs.protobuf3_8;})
+      p.protobuf
+      p.wrapt
+      p.gast
+      p.astor
+      p.absl-py
+      p.termcolor
+      p.keras-applications
+      p.setuptools
+      p.wheel
   ] ++ lib.optionals (!isPy3k)
-  [ future
-    functools32
-    mock
+  [ p.future
+    p.functools32
+    p.mock
   ]);
 
   bazel-build = buildBazelPackage {
@@ -151,7 +161,7 @@ let
       sqlite
       openssl
       jsoncpp
-      pkgs.protobuf
+      pkgs.protobuf3_8
       curl
       snappy
       flatbuffers
@@ -341,13 +351,11 @@ let
       platforms = with platforms; linux ++ darwin;
       # The py2 build fails due to some issue importing protobuf. Possibly related to the fix in
       # https://github.com/akesandgren/easybuild-easyblocks/commit/1f2e517ddfd1b00a342c6abb55aef3fd93671a2b
-      broken = !(xlaSupport -> cudaSupport) || !isPy3k;
     };
   };
 
 in buildPythonPackage {
   inherit version pname;
-  disabled = isPy27 || (pythonAtLeast "3.8");
 
   src = bazel-build.python;
 
@@ -363,28 +371,32 @@ in buildPythonPackage {
 
   # tensorflow/tools/pip_package/setup.py
   propagatedBuildInputs = [
-    absl-py
-    astor
-    gast
-    google-pasta
-    keras-applications
-    keras-preprocessing
-    numpy
-    six
-    protobuf
-    tensorflow-estimator_2
-    termcolor
-    wrapt
-    grpcio
-    opt-einsum
+    overwrittenPython.pkgs.absl-py
+    overwrittenPython.pkgs.astor
+    overwrittenPython.pkgs.gast
+    overwrittenPython.pkgs.google-pasta
+    overwrittenPython.pkgs.keras-applications
+    overwrittenPython.pkgs.keras-preprocessing
+    overwrittenPython.pkgs.numpy
+    overwrittenPython.pkgs.six
+    overwrittenPython.pkgs.protobuf
+    overwrittenPython.pkgs.tensorflow-estimator_2
+    overwrittenPython.pkgs.termcolor
+    overwrittenPython.pkgs.wrapt
+    overwrittenPython.pkgs.grpcio
+    overwrittenPython.pkgs.opt-einsum
   ] ++ lib.optionals (!isPy3k) [
-    mock
-    future
-    functools32
+    overwrittenPython.pkgs.mock
+    overwrittenPython.pkgs.future
+    overwrittenPython.pkgs.functools32
   ] ++ lib.optionals (pythonOlder "3.4") [
-    backports_weakref enum34
+    overwrittenPython.pkgs.backports_weakref overwrittenPython.pkgs.enum34
   ] ++ lib.optionals withTensorboard [
-    tensorflow-tensorboard_2
+    (tensorflow-tensorboard_2.override {
+       protobuf = overwrittenPython.pkgs.protobuf;
+       google-auth-oauthlib = overwrittenPython.pkgs.google-auth-oauthlib.overridePythonAttrs(old: { "doCheck" = false; });
+       }
+    )
   ];
 
   nativeBuildInputs = lib.optional cudaSupport addOpenGLRunpath;
@@ -398,9 +410,12 @@ in buildPythonPackage {
   # Actual tests are slow and impure.
   # TODO try to run them anyway
   # TODO better test (files in tensorflow/tools/ci_build/builds/*test)
+  # FIXME tests currently fail for python2.7 because 'import tensorflow as tf' fails during installCheckPhase
+  doCheck = isPy3k;
   checkPhase = ''
     ${python.interpreter} <<EOF
     # A simple "Hello world"
+    from __future__ import print_function
     import tensorflow as tf
     hello = tf.constant("Hello, world!")
     tf.print(hello)
