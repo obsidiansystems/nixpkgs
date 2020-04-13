@@ -79,13 +79,7 @@ let
   variant = if cudaSupport then "-gpu" else "";
   pname = "tensorflow${variant}";
 
-  overwrittenPython = python.override {
-    packageOverrides = _: super: {
-      protobuf = super.protobuf.override ({ protobuf = pkgs.protobuf3_8; });
-    };
-  };
-
-  pythonEnv = overwrittenPython.withPackages (p:
+  pythonEnv = python.withPackages (p:
     [ # python deps needed during wheel build time (not runtime, see the buildPythonPackage part for that)
       p.numpy
       p.keras-preprocessing
@@ -371,31 +365,28 @@ in buildPythonPackage {
 
   # tensorflow/tools/pip_package/setup.py
   propagatedBuildInputs = [
-    overwrittenPython.pkgs.absl-py
-    overwrittenPython.pkgs.astor
-    overwrittenPython.pkgs.gast
-    overwrittenPython.pkgs.google-pasta
-    overwrittenPython.pkgs.keras-applications
-    overwrittenPython.pkgs.keras-preprocessing
-    overwrittenPython.pkgs.numpy
-    overwrittenPython.pkgs.six
-    overwrittenPython.pkgs.protobuf
-    overwrittenPython.pkgs.tensorflow-estimator_2
-    overwrittenPython.pkgs.termcolor
-    overwrittenPython.pkgs.wrapt
-    overwrittenPython.pkgs.grpcio
-    overwrittenPython.pkgs.opt-einsum
+    absl-py
+    astor
+    gast
+    google-pasta
+    keras-applications
+    keras-preprocessing
+    numpy
+    six
+    protobuf
+    tensorflow-estimator_2
+    termcolor
+    wrapt
+    grpcio
+    opt-einsum
   ] ++ lib.optionals (!isPy3k) [
-    overwrittenPython.pkgs.mock
-    overwrittenPython.pkgs.future
-    overwrittenPython.pkgs.functools32
+    mock
+    future
+    functools32
   ] ++ lib.optionals (pythonOlder "3.4") [
-    overwrittenPython.pkgs.backports_weakref overwrittenPython.pkgs.enum34
+    backports_weakref enum34
   ] ++ lib.optionals withTensorboard [
-    (tensorflow-tensorboard_2.override {
-       protobuf = overwrittenPython.pkgs.protobuf;
-       google-auth-oauthlib = overwrittenPython.pkgs.google-auth-oauthlib.overridePythonAttrs(old: { "doCheck" = false; });
-       }
+    (tensorflow-tensorboard_2
     )
   ];
 
