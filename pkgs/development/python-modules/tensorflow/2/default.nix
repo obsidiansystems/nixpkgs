@@ -62,8 +62,6 @@ let
     ];
   };
 
-  python-protobuf-3_8 = python.pkgs.protobuf.override  { protobuf = pkgs.protobuf3_8; };
-
   # Needed for _some_ system libraries, grep INCLUDEDIR.
   includes_joined = symlinkJoin {
     name = "tensorflow-deps-merged";
@@ -83,7 +81,6 @@ let
     [ # python deps needed during wheel build time (not runtime, see the buildPythonPackage part for that)
       p.numpy
       p.keras-preprocessing
-      # (protobuf.override { protobuf = pkgs.protobuf3_8;})
       p.protobuf
       p.wrapt
       p.gast
@@ -386,9 +383,8 @@ in buildPythonPackage {
   ] ++ lib.optionals (pythonOlder "3.4") [
     backports_weakref enum34
   ] ++ lib.optionals withTensorboard [
-    (tensorflow-tensorboard_2
-    )
-  ];
+    tensorflow-tensorboard_2
+    ];
 
   nativeBuildInputs = lib.optional cudaSupport addOpenGLRunpath;
 
