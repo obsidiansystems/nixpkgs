@@ -36,7 +36,7 @@ buildPythonPackage rec {
     werkzeug
     protobuf
     markdown
-    (grpcio.override { inherit protobuf; })
+    grpcio
     absl-py
     google-auth-oauthlib
     # not declared in install_requires, but used at runtime
