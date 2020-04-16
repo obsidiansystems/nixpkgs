@@ -47,13 +47,20 @@ tryDownload() {
 
 
 finish() {
+    local skipPostFetch="$1"
+
     set +o noglob
 
     if [[ $executable == "1" ]]; then
       chmod +x $downloadedFile
     fi
 
-    runHook postFetch
+    if [[  $outputHashMode == "recursive" || -z "$skipPostFetch" ]]; then
+        runHook postFetch
+    else
+        echo "Skipping postFetch hook for flat hashed-mirror download"
+    fi
+
     exit 0
 }
 
@@ -69,7 +76,13 @@ tryHashedMirrors() {
             --fail --silent --show-error --head "$url" \
             --write-out "%{http_code}" --output /dev/null > code 2> log; then
             tryDownload "$url"
-            if test -n "$success"; then finish; fi
+
+            # We skip postFetch here, because hashed-mirrors are
+            # already content addressed. So if $outputHash is in the
+            # hashed-mirror, changes from ‘postFetch’ would already be
+            # made. So, running postFetch will end up applying the
+            # change /again/, which we don’t want.
+            if test -n "$success"; then finish skipPostFetch; fi
         else
             # Be quiet about 404 errors, which we interpret as the file
             # not being present on this particular mirror.
