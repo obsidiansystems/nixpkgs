@@ -9,8 +9,7 @@ let
 in
 
 args@{
-  name
-, bazel ? bazelPkg
+  bazel ? bazelPkg
 , bazelFlags ? []
 , bazelBuildFlags ? []
 , bazelFetchFlags ? []
@@ -38,11 +37,20 @@ let
   fBuildAttrs = fArgs // buildAttrs;
   fFetchAttrs = fArgs // removeAttrs fetchAttrs [ "sha256" ];
 
-in stdenv.mkDerivation (fBuildAttrs // {
-  inherit name bazelFlags bazelBuildFlags bazelFetchFlags bazelTarget;
+in stdenv.mkDerivation (fBuildAttrs // lib.optionalAttrs (args ? name) {
+  inherit (args) name;
+} // lib.optionalAttrs (args ? pname) {
+  inherit (args) pname;
+  inherit (args) version;
+} // {
+  inherit bazelFlags bazelBuildFlags bazelFetchFlags bazelTarget;
 
-  deps = stdenv.mkDerivation (fFetchAttrs // {
-    name = "${name}-deps";
+  deps = stdenv.mkDerivation (fFetchAttrs // lib.optionalAttrs (args ? name) {
+    name = "${args.name}-deps";
+   } // lib.optionalAttrs (args ? pname) {
+    pname = "${args.pname}-deps";
+    inherit (args) version;
+   } // {
     inherit bazelFlags bazelBuildFlags bazelFetchFlags bazelTarget;
 
     nativeBuildInputs = fFetchAttrs.nativeBuildInputs or [] ++ [ bazel ];
