@@ -61,7 +61,7 @@ stdenv.mkDerivation {
   dontPatchELF = true;
 
   installPhase = (''
-  mkdir -p $out/lib $dev/include $dev/include/pkgconfig
+  mkdir -p $out/lib $dev/include $dev/lib/pkgconfig
 
   libblas="${lib.getLib blasProvider}/lib/libblas${stdenv.hostPlatform.extensions.sharedLibrary}"
 
