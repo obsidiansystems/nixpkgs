@@ -2,7 +2,7 @@
 , eigen, stdio, stdlib-shims, openblas, blas, lapack, owl-base
 }:
 
-assert (!blas.is64bit) && (!lapack.is64bit);
+assert (!blas.isILP64) && (!lapack.isILP64);
 assert blas.implementation == "openblas" && lapack.implementation == "openblas";
 
 buildDunePackage rec {

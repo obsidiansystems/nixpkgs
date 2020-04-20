@@ -1,5 +1,7 @@
 { stdenv, fetchFromGitHub, blas, lapack, gfortran, fixDarwinDylibNames }:
 
+assert (!blas.isILP64) && (!lapack.isILP64);
+
 stdenv.mkDerivation rec {
   pname = "scs";
   version = "2.1.1";

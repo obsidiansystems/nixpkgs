@@ -5,7 +5,7 @@
 , suitesparse ? null, gnuplot ? null, jdk ? null, python ? null, overridePlatforms ? null
 }:
 
-assert (!blas.is64bit) && (!lapack.is64bit);
+assert (!blas.isILP64) && (!lapack.isILP64);
 
 stdenv.mkDerivation rec {
   version = "5.2.0";
@@ -43,12 +43,12 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   # See https://savannah.gnu.org/bugs/?50339
-  F77_INTEGER_8_FLAG = if blas.is64bit then "-fdefault-integer-8" else "";
+  F77_INTEGER_8_FLAG = if blas.isILP64 then "-fdefault-integer-8" else "";
 
   configureFlags = [
     "--with-blas=blas"
     "--with-lapack=lapack"
-    (if blas.is64bit then "--enable-64" else "--disable-64")
+    (if blas.isILP64 then "--enable-64" else "--disable-64")
   ]
     ++ (if stdenv.isDarwin then [ "--enable-link-all-dependencies" ] else [ ])
     ++ stdenv.lib.optionals enableReadline [ "--enable-readline" ]

@@ -2,11 +2,7 @@
 # data, compression
 , bzip2, curl, hdf5, json_c, lzma, lzo, protobuf, snappy
 # maths
-<<<<<<< HEAD
-, openblasCompat, eigen, nlopt, lp_solve, colpack
-=======
-, blas, lapack, eigen, nlopt, lp_solve, colpack, glpk
->>>>>>> 1c8aba8... treewide: use blas and lapack
+, blas, lapack, eigen, nlopt, lp_solve, colpack
 # libraries
 , libarchive, libxml2
 # extra support
@@ -17,9 +13,7 @@
 assert pythonSupport -> pythonPackages != null;
 assert opencvSupport -> opencv != null;
 
-<<<<<<< HEAD
-=======
-assert (!blas.is64bit) && (!lapack.is64bit);
+assert (!blas.isILP64) && (!lapack.isILP64);
 
 let
   pname = "shogun";
@@ -74,13 +68,8 @@ stdenv.mkDerivation rec {
   CCACHE_DIR=".ccache";
 
   buildInputs = with lib; [
-<<<<<<< HEAD
-      openblasCompat bzip2 ccache cmake colpack curl ctags eigen hdf5 json_c lp_solve lzma lzo
+      blas lapack bzip2 ccache cmake colpack curl ctags eigen hdf5 json_c lp_solve lzma lzo
       protobuf nlopt snappy swig (libarchive.dev) libxml2
-=======
-      blas lapack bzip2 cmake colpack curl ctags eigen hdf5 json_c lp_solve lzma lzo
-      protobuf nlopt snappy swig (libarchive.dev) libxml2 lapack glpk
->>>>>>> 1c8aba8... treewide: use blas and lapack
     ]
     ++ optionals (pythonSupport) (with pythonPackages; [ python ply numpy ])
     ++ optional  (opencvSupport) opencv;
