@@ -53,7 +53,7 @@ let
     (targetPlatform != hostPlatform)
     "${targetPlatform.config}-";
 
-  buildMK = ''
+  buildMK = dontStrip: ''
     BuildFlavour = ${ghcFlavour}
     ifneq \"\$(BuildFlavour)\" \"\"
     include mk/flavours/\$(BuildFlavour).mk
@@ -66,6 +66,8 @@ let
     HADDOCK_DOCS = NO
     BUILD_SPHINX_HTML = NO
     BUILD_SPHINX_PDF = NO
+  '' + stdenv.lib.optionalString dontStrip ''
+    STRIP_CMD = :
   '' + stdenv.lib.optionalString enableRelocatedStaticLibs ''
     GhcLibHcOpts += -fPIC
     GhcRtsHcOpts += -fPIC
@@ -129,7 +131,7 @@ stdenv.mkDerivation (rec {
     export READELF="${targetCC.bintools.bintools}/bin/${targetCC.bintools.targetPrefix}readelf"
     export STRIP="${targetCC.bintools.bintools}/bin/${targetCC.bintools.targetPrefix}strip"
 
-    echo -n "${buildMK}" > mk/build.mk
+    echo -n "${buildMK dontStrip}" > mk/build.mk
     echo ${version} >VERSION
     echo ${src.rev} >GIT_COMMIT_ID
     ./boot
