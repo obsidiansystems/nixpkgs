@@ -61,7 +61,7 @@ let
     bazelTarget = ":pip_pkg";
 
     fetchAttrs = {
-      sha256 = "0135nxxvkmjzpd80r1g9fdkk9h62g0xlvp32g5zgk0hkma5kq0bx";
+      sha256 = "0000000000000000000000000000000000000000000000000000";
     };
 
     buildAttrs = {
