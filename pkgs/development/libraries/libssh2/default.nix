@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
     (fetchurl {
       name = "CVE-2019-17498.patch";
       url = "https://github.com/libssh2/libssh2/pull/402.patch";
-      sha256 = "1n9s2mcz5dkw0xpm3c5x4hzj8bar4i6z0pr1rmqjplhfg888vdvc";
+      sha256 = "04ka1w776qs41hxbvvpn1k8acymv88y95g4g9cjrjmfkmzxjnfsn";
     })
   ];
 
