@@ -5,12 +5,12 @@ import sys
 import toml
 
 
-def quote(s: str) -> str:
+def quote(s):
     escaped = s.replace('"', r"\"").replace("\n", r"\n").replace("\\", "\\\\")
     return '"{}"'.format(escaped)
 
 
-def main() -> None:
+def main():
     data = toml.load(sys.stdin)
 
     assert list(data.keys()) == ["source"]

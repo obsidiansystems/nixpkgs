@@ -99,6 +99,7 @@ in stdenv.mkDerivation (fBuildAttrs // {
       tryHashedMirrors() {
           for mirror in $hashedMirrors; do
               url="$mirror/$outputHashAlgo/$outputHash"
+              echo Looking for $url
               if curl --retry 0 --connect-timeout 15 \
                   --fail --silent --show-error --head "$url" \
                   --write-out "%{http_code}" --output /dev/null > code 2> log; then
