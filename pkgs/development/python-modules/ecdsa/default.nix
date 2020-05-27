@@ -3,6 +3,7 @@
 , fetchPypi
 , pkgs
 , six
+, isPy27
 }:
 
 buildPythonPackage rec {
@@ -17,6 +18,8 @@ buildPythonPackage rec {
   propagatedBuildInputs = [ six ];
   # Only needed for tests
   checkInputs = [ pkgs.openssl ];
+
+  doCheck = !isPy27;
 
   meta = with stdenv.lib; {
     description = "ECDSA cryptographic signature library";

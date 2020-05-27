@@ -1185,7 +1185,7 @@ in
 
   blink = libsForQt5.callPackage ../applications/networking/instant-messengers/blink { };
 
-  blockbook = callPackage ../servers/blockbook { 
+  blockbook = callPackage ../servers/blockbook {
     buildGoPackage = buildGo113Package;
   };
 
@@ -13792,7 +13792,7 @@ in
     python = python37;
   };
 
-  protobuf = protobuf3_7;
+  protobuf = protobuf3_8;
 
   protobuf3_11 = callPackage ../development/libraries/protobuf/3.11.nix { };
   protobuf3_10 = callPackage ../development/libraries/protobuf/3.10.nix { };

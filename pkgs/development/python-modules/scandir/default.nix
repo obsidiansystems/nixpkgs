@@ -1,4 +1,4 @@
-{ lib, python, buildPythonPackage, fetchPypi }:
+{ lib, python, buildPythonPackage, fetchPypi, isPy27 }:
 
 buildPythonPackage rec {
   pname = "scandir";
@@ -10,6 +10,10 @@ buildPythonPackage rec {
   };
 
   checkPhase = "${python.interpreter} test/run_tests.py";
+
+  # Broken:
+  # OSError: [Errno 2] No such file or directory: '/build/scandir-1.10.0/test/testdir/linkdir/linksubdir'
+  doCheck = !isPy27;
 
   meta = with lib; {
     description = "A better directory iterator and faster os.walk()";

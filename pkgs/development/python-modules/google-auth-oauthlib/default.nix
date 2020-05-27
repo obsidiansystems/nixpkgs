@@ -27,6 +27,8 @@ buildPythonPackage rec {
     google_auth requests_oauthlib
   ];
 
+  doCheck = false;
+
   checkPhase = ''
     rm -fr tests/__pycache__/
     py.test

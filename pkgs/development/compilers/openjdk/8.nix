@@ -251,7 +251,7 @@ let
       for output in $outputs; do
         if [ "$output" = debug ]; then continue; fi
         OUTPUTDIR=$(eval echo \$$output)
-        BINLIBS=$(find $OUTPUTDIR/bin/ -type f; find $OUTPUTDIR -name \*.so\*)
+        BINLIBS=$(find $OUTPUTDIR/bin/ -type f; find $OUTPUTDIR -name \*.so\*; find $OUTPUTDIR/lib/openjdk/jre/lib/ -type f)
         echo "$BINLIBS" | while read i; do
           patchelf --set-rpath "$LIBDIRS:$(patchelf --print-rpath "$i")" "$i" || true
           patchelf --shrink-rpath "$i" || true

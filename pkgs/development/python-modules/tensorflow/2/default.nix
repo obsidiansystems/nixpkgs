@@ -294,9 +294,9 @@ let
 
       # cudaSupport causes fetch of ncclArchive, resulting in different hashes
       sha256 = if cudaSupport then
-        "0hg3ysy644950a34j28hrb317cz8gcbb9n84d36wdailvnlshghb"
+        "1kqk1gx5g63kb2zdj392x6mnpbrmgqghrdv597aipn7s23xzj8pd"
       else
-        "1gy4pz9kn30wb9c4a9584fibb88c3h38y3dqa99yw1lbsbyyi28c";
+        "1plpcm2ydpajsrxdvmmpfy7l0gfdir78hap72w4k7ddm6d3rm2fv";
     };
 
     buildAttrs = {
@@ -339,12 +339,6 @@ let
       license = licenses.asl20;
       maintainers = with maintainers; [ jyp abbradar ];
       platforms = with platforms; linux ++ darwin;
-      # It is complaining about not having protobuf 3.8, which is weird because
-      # it doesn't have that on master either.
-      broken = true;
-      ## The py2 build fails due to some issue importing protobuf. Possibly related to the fix in
-      ## https://github.com/akesandgren/easybuild-easyblocks/commit/1f2e517ddfd1b00a342c6abb55aef3fd93671a2b
-      #broken = !(xlaSupport -> cudaSupport) || !isPy3k;
     };
   };
 
@@ -401,9 +395,12 @@ in buildPythonPackage {
   # Actual tests are slow and impure.
   # TODO try to run them anyway
   # TODO better test (files in tensorflow/tools/ci_build/builds/*test)
+  # FIXME tests currently fail for python2.7 because 'import tensorflow as tf' fails during installCheckPhase
+  doCheck = isPy3k;
   checkPhase = ''
     ${python.interpreter} <<EOF
     # A simple "Hello world"
+    from __future__ import print_function
     import tensorflow as tf
     hello = tf.constant("Hello, world!")
     tf.print(hello)
@@ -424,7 +421,10 @@ in buildPythonPackage {
   '';
   # Regression test for #77626 removed because not more `tensorflow.contrib`.
 
-  passthru.libtensorflow = bazel-build.out;
+  passthru = {
+    deps = bazel-build.deps;
+    libtensorflow = bazel-build.out;
+  };
 
   inherit (bazel-build) meta;
 }

@@ -1,6 +1,7 @@
 { stdenv
 , bazel
 , cacert
+, curl
 , lib
 }:
 
@@ -38,14 +39,20 @@ let
   fBuildAttrs = fArgs // buildAttrs;
   fFetchAttrs = fArgs // removeAttrs fetchAttrs [ "sha256" ];
 
+  mirrors = import ../fetchurl/mirrors.nix;
+
 in stdenv.mkDerivation (fBuildAttrs // {
   inherit name bazelFlags bazelBuildFlags bazelFetchFlags bazelTarget;
 
   deps = stdenv.mkDerivation (fFetchAttrs // {
-    name = "${name}-deps";
+    name = "${name}-deps.tar.gz";
     inherit bazelFlags bazelBuildFlags bazelFetchFlags bazelTarget;
 
-    nativeBuildInputs = fFetchAttrs.nativeBuildInputs or [] ++ [ bazel ];
+    inherit (mirrors) hashedMirrors;
+
+    impureEnvVars = lib.fetchers.proxyImpureEnvVars;
+
+    nativeBuildInputs = fFetchAttrs.nativeBuildInputs or [] ++ [ bazel curl ];
 
     preHook = fFetchAttrs.preHook or "" + ''
       export bazelOut="$(echo ''${NIX_BUILD_TOP}/output | sed -e 's,//,/,g')"
@@ -60,6 +67,59 @@ in stdenv.mkDerivation (fBuildAttrs // {
     '';
 
     buildPhase = fFetchAttrs.buildPhase or ''
+      #########################################################################
+      # PDT HACK: Copied from fetchurl's builder.sh. Ideally we refactor this to
+      # be more re-usable as a generic hashed-mirror substituter across any FOD
+      # builder, including Cargo. This could probably be done in a
+      # straightforward manner by exposing the portion checking the hashed
+      # mirror as a re-usable `checkHashedMirror` setupHook within fetchurl, and
+      # then having other builders (Bazel, Cargo) include it at the infra level.
+      downloadedFile="$out"
+
+      tryDownload() {
+          local url="$1"
+          echo
+          header "trying $url"
+          local curlexit=18;
+
+          success=
+
+          # if we get error code 18, resume partial download
+          while [ $curlexit -eq 18 ]; do
+            # keep this inside an if statement, since on failure it doesn't abort the script
+            if curl -C - --fail "$url" --output "$downloadedFile"; then
+                success=1
+                break
+            else
+                curlexit=$?;
+            fi
+          done
+      }
+
+      tryHashedMirrors() {
+          for mirror in $hashedMirrors; do
+              url="$mirror/$outputHashAlgo/$outputHash"
+              if curl --retry 0 --connect-timeout 15 \
+                  --fail --silent --show-error --head "$url" \
+                  --write-out "%{http_code}" --output /dev/null > code 2> log; then
+                  tryDownload "$url"
+                  if test -n "$success"; then exit 0; fi
+              else
+                  # Be quiet about 404 errors, which we interpret as the file
+                  # not being present on this particular mirror.
+                  if test "$(cat code)" != 404; then
+                      echo "error checking the existence of $url:"
+                      cat log
+                  fi
+              fi
+          done
+      }
+
+      tryHashedMirrors
+
+      # END PDT HACK
+      ################################################################################
+
       runHook preBuild
 
       # Bazel computes the default value of output_user_root before parsing the
@@ -75,6 +135,7 @@ in stdenv.mkDerivation (fBuildAttrs // {
       BAZEL_USE_CPP_ONLY_TOOLCHAIN=1 \
       USER=homeless-shelter \
       bazel \
+        --host_jvm_args="-Djavax.net.ssl.trustStore=/etc/pki/ca-trust/extracted/java/cacerts" \
         --output_base="$bazelOut" \
         --output_user_root="$bazelUserRoot" \
         fetch \
@@ -120,7 +181,9 @@ in stdenv.mkDerivation (fBuildAttrs // {
         ln -sf "$new_target" "$symlink"
       done
 
-      cp -r $bazelOut/external $out
+      echo '${bazel.name}' > $bazelOut/external/.nix-bazel-version
+
+      (cd $bazelOut/ && tar czf $out --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner external/)
 
       runHook postInstall
     '';
@@ -128,7 +191,6 @@ in stdenv.mkDerivation (fBuildAttrs // {
     dontFixup = true;
     allowedRequisites = [];
 
-    outputHashMode = "recursive";
     outputHashAlgo = "sha256";
     outputHash = fetchAttrs.sha256;
   });
@@ -143,7 +205,16 @@ in stdenv.mkDerivation (fBuildAttrs // {
 
   preConfigure = ''
     mkdir -p "$bazelOut"
-    cp -r $deps $bazelOut/external
+
+    (cd $bazelOut && tar xfz $deps)
+
+    test "${bazel.name}" = "$(<$bazelOut/external/.nix-bazel-version)" || {
+      echo "fixed output derivation was built for a different bazel version" >&2
+      echo "     got: $(<$bazelOut/external/.nix-bazel-version)" >&2
+      echo "expected: ${bazel.name}" >&2
+      exit 1
+    }
+
     chmod -R +w $bazelOut
     find $bazelOut -type l | while read symlink; do
       ln -sf $(readlink "$symlink" | sed "s,NIX_BUILD_TOP,$NIX_BUILD_TOP,") "$symlink"
@@ -152,6 +223,8 @@ in stdenv.mkDerivation (fBuildAttrs // {
 
   buildPhase = fBuildAttrs.buildPhase or ''
     runHook preBuild
+
+    NIX_LDFLAGS+=" -lstdc++_nonshared"
 
     # Bazel sandboxes the execution of the tools it invokes, so even though we are
     # calling the correct nix wrappers, the values of the environment variables

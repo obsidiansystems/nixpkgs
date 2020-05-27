@@ -411,6 +411,8 @@ stdenv.mkDerivation rec {
       substituteInPlace scripts/bootstrap/compile.sh \
           --replace /bin/bash ${customBash}/bin/bash
 
+      NIX_LDFLAGS+=" -lstdc++_nonshared"
+
       # add nix environment vars to .bazelrc
       cat >> .bazelrc <<EOF
       build --distdir=${distDir}
