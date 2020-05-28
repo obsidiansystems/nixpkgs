@@ -1,4 +1,4 @@
-{ stdenv, cacert, git, cargo, python3 }:
+{ stdenv, cacert, cargo, curl, git, python3 }:
 let cargo-vendor-normalise = stdenv.mkDerivation {
   name = "cargo-vendor-normalise";
   src = ./cargo-vendor-normalise.py;
@@ -16,6 +16,7 @@ let cargo-vendor-normalise = stdenv.mkDerivation {
   '';
   preferLocalBuild = true;
 };
+mirrors = import ../fetchurl/mirrors.nix;
 in
 { name ? "cargo-deps"
 , src ? null
@@ -28,11 +29,67 @@ in
 } @ args:
 stdenv.mkDerivation ({
   name = "${name}-vendor.tar.gz";
-  nativeBuildInputs = [ cacert git cargo-vendor-normalise cargo ];
+  nativeBuildInputs = [ cacert cargo cargo-vendor-normalise curl git ];
 
   phases = "unpackPhase patchPhase buildPhase installPhase";
 
+  inherit (mirrors) hashedMirrors;
+
   buildPhase = ''
+    #########################################################################
+    # PDT HACK: Copied from fetchurl's builder.sh. Ideally we refactor this to
+    # be more re-usable as a generic hashed-mirror substituter across any FOD
+    # builder, including Cargo. This could probably be done in a
+    # straightforward manner by exposing the portion checking the hashed
+    # mirror as a re-usable `checkHashedMirror` setupHook within fetchurl, and
+    # then having other builders (Bazel, Cargo) include it at the infra level.
+    downloadedFile="$out"
+
+    tryDownload() {
+        local url="$1"
+        echo
+        header "trying $url"
+        local curlexit=18;
+
+        success=
+
+        # if we get error code 18, resume partial download
+        while [ $curlexit -eq 18 ]; do
+          # keep this inside an if statement, since on failure it doesn't abort the script
+          if curl -C - --fail "$url" --output "$downloadedFile"; then
+              success=1
+              break
+          else
+              curlexit=$?;
+          fi
+        done
+    }
+
+    tryHashedMirrors() {
+        for mirror in $hashedMirrors; do
+            url="$mirror/$outputHashAlgo/$outputHash"
+            echo Looking for $url
+            if curl --retry 0 --connect-timeout 15 \
+                --fail --silent --show-error --head "$url" \
+                --write-out "%{http_code}" --output /dev/null > code 2> log; then
+                tryDownload "$url"
+                if test -n "$success"; then exit 0; fi
+            else
+                # Be quiet about 404 errors, which we interpret as the file
+                # not being present on this particular mirror.
+                if test "$(cat code)" != 404; then
+                    echo "error checking the existence of $url:"
+                    cat log
+                fi
+            fi
+        done
+    }
+
+    tryHashedMirrors
+
+    # END PDT HACK
+    ################################################################################
+
     # Ensure deterministic Cargo vendor builds
     export SOURCE_DATE_EPOCH=1
 
