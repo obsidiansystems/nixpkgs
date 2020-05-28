@@ -1,6 +1,6 @@
 { stdenv
 , buildPythonPackage
-, fetchFromBitbucket
+, fetchPypi
 , ruamel_base
 , ruamel_ordereddict
 , isPy3k
@@ -10,11 +10,9 @@ buildPythonPackage rec {
   pname = "ruamel.yaml.clib";
   version = "0.2.0";
 
-  src = fetchFromBitbucket {
-    owner = "ruamel";
-    repo = "yaml.clib";
-    rev = version;
-    sha256 = "0kq6zi96qlm72lzj90fc2rfk6nm5kqhk6qxdl8wl9s3a42b0v6wl";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "133igvb18g0gal4aks5n5pfbag970qysbi0iwgvb7nbph3m34s5n";
   };
 
   # outputs match wheel
