@@ -71,6 +71,9 @@ tryHashedMirrors() {
     fi
 
     for mirror in $hashedMirrors; do
+        if [[ -z "$outputHashAlgo" && $outputHash =~ : ]]; then
+            IFS=: read outputHashAlgo outputHash <<< $outputHash
+        fi
         url="$mirror/$outputHashAlgo/$outputHash"
         if "${curl[@]}" --retry 0 --connect-timeout "${NIX_CONNECT_TIMEOUT:-15}" \
             --fail --silent --show-error --head "$url" \
