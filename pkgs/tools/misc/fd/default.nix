@@ -11,7 +11,7 @@ rustPlatform.buildRustPackage rec {
     sha256 = "029xr7l751dy167hfzrd030llkaiy8j585h1d4l6391fgrsvnav7";
   };
 
-  cargoSha256 = "0h846lmif2c3iclnbifldnya5spwqcj2lhx88qakjbyjfs8h91f4";
+  cargoSha256 = "0lq6da2f6xywyhzyyrpph96d8b9vpdzakzipci167g6hhh232b5b";
 
   preFixup = ''
     install -Dm644 "$src/doc/fd.1" "$out/man/man1/fd.1"
