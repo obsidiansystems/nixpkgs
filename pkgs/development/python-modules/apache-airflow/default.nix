@@ -5,7 +5,9 @@
 , fetchFromGitHub
 , fetchpatch
 , alembic
+, backports_abc
 , cached-property
+, celery
 , configparser
 , colorlog
 , croniter
@@ -32,6 +34,7 @@
 , pandas
 , pendulum
 , psutil
+, psycopg2
 , pygments
 , python-daemon
 , python-dateutil
@@ -59,7 +62,6 @@
 buildPythonPackage rec {
   pname = "apache-airflow";
   version = "1.10.5";
-  disabled = (!isPy3k);
 
   src = fetchFromGitHub rec {
     owner = "apache";
@@ -68,24 +70,19 @@ buildPythonPackage rec {
     sha256 = "14fmhfwx977c9jdb2kgm93i6acx43l45ggj30rb37r68pzpb6l6h";
   };
 
-  patches = [
+  patches = lib.optionals isPy3k [
        # Not yet accepted: https://github.com/apache/airflow/pull/6562
      (fetchpatch {
        name = "avoid-warning-from-abc.collections";
        url = https://patch-diff.githubusercontent.com/raw/apache/airflow/pull/6562.patch;
        sha256 = "0swpay1qlb7f9kgc56631s1qd9k82w4nw2ggvkm7jvxwf056k61z";
      })
-       # Not yet accepted: https://github.com/apache/airflow/pull/6561
-     (fetchpatch {
-       name = "pendulum2-compatibility";
-       url = https://patch-diff.githubusercontent.com/raw/apache/airflow/pull/6561.patch;
-       sha256 = "17hw8qyd4zxvib9zwpbn32p99vmrdz294r31gnsbkkcl2y6h9knk";
-     })
   ];
 
   propagatedBuildInputs = [
     alembic
     cached-property
+    celery
     colorlog
     configparser
     croniter
@@ -112,6 +109,7 @@ buildPythonPackage rec {
     pandas
     pendulum
     psutil
+    psycopg2
     pygments
     python-daemon
     python-dateutil
@@ -127,7 +125,7 @@ buildPythonPackage rec {
     unicodecsv
     werkzeug
     zope_deprecation
-  ];
+  ] ++ stdenv.lib.optionals (!isPy3k) [ backports_abc ];
 
   checkInputs = [
     snakebite
@@ -167,6 +165,8 @@ buildPythonPackage rec {
    substituteInPlace tests/core.py \
      --replace "/bin/bash" "${stdenv.shell}"
   '';
+
+  doCheck = isPy3k;
 
   checkPhase = ''
    export HOME=$(mktemp -d)
