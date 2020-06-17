@@ -79,19 +79,25 @@ in {
         description = "Where to mount the IPNS namespace to";
       };
 
-      gatewayAddress = mkOption {
-        type = types.str;
-        default = "/ip4/127.0.0.1/tcp/8080";
+      gatewayAddresses = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "/ip4/127.0.0.1/tcp/8080"
+          "/ip6/::1/tcp/8080"
+        ];
         description = "Where the IPFS Gateway can be reached";
       };
 
-      apiAddress = mkOption {
-        type = types.str;
-        default = "/ip4/127.0.0.1/tcp/5001";
+      apiAddresses = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "/ip4/127.0.0.1/tcp/5001"
+          "/ip6/::1/tcp/5001"
+        ];
         description = "Where IPFS exposes its API to";
       };
 
-      swarmAddress = mkOption {
+      swarmAddresses = mkOption {
         type = types.listOf types.str;
         default = [
           "/ip4/0.0.0.0/tcp/4001"
@@ -249,9 +255,9 @@ in {
                 EOF
                 ipfs --local config --json "${concatStringsSep "." path}" "$value"
               '')
-              ({ Addresses.API = cfg.apiAddress;
-                 Addresses.Gateway = cfg.gatewayAddress;
-                 Addresses.Swarm = cfg.swarmAddress;
+              ({ Addresses.API = cfg.apiAddresses;
+                 Addresses.Gateway = cfg.gatewayAddresses;
+                 Addresses.Swarm = cfg.swarmAddresses;
               } //
               cfg.extraConfig))
           );
@@ -266,18 +272,16 @@ in {
 
     systemd.sockets.ipfs-gateway = {
       wantedBy = [ "sockets.target" ];
-      socketConfig.ListenStream = let
-          fromCfg = multiaddrToListenStream cfg.gatewayAddress;
-        in [ "" ] ++ lib.optional (fromCfg != null) fromCfg;
+      socketConfig.ListenStream = [ "" ]
+        ++ lib.filter (a: a != null) (map multiaddrToListenStream cfg.gatewayAddresses);
     };
 
     systemd.sockets.ipfs-api = {
       wantedBy = [ "sockets.target" ];
       # We also include "%t/ipfs.sock" because tere is no way to put the "%t"
       # in the multiaddr.
-      socketConfig.ListenStream = let
-          fromCfg = multiaddrToListenStream cfg.apiAddress;
-        in [ "" "%t/ipfs.sock" ] ++ lib.optional (fromCfg != null) fromCfg;
+      socketConfig.ListenStream = [ "" "%t/ipfs.sock" ]
+        ++ lib.filter (a: a != null) (map multiaddrToListenStream cfg.apiAddresses);
     };
 
   };

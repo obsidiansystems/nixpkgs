@@ -9,14 +9,23 @@ import ./make-test-python.nix ({ pkgs, ...} : {
       enable = true;
       # Also will add a unix domain socket socket API address, see module.
       startWhenNeeded = true;
-      apiAddress = "/ip4/127.0.0.1/tcp/2324";
+      apiAddresses = [
+        "/ip4/127.0.0.1/tcp/2324"
+        "/ip6/::1/tcp/2324"
+      ];
     };
   };
 
   testScript = ''
     start_all()
 
-    # IPv4 activation
+    # IPv6 activation
+
+    machine.wait_until_succeeds("ipfs --api /ip6/::1/tcp/2324 id")
+
+    # IPv6 activation
+
+    machine.stop_job("ipfs")
 
     machine.succeed("ipfs --api /ip4/127.0.0.1/tcp/2324 id")
     ipfs_hash = machine.succeed(

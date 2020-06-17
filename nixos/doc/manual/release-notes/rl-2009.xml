@@ -490,6 +490,17 @@ systemd.services.nginx.serviceConfig.ReadWritePaths = [ "/var/www" ];
      <link xlink:href="https://github.com/NixOS/nixpkgs/issues/89205">#89205</link>.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     The options <option>services.ipfs.apiAddress</option>,
+     <option>services.ipfs.gatewayAddress</option>,
+     <option>services.ipfs.swarmAddress</option> are now pluralized
+     (<varname>...Addresses</varname>), to reflect that they all now take lists
+     of multiaddrs (strings). Previously, <varname>.swamAddress</varname> still
+     took a list despite the singular name, but the the others took only a
+     single multiaddr.
+    </para>
+   </listitem>
   </itemizedlist>
  </section>
 
