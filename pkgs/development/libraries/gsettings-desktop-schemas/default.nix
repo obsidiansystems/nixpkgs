@@ -35,6 +35,9 @@ stdenv.mkDerivation rec {
   postPatch = ''
     chmod +x build-aux/meson/post-install.py
     patchShebangs build-aux/meson/post-install.py
+
+    substituteInPlace meson.build \
+      --replace "join_paths(datadir, 'pkgconfig')," "join_paths(libdir, 'pkgconfig'),"
   '';
 
   buildInputs = [ glib gobject-introspection ];
