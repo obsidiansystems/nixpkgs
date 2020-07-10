@@ -34,4 +34,5 @@ in
     ibm = callPackage ./ibm {};
     libvirt = callPackage ./libvirt {};
     ansible = callPackage ./ansible {};
+    shell = callPackage ./shell {};
   } // lib.mapAttrs (n: v: toDrv v) list
