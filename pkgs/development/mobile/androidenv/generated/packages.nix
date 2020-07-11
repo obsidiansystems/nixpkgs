@@ -876,6 +876,25 @@
       
     };
   };
+
+  "build-tools"."29.0.2" = {
+    
+    name = "build-tools";
+    path = "build-tools/29.0.2";
+    revision = "29.0.2";
+    displayName = "Android SDK Build-Tools 29.0.2";
+    archives = {
+      linux = fetchurl {
+        url = https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip;
+        sha1 = "k2rp23kdnf52x00iqv8bz5mc6xf7xz60";
+      };
+      macosx = fetchurl {
+        url = https://dl.google.com/android/repository/build-tools_r28.0.3-macosx.zip;
+        sha1 = "f8c333a2991b1ab05a671bc6248b78e00edcd83a";
+      };
+      
+    };
+  };
   
   "cmake"."3.10.2" = {
     
@@ -1503,6 +1522,23 @@
       
     };
   };
+
+  "platforms"."29" = {
+    
+    name = "platforms";
+    path = "platforms/android-29";
+    revision = "28";
+    displayName = "Android SDK Platform 29";
+    archives = {
+      
+        all = fetchurl {
+          url = https://dl.google.com/android/repository/platform-29_r04.zip;
+          sha1 = "xbd0g1js9yxdarciaayy0f10j0wlqr4d";
+        };
+      
+    };
+  };
+ 
   
   "platforms"."3" = {
     
@@ -1863,6 +1899,21 @@
         all = fetchurl {
           url = https://dl.google.com/android/repository/sources-28_r01.zip;
           sha1 = "5610e0c24235ee3fa343c899ddd551be30315255";
+        };
+      
+    };
+  };
+  "sources"."29" = {
+    
+    name = "sources";
+    path = "sources/android-29";
+    revision = "29";
+    displayName = "Sources for Android 29";
+    archives = {
+      
+        all = fetchurl {
+          url = https://dl.google.com/android/repository/sources-29_r01.zip;
+          sha1 = "0000000000000000000000000000000000000000";
         };
       
     };
