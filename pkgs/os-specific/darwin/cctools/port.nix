@@ -102,4 +102,17 @@ let
       maintainers = with stdenv.lib.maintainers; [ matthewbauer ];
     };
   };
-in stdenv.mkDerivation baseParams
+
+  crossParams = {
+    name = "${targetPrefix}cctools-port-949.0.1";
+    version = "949.0.1";
+    src = fetchFromGitHub {
+      owner  = "tpoechtrager";
+      repo   = "cctools-port";
+      rev    = "43f32a4c61b5ba7fde011e816136c550b1b3146f";
+      sha256 = "10yc5smiczzm62q6ijqccc58bwmfhc897f3bwa5i9j98csqsjj0k";
+    };
+    patches = [ ./949-ld-rpath-nonfinal.patch ./ld-ignore-rpath-link.patch ];
+    preConfigure = "";
+  };
+in stdenv.mkDerivation (baseParams // (if stdenv.hostPlatform != stdenv.targetPlatform then crossParams else {}))
