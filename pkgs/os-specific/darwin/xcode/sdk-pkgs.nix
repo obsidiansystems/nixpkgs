@@ -35,8 +35,6 @@ rec {
     bintools = binutils-unwrapped;
     extraBuildCommands = ''
       echo "-arch ${iosPlatformArch targetPlatform}" >> $out/nix-support/libc-ldflags
-    '' + stdenv.lib.optionalString (sdk.platform == "iPhoneSimulator") ''
-      echo "-platform_version ios-sim ${targetPlatform.minSdkVersion or "9.0"} ${sdk.version}" >> $out/nix-support/libc-ldflags
     '' + stdenv.lib.optionalString (sdk.platform == "iPhoneOS") ''
       echo "-platform_version ios ${targetPlatform.minSdkVersion or "9.0"} ${sdk.version}" >> $out/nix-support/libc-ldflags
     '';
