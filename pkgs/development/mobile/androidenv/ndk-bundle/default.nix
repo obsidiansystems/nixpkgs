@@ -10,8 +10,7 @@ deployAndroidPackage {
   patchInstructions = lib.optionalString (os == "linux") ''
     patchShebangs .
 
-    patch -p1 \
-      --no-backup-if-mismatch < ${./make_standalone_toolchain.py_18.patch}
+    chmod -R +w .
     wrapProgram $(pwd)/build/tools/make_standalone_toolchain.py --prefix PATH : "${runtime_paths}"
 
     # TODO: allow this stuff
