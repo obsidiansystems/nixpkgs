@@ -262,8 +262,9 @@ in with passthru; stdenv.mkDerivation {
   # Enforce that we don't have references to the OpenSSL -dev package, which we
   # explicitly specify in our configure flags above.
   disallowedReferences =
-    stdenv.lib.optionals (openssl != null) [ openssl.dev ]
-    ++ stdenv.lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
+    # stdenv.lib.optionals (openssl != null) [ openssl.dev ]
+    # ++ 
+    stdenv.lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
     # Ensure we don't have references to build-time packages.
     # These typically end up in shebangs.
     pythonForBuild buildPackages.bash
