@@ -1,5 +1,5 @@
 { stdenv, fetchurl, fetchpatch, gfortran, perl, libnl
-, rdma-core, zlib, numactl, libevent, hwloc, pkgsTargetTarget, symlinkJoin
+, zlib, numactl, libevent, hwloc, pkgsTargetTarget, symlinkJoin
 
 # Enable CUDA support
 , cudaSupport ? false, cudatoolkit ? null
@@ -43,8 +43,7 @@ in stdenv.mkDerivation rec {
   buildInputs = with stdenv; [ gfortran zlib ]
     ++ lib.optionals isLinux [ libnl numactl ]
     ++ lib.optionals cudaSupport [ cudatoolkit ]
-    ++ [ libevent hwloc ]
-    ++ lib.optional (isLinux || isFreeBSD) rdma-core;
+    ++ [ libevent hwloc ];
 
   nativeBuildInputs = [ perl ];
 
