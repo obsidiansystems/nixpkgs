@@ -417,6 +417,9 @@ stdenv.mkDerivation rec {
       substituteInPlace scripts/bootstrap/compile.sh \
           --replace /bin/bash ${customBash}/bin/bash
 
+      # FIXME: needed for RHEL stdenv
+      NIX_LDFLAGS+=" -lstdc++_nonshared"
+
       # add nix environment vars to .bazelrc
       cat >> .bazelrc <<EOF
       build --distdir=${distDir}
