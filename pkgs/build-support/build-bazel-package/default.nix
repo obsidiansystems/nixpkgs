@@ -3,6 +3,7 @@
 , cacert
 , curl
 , lib
+, gnutar # need tar >= 1.28 for --sort=name support
 }:
 
 let
@@ -52,7 +53,7 @@ in stdenv.mkDerivation (fBuildAttrs // {
 
     impureEnvVars = lib.fetchers.proxyImpureEnvVars;
 
-    nativeBuildInputs = fFetchAttrs.nativeBuildInputs or [] ++ [ bazel curl ];
+    nativeBuildInputs = fFetchAttrs.nativeBuildInputs or [] ++ [ bazel curl gnutar ];
 
     preHook = fFetchAttrs.preHook or "" + ''
       export bazelOut="$(echo ''${NIX_BUILD_TOP}/output | sed -e 's,//,/,g')"
