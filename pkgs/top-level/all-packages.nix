@@ -9228,7 +9228,6 @@ in
   };
 
   octave = callPackage ../development/interpreters/octave {
-<<<<<<< HEAD
     qt = null;
     qscintilla = null;
     ghostscript = null;
@@ -9244,17 +9243,7 @@ in
   octaveFull = (lowPrio (octave.override {
     qt = qt4;
     inherit qscintilla;
-=======
     python = python3;
-  };
-  octave-jit = callPackage ../development/interpreters/octave {
-    python = python3;
-    enableJIT = true;
-  };
-  octaveFull = (lowPrio (libsForQt512.callPackage ../development/interpreters/octave {
-    python = python3;
-    enableQt = true;
->>>>>>> 1c8aba8... treewide: use blas and lapack
     overridePlatforms = ["x86_64-linux" "x86_64-darwin"];
     openblas = if stdenv.isDarwin then openblasCompat else openblas;
   }));
