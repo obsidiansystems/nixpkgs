@@ -56,7 +56,7 @@ let
   cudatoolkit_cc_joined = symlinkJoin {
     name = "${cudatoolkit.cc.name}-merged";
     paths = [
-      cudatoolkit.cc
+      cudatoolkit.cc.cc
       binutils.bintools # for ar, dwp, nm, objcopy, objdump, strip
     ];
   };
@@ -228,6 +228,7 @@ let
     GCC_HOST_COMPILER_PREFIX = lib.optionalString cudaSupport "${cudatoolkit_cc_joined}/bin";
     GCC_HOST_COMPILER_PATH = lib.optionalString cudaSupport "${cudatoolkit_cc_joined}/bin/gcc";
     TF_CUDA_COMPUTE_CAPABILITIES = lib.concatStringsSep "," cudaCapabilities;
+    dontAddBazelOpts = cudaSupport;
 
     postPatch = ''
       # Tensorboard pulls in a bunch of dependencies, some of which may
@@ -286,10 +287,11 @@ let
       TF_SYSTEM_LIBS = null;
 
       # cudaSupport causes fetch of ncclArchive, resulting in different hashes
+      # NOTE: for some reason native stdenv gives a different hash, probably purity issue
       sha256 = if cudaSupport then
-        "0pf8128chkm6fxnhd4956n6gvijlj00mjmvry33gq3xx3bayhs9g"
+        "06xssnxl0imf3yfmir49zmibv2hl1bxmjifrfr9766zm0sskg5kx"
       else
-        "0mkgss2nyk21zlj8hp24cs3dmpdnxk8qi6qq4hyc18lp82p09xwa";
+        "1wk2jh7czpcbi8dy79jwm3jalzm5njvasclj9l2qmikzggp41vkd";
     };
 
     buildAttrs = {
