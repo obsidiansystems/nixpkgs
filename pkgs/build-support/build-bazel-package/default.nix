@@ -32,6 +32,8 @@ args@{
 , removeRulesCC ? true
 , removeLocalConfigCc ? true
 , removeLocal ? true
+
+, dontAddBazelOpts ? false
 , ...
 }:
 
@@ -223,6 +225,8 @@ in stdenv.mkDerivation (fBuildAttrs // {
     done
   '' + fBuildAttrs.preConfigure or "";
 
+  inherit dontAddBazelOpts;
+
   buildPhase = fBuildAttrs.buildPhase or ''
     runHook preBuild
 
@@ -236,20 +240,22 @@ in stdenv.mkDerivation (fBuildAttrs // {
     #
     copts=()
     host_copts=()
-    for flag in $NIX_CFLAGS_COMPILE; do
-      copts+=( "--copt=$flag" )
-      host_copts+=( "--host_copt=$flag" )
-    done
-    for flag in $NIX_CXXSTDLIB_COMPILE; do
-      copts+=( "--copt=$flag" )
-      host_copts+=( "--host_copt=$flag" )
-    done
     linkopts=()
     host_linkopts=()
-    for flag in $NIX_LDFLAGS; do
-      linkopts+=( "--linkopt=-Wl,$flag" )
-      host_linkopts+=( "--host_linkopt=-Wl,$flag" )
-    done
+    if [ -z "''${dontAddBazelOpts:-}" ]; then
+      for flag in $NIX_CFLAGS_COMPILE; do
+        copts+=( "--copt=$flag" )
+        host_copts+=( "--host_copt=$flag" )
+      done
+      for flag in $NIX_CXXSTDLIB_COMPILE; do
+        copts+=( "--copt=$flag" )
+        host_copts+=( "--host_copt=$flag" )
+      done
+      for flag in $NIX_LDFLAGS; do
+        linkopts+=( "--linkopt=-Wl,$flag" )
+        host_linkopts+=( "--host_linkopt=-Wl,$flag" )
+      done
+    fi
 
     BAZEL_USE_CPP_ONLY_TOOLCHAIN=1 \
     USER=homeless-shelter \
