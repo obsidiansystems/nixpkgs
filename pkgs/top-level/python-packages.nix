@@ -4815,7 +4815,7 @@ in {
   protobuf = callPackage ../development/python-modules/protobuf {
     disabled = isPyPy;
     doCheck = !isPy3k;
-    protobuf = pkgs.protobuf;
+    protobuf = pkgs.protobuf3_9;
   };
 
   psd-tools = callPackage ../development/python-modules/psd-tools { };

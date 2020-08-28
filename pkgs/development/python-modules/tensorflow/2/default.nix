@@ -65,7 +65,7 @@ let
   includes_joined = symlinkJoin {
     name = "tensorflow-deps-merged";
     paths = [
-      pkgs.protobuf
+      pkgs.protobuf3_9
       jsoncpp
     ];
   };
@@ -143,7 +143,7 @@ let
       sqlite
       openssl
       jsoncpp
-      pkgs.protobuf
+      pkgs.protobuf3_9
       curl
       snappy
       flatbuffers
