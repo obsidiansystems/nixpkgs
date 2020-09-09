@@ -108,7 +108,7 @@ let
     "LD_LIBRARY_PATH=${cudaStub}\${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH ";
 
 in buildPythonPackage rec {
-  version = "1.2.0";
+  version = "1.6.0";
   pname = "pytorch";
   disabled = !isPy3k;
 
@@ -122,7 +122,7 @@ in buildPythonPackage rec {
     repo   = "pytorch";
     rev    = "v${version}";
     fetchSubmodules = true;
-    sha256 = "1biyq2p48chakf2xw7hazzqmr5ps1nx475ql8vkmxjg5zaa071cz";
+    sha256 = "14hhjsi6fnpaw9m1a3bhvdinsks6fhss6bbcrfk6jgns64abqdaz";
   };
 
   dontUseCmakeConfigure = true;
