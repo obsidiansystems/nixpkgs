@@ -44,4 +44,7 @@ in stdenv.mkDerivation {
     platforms = platforms.unix;
     maintainers = with maintainers; [ tbenst ];
   };
+
+  passthru.cudatoolkit = cudatoolkit;
+  passthru.mkl = if blas.implementation == "mkl" then blas.provider else null;
 }
