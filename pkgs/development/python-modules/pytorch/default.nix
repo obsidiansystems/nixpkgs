@@ -3,7 +3,6 @@
   mklSupport ? false, mkl ? null,
   openMPISupport ? false, openmpi ? null,
   buildNamedTensor ? false,
-  buildBinaries ? false,
   cudaArchList ? null,
   fetchFromGitHub, lib, numpy, pyyaml, cffi, click, typing, cmake, hypothesis, numactl,
   linkFarm, symlinkJoin,
