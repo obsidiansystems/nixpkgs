@@ -107,6 +107,9 @@ rec {
     wasm32   = { bits = 32; significantByte = littleEndian; family = "wasm"; };
     wasm64   = { bits = 64; significantByte = littleEndian; family = "wasm"; };
 
+    bpfel    = { bits = 64; significantByte = littleEndian; family = "bpf"; };
+    bpfeb    = { bits = 64; significantByte = bigEndian;    family = "bpf"; };
+
     alpha    = { bits = 64; significantByte = littleEndian; family = "alpha"; };
 
     msp430   = { bits = 16; significantByte = littleEndian; family = "msp430"; };

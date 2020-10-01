@@ -22,6 +22,8 @@ let
 
     "wasm64-wasi" "wasm32-wasi"
 
+    "bpfel-none" "bpfeb-none"
+
     "x86_64-redox"
 
     "powerpc64le-linux"
