@@ -25,11 +25,13 @@ let
   gcc = if stdenv.cc.isGNU then stdenv.cc.cc else stdenv.cc.cc.gcc;
 in stdenv.mkDerivation rec {
   pname = "thunderbird";
-  version = "68.2.2";
+  version = "68.9.0";
 
   src = fetchurl {
-    url = "mirror://mozilla/thunderbird/releases/${version}/source/thunderbird-${version}.source.tar.xz";
-    sha512 = "3mvanjfc35f14lsfa4zjlhsvwij1n9dz9xmisd5s376r5wp9y33sva5ly914b2hmdl85ypdwv90zyi6whj7jb2f2xmqk480havxgjcn";
+    url =
+      "mirror://mozilla/thunderbird/releases/${version}/source/thunderbird-${version}.source.tar.xz";
+    sha512 =
+      "3q0dikgkfr72hhz39pxi2f0cljn09lw4940qcn9kzfwfid2h290j7pihx6gs0z6h82fl78f9fl1598d064lwl1i2434dzx6bg4p4549";
   };
 
   # from firefox, but without sound libraries
@@ -53,7 +55,7 @@ in stdenv.mkDerivation rec {
     # Remove buildconfig.html to prevent a dependency on clang etc.
     ./no-buildconfig.patch
   ]
-  ++ lib.optional (lib.versionOlder version "69")
+  ++ lib.optional (lib.versionOlder version "68.3")
     (fetchpatch { # https://bugzilla.mozilla.org/show_bug.cgi?id=1500436#c29
       name = "write_error-parallel_make.diff";
       url = "https://hg.mozilla.org/mozilla-central/raw-diff/562655fe/python/mozbuild/mozbuild/action/node.py";

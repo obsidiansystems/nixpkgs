@@ -60,11 +60,41 @@ mkChromiumDerivation (base: rec {
 
   meta = {
     description = "An open source web browser from Google";
-    homepage = http://www.chromium.org/;
-    maintainers = with maintainers; [ bendlas ivan ];
+    longDescription = ''
+      Chromium is an open source web browser from Google that aims to build a
+      safer, faster, and more stable way for all Internet users to experience
+      the web. It has a minimalist user interface and provides the vast majority
+      of source code for Google Chrome (which has some additional features).
+    '';
+    homepage = https://www.chromium.org/;
+    maintainers = with maintainers; [ bendlas thefloweringash primeos ];
+    # Overview of the maintainer roles:
+    # nixos-unstable:
+    # - TODO: Need a new maintainer for x86_64 [0]
+    # - @thefloweringash: aarch64
+    # - @primeos: Provisional maintainer (x86_64)
+    # Stable channel:
+    # - TODO (need someone to test backports [0])
+    # [0]: https://github.com/NixOS/nixpkgs/issues/78450
     license = if enableWideVine then licenses.unfree else licenses.bsd3;
     platforms = platforms.linux;
     hydraPlatforms = if channel == "stable" then ["aarch64-linux" "x86_64-linux"] else [];
     timeout = 172800; # 48 hours
+    broken = channel != "stable"; # M81 is the last supported version for 19.09
+    # Reason: The build of Chromium 83 requires a lot of additional changes
+    # (LLVM 10, a newer gn version, some patches, etc.) which are unlikely to be
+    # backported to 19.09. Therefore we'll only maintain M81 for NixOS 19.09
+    # which will give us approx. one month of security updates / time for users
+    # to transition to 20.03 (as per our policy).
+    knownVulnerabilities = [
+      # Since the release of M83 the previous version isn't secure anymore.
+      # nixos-unstable update: https://github.com/NixOS/nixpkgs/pull/88206
+      ''
+        This version of Chromium is no longer being updated. Consider switching
+        to the new stable NixOS channel or installing Chromium from a different
+        channel. A list of the missing security fixes can be found here:
+        https://chromereleases.googleblog.com/2020/05/stable-channel-update-for-desktop_19.html
+      ''
+    ];
   };
 })

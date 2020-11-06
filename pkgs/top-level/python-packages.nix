@@ -108,7 +108,7 @@ in {
   inherit buildSetupcfg;
 
   inherit (callPackage ../development/interpreters/python/hooks { })
-    flitBuildHook pipBuildHook pipInstallHook pytestCheckHook pythonCatchConflictsHook pythonImportsCheckHook pythonRemoveBinBytecodeHook setuptoolsBuildHook setuptoolsCheckHook wheelUnpackHook;
+    eggUnpackHook eggBuildHook eggInstallHook flitBuildHook pipBuildHook pipInstallHook pytestCheckHook pythonCatchConflictsHook pythonImportsCheckHook pythonRemoveBinBytecodeHook setuptoolsBuildHook setuptoolsCheckHook wheelUnpackHook;
 
   # helpers
 
@@ -1027,6 +1027,8 @@ in {
     `propagatedBuildInputs` may cause collisions.
   */
   pyqt5_with_qtwebkit = self.pyqt5.override { withWebKit = true; };
+
+  pyqt5_with_qtmultimedia = self.pyqt5.override { withMultimedia = true; };
 
   pyqtwebengine = pkgs.libsForQt5.callPackage ../development/python-modules/pyqtwebengine {
     pythonPackages = self;
@@ -2501,6 +2503,8 @@ in {
 
   iniparse = callPackage ../development/python-modules/iniparse { };
 
+  intreehooks = callPackage ../development/python-modules/intreehooks { };
+
   i3-py = callPackage ../development/python-modules/i3-py { };
 
   JayDeBeApi = callPackage ../development/python-modules/JayDeBeApi {};
@@ -3189,6 +3193,8 @@ in {
   pytorchWithoutCuda = self.pytorch.override {
     cudaSupport = false;
   };
+
+  pythondialog = callPackage ../development/python-modules/pythondialog { };
 
   python2-pythondialog = callPackage ../development/python-modules/python2-pythondialog { };
 

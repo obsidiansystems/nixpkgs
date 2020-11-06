@@ -16,7 +16,7 @@
 , libXScrnSaver, libXcursor, libXtst, libGLU_combined, libGL
 , protobuf, speechd, libXdamage, cups
 , ffmpeg, libxslt, libxml2, at-spi2-core
-, jdk
+, jre
 
 # optional dependencies
 , libgcrypt ? null # gnomeSupport || cupsSupport
@@ -116,7 +116,7 @@ let
       glib gtk3 dbus-glib
       libXScrnSaver libXcursor libXtst libGLU_combined
       pciutils protobuf speechd libXdamage at-spi2-core
-      jdk.jre
+      jre
     ] ++ optional gnomeKeyringSupport libgnome-keyring3
       ++ optionals gnomeSupport [ gnome.GConf libgcrypt ]
       ++ optionals cupsSupport [ libgcrypt cups ]
@@ -127,10 +127,8 @@ let
       ./patches/nix_plugin_paths_68.patch
       ./patches/remove-webp-include-69.patch
       ./patches/no-build-timestamps.patch
-    ] ++ optionals (channel == "stable") [
-      ./patches/widevine.patch
-    ] ++ optionals (channel == "beta" || channel == "dev") [
       ./patches/widevine-79.patch
+      ./patches/dont-use-ANGLE-by-default.patch
       # Unfortunately, chromium regularly breaks on major updates and
       # then needs various patches backported in order to be compiled with GCC.
       # Good sources for such patches and other hints:
@@ -139,14 +137,11 @@ let
       # - https://github.com/chromium/chromium/search?q=GCC&s=committer-date&type=Commits
       #
       # ++ optionals (channel == "dev") [ ( githubPatch "<patch>" "0000000000000000000000000000000000000000000000000000000000000000" ) ]
+      # ++ optional (versionRange "68" "72") ( githubPatch "<patch>" "0000000000000000000000000000000000000000000000000000000000000000" )
     ] ++ optionals (useVaapi) [
       # source: https://aur.archlinux.org/cgit/aur.git/tree/vaapi-fix.patch?h=chromium-vaapi
       ./patches/vaapi-fix.patch
-    ] ++ optional stdenv.isAarch64 (fetchpatch {
-      url       = https://raw.githubusercontent.com/OSSystems/meta-browser/e4a667deaaf9a26a3a1aeb355770d1f29da549ad/recipes-browser/chromium/files/aarch64-skia-build-fix.patch;
-      postFetch = "substituteInPlace $out --replace __aarch64__ SK_CPU_ARM64";
-      sha256    = "018fbdzyw9rvia8m0qkk5gv8q8gl7x34rrjbn7mi1fgxdsayn22s";
-    });
+    ];
 
     postPatch = ''
       # We want to be able to specify where the sandbox is via CHROME_DEVEL_SANDBOX
@@ -225,6 +220,9 @@ let
       use_gnome_keyring = gnomeKeyringSupport;
       use_gio = gnomeSupport;
       enable_nacl = enableNaCl;
+      # Enabling the Widevine component here doesn't affect whether we can
+      # redistribute the chromium package; the Widevine component is either
+      # added later in the wrapped -wv build or downloaded from Google.
       enable_widevine = true;
       use_cups = cupsSupport;
 
@@ -268,6 +266,11 @@ let
 
       runHook postConfigure
     '';
+
+    # Don't spam warnings about unknown warning options. This is useful because
+    # our Clang is always older than Chromium's and the build logs have a size
+    # of approx. 25 MB without this option (and this saves e.g. 66 %).
+    NIX_CFLAGS_COMPILE = "-Wno-unknown-warning-option";
 
     buildPhase = let
       # Build paralelism: on Hydra the build was frequently running into memory

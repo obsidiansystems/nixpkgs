@@ -1766,6 +1766,8 @@ in
 
   klaus = with pythonPackages; toPythonApplication klaus;
 
+  kramdown-rfc2629 = callPackage ../tools/text/kramdown-rfc2629 { };
+
   lcdproc = callPackage ../servers/monitoring/lcdproc { };
 
   languagetool = callPackage ../tools/text/languagetool {  };
@@ -1945,7 +1947,7 @@ in
   riot-desktop = callPackage ../applications/networking/instant-messengers/riot/riot-desktop.nix { };
 
   riot-web = callPackage ../applications/networking/instant-messengers/riot/riot-web.nix {
-    conf = config.riot-web.conf or null;
+    conf = config.riot-web.conf or {};
   };
 
   ripasso-cursive = callPackage ../tools/security/ripasso/cursive.nix {};
@@ -5670,7 +5672,7 @@ in
 
   openmodelica = callPackage ../applications/science/misc/openmodelica { };
 
-  qarte = callPackage ../applications/video/qarte { };
+  qarte = libsForQt5.callPackage ../applications/video/qarte { };
 
   qlcplus = libsForQt5.callPackage ../applications/misc/qlcplus { };
 
@@ -7154,6 +7156,8 @@ in
 
   yeshup = callPackage ../tools/system/yeshup { };
 
+  yggdrasil = callPackage ../tools/networking/yggdrasil { };
+
   # To expose more packages for Yi, override the extraPackages arg.
   yi = callPackage ../applications/editors/yi/wrapper.nix { };
 
@@ -7896,6 +7900,10 @@ in
     inherit (darwin.apple_sdk.frameworks) Security Foundation;
   };
 
+  go_1_13 = callPackage ../development/compilers/go/1.13.nix {
+    inherit (darwin.apple_sdk.frameworks) Security Foundation;
+  };
+
   go = go_1_12;
 
   go-repo-root = callPackage ../development/tools/go-repo-root { };
@@ -8305,6 +8313,15 @@ in
   inherit (rustPackages) cargo rustc rustPlatform;
   inherit (rust) makeRustPlatform;
 
+  rust_1_41 = callPackage ../development/compilers/rust_1_41 {
+    inherit (darwin.apple_sdk.frameworks) CoreFoundation Security;
+  };
+
+  rustPackages_1_41 = rust_1_41.packages.stable;
+  rustPlatform_1_41 = rustPackages_1_41.rustPlatform;
+  rustc_1_41 = rustPackages_1_41.rustc;
+  cargo_1_41 = rustPackages_1_41.cargo;
+
   buildRustCrate = callPackage ../build-support/rust/build-rust-crate { };
   buildRustCrateHelpers = callPackage ../build-support/rust/build-rust-crate/helpers.nix { };
   buildRustCrateTests = recurseIntoAttrs (callPackage ../build-support/rust/build-rust-crate/test { }).tests;
@@ -8371,6 +8388,12 @@ in
   rust-cbindgen = callPackage ../development/tools/rust/cbindgen {
     inherit (darwin.apple_sdk.frameworks) Security;
   };
+
+  rust-cbindgen_0_1_13 = callPackage ../development/tools/rust/cbindgen/0_1_13.nix {
+    inherit (darwin.apple_sdk.frameworks) Security;
+    rustPlatform = rustPlatform_1_41;
+  };
+
   rustup = callPackage ../development/tools/rust/rustup {
     inherit (darwin.apple_sdk.frameworks) CoreServices Security;
   };
@@ -8852,6 +8875,8 @@ in
   pypy2Packages = pypy2.pkgs;
   pypy27Packages = pypy27.pkgs;
   pypy3Packages = pypy3.pkgs;
+
+  pythonManylinuxPackages = callPackage ./../development/interpreters/python/manylinux { };
 
   update-python-libraries = callPackage ../development/interpreters/python/update-python-libraries { };
 
@@ -12489,6 +12514,7 @@ in
   libviper = callPackage ../development/libraries/libviper { };
 
   libvpx = callPackage ../development/libraries/libvpx { };
+  libvpx_1_8 = callPackage ../development/libraries/libvpx/1_8.nix { };
 
   libvterm = callPackage ../development/libraries/libvterm { };
   libvterm-neovim = callPackage ../development/libraries/libvterm-neovim { };
@@ -12803,14 +12829,14 @@ in
   };
 
   # newer nspr version for newer firefox stable releases
-  nspr_4_23 = callPackage ../development/libraries/nspr/nspr_4_23.nix {
+  nspr_4_25 = callPackage ../development/libraries/nspr/nspr_4_25.nix {
     inherit (darwin.apple_sdk.frameworks) CoreServices;
   };
 
   nss = lowPrio (callPackage ../development/libraries/nss { });
 
   # newer NSS version for newer firefox stable releases
-  nss_3_47_1 = callPackage ../development/libraries/nss/3_47_1.nix { };
+  nss_3_52 = lowPrio (callPackage ../development/libraries/nss/3_52.nix { });
 
   nssTools = nss.tools;
 
@@ -13684,7 +13710,7 @@ in
   stxxl = callPackage ../development/libraries/stxxl { parallel = true; };
 
   sqlite = lowPrio (callPackage ../development/libraries/sqlite { });
-  sqlite_3_30 = callPackage ../development/libraries/sqlite/3-30.nix { };
+  sqlite_3_31_1 = callPackage ../development/libraries/sqlite/3-31-1.nix { };
 
   sqlite-analyzer = lowPrio (callPackage ../development/libraries/sqlite/analyzer.nix { });
 
@@ -14366,10 +14392,18 @@ in
     go = buildPackages.go_1_12;
   };
 
+  buildGo113Package = callPackage ../development/go-packages/generic {
+    go = buildPackages.go_1_13;
+  };
+
   buildGoPackage = buildGo112Package;
 
   buildGo112Module = callPackage ../development/go-modules/generic {
     go = buildPackages.go_1_12;
+  };
+
+  buildGo113Module = callPackage ../development/go-modules/generic {
+    go = buildPackages.go_1_13;
   };
 
   buildGoModule = buildGo112Module;
@@ -14669,9 +14703,13 @@ in
 
   gofish = callPackage ../servers/gopher/gofish { };
 
-  grafana = callPackage ../servers/monitoring/grafana { };
+  grafana = callPackage ../servers/monitoring/grafana {
+    buildGoPackage = buildGo113Package;
+  };
 
-  grafana-loki = callPackage ../servers/monitoring/loki { };
+  grafana-loki = callPackage ../servers/monitoring/loki {
+    buildGoPackage = buildGo113Package;
+  };
 
   grafana_reporter = callPackage ../servers/monitoring/grafana-reporter { };
 
@@ -15219,6 +15257,8 @@ in
 
   syncserver = callPackage ../servers/syncserver { };
 
+  tailscale = callPackage ../servers/tailscale { };
+
   thanos = callPackage ../servers/monitoring/thanos { };
 
   inherit (callPackages ../servers/http/tomcat { })
@@ -15704,11 +15744,6 @@ in
       [ kernelPatches.bridge_stp_helper
         kernelPatches.cpu-cgroup-v2."4.4"
         kernelPatches.modinst_arg_list_too_long
-        # https://github.com/NixOS/nixpkgs/issues/42755
-        # Remove these xen-netfront patches once they're included in
-        # upstream! Fixes https://github.com/NixOS/nixpkgs/issues/42755
-        kernelPatches.xen-netfront_fix_mismatched_rtnl_unlock
-        kernelPatches.xen-netfront_update_features_after_registering_netdev
       ];
   };
 
@@ -15727,7 +15762,7 @@ in
         # when adding a new linux version
         kernelPatches.cpu-cgroup-v2."4.11"
         kernelPatches.modinst_arg_list_too_long
-        kernelPatches.export_kernel_fpu_functions
+        kernelPatches.export_kernel_fpu_functions."4.14"
       ];
   };
 
@@ -15735,13 +15770,16 @@ in
     kernelPatches =
       [ kernelPatches.bridge_stp_helper
         kernelPatches.modinst_arg_list_too_long
-        kernelPatches.export_kernel_fpu_functions
+        kernelPatches.export_kernel_fpu_functions."4.14"
       ];
   };
 
   # Update this when adding the newest kernel major version!
   linux_latest = callPackage ../os-specific/linux/kernel/linux-5.4.nix {
-    kernelPatches = [ kernelPatches.bridge_stp_helper ];
+    kernelPatches = [
+      kernelPatches.bridge_stp_helper
+      kernelPatches.export_kernel_fpu_functions."5.3"
+    ];
   };
 
   linux_testing = callPackage ../os-specific/linux/kernel/linux-testing.nix {
@@ -15917,7 +15955,7 @@ in
       virtualbox = pkgs.virtualboxHardened;
     };
 
-    wireguard = callPackage ../os-specific/linux/wireguard { };
+    wireguard = if lib.versionOlder kernel.version "5.6" then callPackage ../os-specific/linux/wireguard { } else null;
 
     x86_energy_perf_policy = callPackage ../os-specific/linux/x86_energy_perf_policy { };
 
@@ -18068,9 +18106,7 @@ in
 
   fehlstart = callPackage ../applications/misc/fehlstart { };
 
-  fetchmail = callPackage ../applications/misc/fetchmail {
-    openssl = openssl_1_0_2;
-  };
+  fetchmail = callPackage ../applications/misc/fetchmail { };
 
   fff = callPackage ../applications/misc/fff { };
 
@@ -19401,6 +19437,7 @@ in
 
   monotone = callPackage ../applications/version-management/monotone {
     lua = lua5;
+    botan = botan.override (x: { openssl = null; });
   };
 
   inherit (ocaml-ng.ocamlPackages_4_01_0) monotoneViz;
@@ -20035,6 +20072,8 @@ in
   protonmail-bridge = libsForQt512.callPackage ../applications/networking/protonmail-bridge { };
 
   protonvpn-cli = callPackage ../applications/networking/protonvpn-cli { };
+
+  protonvpn-cli-ng = callPackage ../applications/networking/protonvpn-cli-ng { };
 
   ps2client = callPackage ../applications/networking/ps2client { };
 
@@ -21616,7 +21655,7 @@ in
     inherit (darwin.apple_sdk.frameworks) CoreServices;
   };
 
-  zoom-us = libsForQt59.callPackage ../applications/networking/instant-messengers/zoom-us { };
+  zoom-us = libsForQt5.callPackage ../applications/networking/instant-messengers/zoom-us { };
 
   zotero = callPackage ../applications/office/zotero { };
 
@@ -23872,7 +23911,7 @@ in
 
   mupen64plus = callPackage ../misc/emulators/mupen64plus { };
 
-  muse = callPackage ../applications/audio/muse { };
+  muse = libsForQt5.callPackage ../applications/audio/muse { };
 
   musly = callPackage ../applications/audio/musly { };
 
@@ -24078,7 +24117,7 @@ in
     "Also see https://github.com/NixOS/nixpkgs/pull/44903"
   );
 
-  nix-review = callPackage ../tools/package-management/nix-review { };
+  nixpkgs-review = callPackage ../tools/package-management/nixpkgs-review { };
 
   nix-serve = callPackage ../tools/package-management/nix-serve { };
 

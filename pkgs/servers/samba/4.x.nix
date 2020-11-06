@@ -20,11 +20,11 @@ with lib;
 
 stdenv.mkDerivation rec {
   pname = "samba";
-  version = "4.10.10";
+  version = "4.10.11";
 
   src = fetchurl {
     url = "mirror://samba/pub/samba/stable/${pname}-${version}.tar.gz";
-    sha256 = "19b653rr2i9snvapik58phbqj38cxjdlyx6nl3m2y3k1a55p633h";
+    sha256 = "157qvz8x2s7994rzxhcmpc79cfk86zc0rq5qwg8alvjcw0r457v0";
   };
 
   outputs = [ "out" "dev" "man" ];
@@ -34,6 +34,11 @@ stdenv.mkDerivation rec {
     ./patch-source3__libads__kerberos_keytab.c.patch
     ./4.x-no-persistent-install-dynconfig.patch
     ./4.x-fix-makeflags-parsing.patch
+    (fetchurl {
+      name = "CVE-2019-14902+CVE-2019-14907+CVE-2019-19344.patch";
+      url = "https://www.samba.org/samba/ftp/patches/security/samba-4.10.11-security-2020-01-21.patch";
+      sha256 = "1mglfzyb6wv85rrlspqa0hlga1c9f3v123j2dvywrsp3waxhb651";
+    })
   ];
 
   nativeBuildInputs = optionals stdenv.isDarwin [ rpcgen fixDarwinDylibNames ];
