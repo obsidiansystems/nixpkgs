@@ -82,16 +82,10 @@ let
   // optionalAttrs cfg.enableHeaderChecks { header_checks = "regexp:/etc/postfix/header_checks"; }
   // optionalAttrs (cfg.sslCert != "") {
     smtp_tls_CAfile = cfg.sslCACert;
-    smtp_tls_cert_file = cfg.sslCert;
-    smtp_tls_key_file = cfg.sslKey;
-
-    smtp_use_tls = true;
 
     smtpd_tls_CAfile = cfg.sslCACert;
     smtpd_tls_cert_file = cfg.sslCert;
     smtpd_tls_key_file = cfg.sslKey;
-
-    smtpd_use_tls = true;
   };
 
   masterCfOptions = { options, config, name, ... }: {
