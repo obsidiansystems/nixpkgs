@@ -204,7 +204,6 @@ let
   allPkgconfigDepends = pkgconfigDepends ++ libraryPkgconfigDepends ++ executablePkgconfigDepends ++
                         optionals doCheck testPkgconfigDepends ++ optionals doBenchmark benchmarkPkgconfigDepends;
 
-  depsBuildBuild = [ nativeGhc ];
   nativeBuildInputs = [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkgconfig ++
                       setupHaskellDepends ++
                       buildTools ++ libraryToolDepends ++ executableToolDepends ++
@@ -217,7 +216,7 @@ let
                      optionals doBenchmark (benchmarkDepends ++ benchmarkHaskellDepends ++ benchmarkSystemDepends ++ benchmarkFrameworkDepends);
 
 
-  allBuildInputs = propagatedBuildInputs ++ otherBuildInputs ++ depsBuildBuild ++ nativeBuildInputs;
+  allBuildInputs = propagatedBuildInputs ++ otherBuildInputs ++ nativeBuildInputs;
   isHaskellPartition =
     stdenv.lib.partition isHaskellPkg allBuildInputs;
 
@@ -226,7 +225,15 @@ let
   ghcCommand' = if isGhcjs then "ghcjs" else "ghc";
   ghcCommand = "${ghc.targetPrefix}${ghcCommand'}";
 
-  nativeGhcCommand = "${nativeGhc.targetPrefix}ghc";
+  # This is called with a full path instead of being placed on the
+  # PATH because Setup.hs will search for GHCs available on the PATH.
+  # If we're building in a situation where nativeGhc != ghc, but
+  # nativeGhc still has the same architecture as ghc (i.e. we're not
+  # building a cross-compiler), cabal may choose to use the wrong GHC
+  # to build with.  Since nativeGhc is only meant to be used in a few
+  # specific places, it's easier to be specific with that than to
+  # explicitly specify everything cabal wants to search for.
+  nativeGhcCommand = "${nativeGhc}/bin/${nativeGhc.targetPrefix}ghc";
 
   buildPkgDb = ghcName: packageConfDir: ''
     # If this dependency has a package database, then copy the contents of it,
@@ -264,7 +271,7 @@ stdenv.mkDerivation ({
 
   inherit src;
 
-  inherit depsBuildBuild nativeBuildInputs;
+  inherit nativeBuildInputs;
   buildInputs = otherBuildInputs ++ optionals (!isLibrary) propagatedBuildInputs;
   propagatedBuildInputs = optionals isLibrary propagatedBuildInputs;
 
