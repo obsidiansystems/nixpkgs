@@ -1,13 +1,14 @@
-{ stdenv,
-  fetchFromGitHub,
-  makeWrapper,
-  pkgs ? import <nixpkgs> {
-    inherit system;
-  }, system ? builtins.currentSystem, nodejs ? pkgs."nodejs-8_x"}:
+{ stdenv
+, fetchFromGitHub
+, makeWrapper
+, pkgs
+, system
+, nodejs
+}:
 
 let
   nodePackages = import ./node.nix {
-    inherit pkgs;
+    inherit pkgs nodejs;
     system = stdenv.hostPlatform.system;
   };
   name = "turtl-server-${version}";
