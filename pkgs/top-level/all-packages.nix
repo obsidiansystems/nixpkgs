@@ -25518,10 +25518,11 @@ in
     buildGoModule = buildGo112Module;
   };
 
-  inherit (callPackage ../applications/networking/cluster/terraform {})
+  inherit (callPackage ../applications/networking/cluster/terraform { })
     terraform_0_11
     terraform_0_11-full
     terraform_0_12
+    terraform_0_13
     terraform_plugins_test
     ;
 
@@ -25530,9 +25531,7 @@ in
   terraform-full = terraform.full;
 
   terraform-providers = recurseIntoAttrs (
-    callPackage ../applications/networking/cluster/terraform-providers {
-      inherit buildGo112Module;
-    }
+    callPackage ../applications/networking/cluster/terraform-providers {}
   );
 
   terraform-docs = callPackage ../applications/networking/cluster/terraform-docs {};
