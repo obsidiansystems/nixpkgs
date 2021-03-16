@@ -3540,6 +3540,10 @@ in
 
   cudnn = cudnn_cudatoolkit_10;
 
+  cudf-cpp = callPackage ../development/libraries/science/math/cudf {
+    cudatoolkit = cudatoolkit_11;
+  };
+
   cutensorPackages = callPackages ../development/libraries/science/math/cutensor { };
   inherit (cutensorPackages)
     cutensor_cudatoolkit_10
