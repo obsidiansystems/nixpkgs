@@ -2,6 +2,7 @@
 , autoconf, boost, brotli, cmake, flatbuffers, gflags, glog, gtest, lz4
 , perl, python3, rapidjson, re2, snappy, thrift, utf8proc, which, zlib, zstd
 , enableShared ? !stdenv.hostPlatform.isStatic
+, cudaSupport ? false, cudatoolkit, addOpenGLRunpath
 }:
 
 let
@@ -57,7 +58,9 @@ in stdenv.mkDerivation rec {
     cmake
     autoconf # for vendored jemalloc
     flatbuffers
-  ] ++ lib.optional stdenv.isDarwin fixDarwinDylibNames;
+  ] ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
+    ++ lib.optional cudaSupport addOpenGLRunpath;
+
   buildInputs = [
     boost
     brotli
@@ -76,6 +79,8 @@ in stdenv.mkDerivation rec {
   ] ++ lib.optionals enableShared [
     python3.pkgs.python
     python3.pkgs.numpy
+  ] ++ lib.optionals cudaSupport [
+    cudatoolkit
   ];
 
   preConfigure = ''
@@ -104,12 +109,20 @@ in stdenv.mkDerivation rec {
     # Parquet options:
     "-DARROW_PARQUET=ON"
     "-DPARQUET_BUILD_EXECUTABLES=ON"
+    "-DARROW_CUDA=${if cudaSupport then "ON" else "OFF"}"
   ] ++ lib.optionals (!enableShared) [
     "-DARROW_TEST_LINKAGE=static"
   ] ++ lib.optionals stdenv.isDarwin [
     "-DCMAKE_SKIP_BUILD_RPATH=OFF" # needed for tests
     "-DCMAKE_INSTALL_RPATH=@loader_path/../lib" # needed for tools executables
-  ] ++ lib.optional (!stdenv.isx86_64) "-DARROW_USE_SIMD=OFF";
+  ] ++ lib.optional (!stdenv.isx86_64) "-DARROW_USE_SIMD=OFF"
+    ++ lib.optional cudaSupport "-DCMAKE_LIBRARY_PATH=${cudatoolkit}/lib/stubs";
+
+  postFixup = lib.optionalString cudaSupport ''
+    for l in "$out"/lib/libarrow_cuda*; do
+      addOpenGLRunpath $l
+    done
+  '';
 
   doInstallCheck = true;
   ARROW_TEST_DATA =
@@ -133,6 +146,13 @@ in stdenv.mkDerivation rec {
       # path on Darwin. See https://github.com/NixOS/nix/pull/1085
       "plasma-external-store-tests"
       "plasma-client-tests"
+    ] ++ lib.optionals cudaSupport [
+      # We are just building with the stub, so can't CUDA
+      "arrow-cuda-test"
+      # Did these become CUDA-ified too?
+      "plasma-serialization-tests"
+      "plasma-client-tests"
+      "plasma-external-store-tests"
     ];
   in ''
     ctest -L unittest -V \
