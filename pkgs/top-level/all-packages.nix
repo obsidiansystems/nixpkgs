@@ -7610,6 +7610,10 @@ in
 
   richgo = callPackage ../development/tools/richgo {  };
 
+  rmm = callPackage ../development/libraries/science/math/rmm {
+    cudatoolkit = cudatoolkit_11;
+  };
+
   rs = callPackage ../tools/text/rs { };
 
   rst2html5 = callPackage ../tools/text/rst2html5 { };
