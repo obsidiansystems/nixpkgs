@@ -54,6 +54,9 @@ let
       CPU_FREQ_DEFAULT_GOV_PERFORMANCE = yes;
       CPU_FREQ_GOV_SCHEDUTIL           = whenAtLeast "4.9" yes;
       PM_WAKELOCKS                     = yes;
+      # Power-capping framework and support for INTEL RAPL
+      POWERCAP                         = yes;
+      INTEL_RAPL                       = module;
     };
 
     external-firmware = {
@@ -724,6 +727,9 @@ let
     } // optionalAttrs (stdenv.hostPlatform.system == "aarch64-linux") {
       # Enables support for the Allwinner Display Engine 2.0
       SUN8I_DE2_CCU = whenAtLeast "4.13" yes;
+
+      # See comments on https://github.com/NixOS/nixpkgs/commit/9b67ea9106102d882f53d62890468071900b9647
+      CRYPTO_AEGIS128_SIMD = no;
     };
   };
 in

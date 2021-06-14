@@ -5,7 +5,7 @@
 , libXcursor, libXext, libXfixes, libXrender, libXScrnSaver, libXcomposite, libxcb
 , alsaLib, libXdamage, libXtst, libXrandr, expat, cups
 , dbus, gtk2, gtk3, gdk-pixbuf, gcc-unwrapped, at-spi2-atk, at-spi2-core
-, kerberos
+, kerberos, libdrm, mesa
 
 # command line arguments which are always set e.g "--disable-gpu"
 , commandLineArgs ? ""
@@ -58,7 +58,7 @@ let
     liberation_ttf curl utillinux xdg_utils wget
     flac harfbuzz icu libpng opusWithCustomModes snappy speechd
     bzip2 libcap at-spi2-atk at-spi2-core
-    kerberos
+    kerberos libdrm mesa
   ] ++ optional pulseSupport libpulseaudio
     ++ [ gtk ];
 
@@ -137,5 +137,15 @@ in stdenv.mkDerivation {
     license = licenses.unfree;
     maintainers = [ maintainers.msteen ];
     platforms = [ "x86_64-linux" ];
+    knownVulnerabilities = [
+      # Since the release of M83 the previous version isn't secure anymore.
+      # nixos-unstable update: https://github.com/NixOS/nixpkgs/pull/88206
+      ''
+        This version of Google Chrome is no longer being updated. Consider switching
+        to the new stable NixOS channel or installing Google Chrome from a different
+        channel. A list of the missing security fixes can be found here:
+        https://chromereleases.googleblog.com/2020/05/stable-channel-update-for-desktop_19.html
+      ''
+    ];
   };
 }

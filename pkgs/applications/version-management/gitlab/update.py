@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#! nix-shell -i python3 -p bundix common-updater-scripts nix nix-prefetch-git python3 python3Packages.requests python3Packages.lxml python3Packages.click python3Packages.click-log vgo2nix yarn2nix-moretea.yarn2nix
+#! nix-shell -i python3 -p bundix bundler common-updater-scripts nix nix-prefetch-git python3 python3Packages.requests python3Packages.lxml python3Packages.click python3Packages.click-log vgo2nix yarn2nix-moretea.yarn2nix
 
 import click
 import click_log
@@ -100,7 +100,7 @@ def cli():
 
 
 @cli.command('update-data')
-@click.option('--rev', default='latest', help='The rev to use, \'latest\' points to the latest (stable) tag')
+@click.option('--rev', default='latest', help='The rev to use (vX.Y.Z-ee), or \'latest\'')
 def update_data(rev: str):
     """Update data.nix"""
     repo = GitLabRepo()
@@ -135,6 +135,7 @@ def update_rubyenv():
         with open(rubyenv_dir / fn, 'w') as f:
             f.write(repo.get_file(fn, rev))
 
+    subprocess.check_output(['bundle', 'lock'], cwd=rubyenv_dir)
     subprocess.check_output(['bundix'], cwd=rubyenv_dir)
 
 
@@ -174,7 +175,10 @@ def update_gitaly():
         with open(gitaly_dir / fn, 'w') as f:
             f.write(repo.get_file(fn, f"v{gitaly_server_version}"))
 
+    subprocess.check_output(['bundle', 'lock'], cwd=gitaly_dir)
     subprocess.check_output(['bundix'], cwd=gitaly_dir)
+
+    os.environ['GOROOT'] = ""
     subprocess.check_output(['vgo2nix'], cwd=gitaly_dir)
 
     for fn in ['go.mod', 'go.sum']:
@@ -195,8 +199,9 @@ def update_gitlab_shell():
 
     for fn in ['go.mod', 'go.sum']:
         with open(gitlab_shell_dir / fn, 'w') as f:
-            f.write(repo.get_file(f"go/{fn}", f"v{gitlab_shell_version}"))
+            f.write(repo.get_file(fn, f"v{gitlab_shell_version}"))
 
+    os.environ['GOROOT'] = ""
     subprocess.check_output(['vgo2nix'], cwd=gitlab_shell_dir)
 
     for fn in ['go.mod', 'go.sum']:
@@ -217,16 +222,18 @@ def update_gitlab_workhorse():
         with open(gitlab_workhorse_dir / fn, 'w') as f:
             f.write(repo.get_file(fn, f"v{gitlab_workhorse_version}"))
 
+    os.environ['GOROOT'] = ""
     subprocess.check_output(['vgo2nix'], cwd=gitlab_workhorse_dir)
 
     for fn in ['go.mod', 'go.sum']:
         os.unlink(gitlab_workhorse_dir / fn)
 
 @cli.command('update-all')
+@click.option('--rev', default='latest', help='The rev to use (vX.Y.Z-ee), or \'latest\'')
 @click.pass_context
-def update_all(ctx):
+def update_all(ctx, rev: str):
     """Update all gitlab components to the latest stable release"""
-    ctx.invoke(update_data, rev='latest')
+    ctx.invoke(update_data, rev=rev)
     ctx.invoke(update_rubyenv)
     ctx.invoke(update_yarnpkgs)
     ctx.invoke(update_gitaly)

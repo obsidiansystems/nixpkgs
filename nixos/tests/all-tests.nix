@@ -37,7 +37,8 @@ in
   buildbot = handleTest ./buildbot.nix {};
   cadvisor = handleTestOn ["x86_64-linux"] ./cadvisor.nix {};
   cassandra = handleTest ./cassandra.nix {};
-  ceph = handleTestOn ["x86_64-linux"] ./ceph.nix {};
+  ceph-single-node = handleTestOn ["x86_64-linux"] ./ceph-single-node.nix {};
+  ceph-multi-node = handleTestOn ["x86_64-linux"] ./ceph-multi-node.nix {};
   certmgr = handleTest ./certmgr.nix {};
   cfssl = handleTestOn ["x86_64-linux"] ./cfssl.nix {};
   chromium = (handleTestOn ["x86_64-linux"] ./chromium.nix {}).stable or {};
@@ -195,6 +196,8 @@ in
   nfs4 = handleTest ./nfs.nix { version = 4; };
   nghttpx = handleTest ./nghttpx.nix {};
   nginx = handleTest ./nginx.nix {};
+  nginx-etag = handleTest ./nginx-etag.nix {};
+  nginx-pubhtml = handleTest ./nginx-pubhtml.nix {};
   nginx-sso = handleTest ./nginx-sso.nix {};
   nix-ssh-serve = handleTest ./nix-ssh-serve.nix {};
   nixos-generate-config = handleTest ./nixos-generate-config.nix {};
@@ -226,6 +229,7 @@ in
   postgresql = handleTest ./postgresql.nix {};
   postgresql-wal-receiver = handleTest ./postgresql-wal-receiver.nix {};
   powerdns = handleTest ./powerdns.nix {};
+  pppd = handleTest ./pppd.nix {};
   predictable-interface-names = handleTest ./predictable-interface-names.nix {};
   printing = handleTest ./printing.nix {};
   prometheus = handleTest ./prometheus.nix {};

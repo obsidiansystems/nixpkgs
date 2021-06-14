@@ -18,13 +18,13 @@ let
   pname = "wire-desktop";
 
   version = {
-    x86_64-linux = "3.11.2912";
-    x86_64-darwin = "3.10.3215";
+    x86_64-darwin = "3.18.3728";
+    x86_64-linux = "3.18.2925";
   }.${system} or throwSystem;
 
   sha256 = {
-    x86_64-linux = "1d2wa13d750dd2vslnvzf0ibwjmf5s299pxq0rs2x98y2sabw3sl";
-    x86_64-darwin = "0ygm3fgy9k1dp2kjfwsrrwq1i88wgxc6k8y80yz61ivdawgph9wa";
+    x86_64-darwin = "0xi3k95yw59xsfavncc1giwxlwjz26z34qm3i604ksjjalvpzy5l";
+    x86_64-linux = "01g39hncj1w0zyfrzv4mgv8npwvx0g0lw99azyai99877b30bm8j";
   }.${system} or throwSystem;
 
   meta = with stdenv.lib; {
@@ -61,9 +61,12 @@ let
       exec = "wire-desktop %U";
       icon = "wire-desktop";
       comment = "Secure messenger for everyone";
-      desktopName = "Wire Desktop";
+      desktopName = "Wire";
       genericName = "Secure messenger";
       categories = "Network;InstantMessaging;Chat;VideoConference";
+      extraEntries = ''
+        StartupWMClass=Wire
+      '';
     };
 
     dontBuild = true;
@@ -107,7 +110,7 @@ let
 
     src = fetchurl {
       url = "https://github.com/wireapp/wire-desktop/releases/download/"
-        + "macos%2F${version}/Wire.pkg";
+          + "macos%2F${version}/Wire.pkg";
       inherit sha256;
     };
 

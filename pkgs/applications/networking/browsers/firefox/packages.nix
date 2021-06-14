@@ -1,4 +1,4 @@
-{ lib, callPackage, fetchurl, fetchFromGitHub, overrideCC, gccStdenv, gcc6 }:
+{ lib, callPackage, fetchurl, fetchpatch, fetchFromGitHub, overrideCC, gccStdenv, gcc6 }:
 
 let
 
@@ -16,14 +16,19 @@ in
 rec {
   firefox = common rec {
     pname = "firefox";
-    ffversion = "71.0";
+    ffversion = "76.0.1";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${ffversion}/source/firefox-${ffversion}.source.tar.xz";
-      sha512 = "0hfjlhwdhfdfzd27d6p3h8ff5m2jphlaipv4zym48bn6g95if1x98q2lb87617bxfm31di4rckjvqb70g9sm3smil6p6bnw2dsvnq1g";
+      sha512 = "0gnhfcgrz6022xf3vqia3s3639xa5pjp13h343d3c09mn8r919cmm6s38vzj1v3734fm25zb68acyarsp72xqq8z1420rh02b2pv38q";
     };
 
     patches = [
-      ./no-buildconfig-ffx65.patch
+      ./no-buildconfig-ffx76.patch
+      # Fix for NSS 3.52 (add missing CK_GCM_PARMS field)
+      (fetchpatch {
+        url = "https://hg.mozilla.org/mozilla-central/raw-rev/463069687b3d";
+        sha256 = "00yhz67flnkww3rbry0kqn6z6bm7vxfb2sgf7qikgbjcm3ysvpsm";
+      })
     ];
 
     meta = {
@@ -88,6 +93,7 @@ rec {
 
     meta = firefox.meta // {
       description = "A web browser built from Firefox Extended Support Release source tree";
+      knownVulnerabilities = [ "Support ended around October 2019." ];
     };
     updateScript = callPackage ./update.nix {
       attrPath = "firefox-esr-60-unwrapped";
@@ -98,10 +104,10 @@ rec {
 
   firefox-esr-68 = common rec {
     pname = "firefox-esr";
-    ffversion = "68.3.0esr";
+    ffversion = "68.8.0esr";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${ffversion}/source/firefox-${ffversion}.source.tar.xz";
-      sha512 = "31zisy4l07hhm9yvxz7sx04kz1f5rl20z1w072jxaabi42sw07xr6lcflv88gwl21y902n7vwd1q1zfavpnipn65wap4i0vm8c4m6pr";
+      sha512 = "2rl5irkamxi8caa8krj0wng93lb82kk9mf09mgci87mj9hy6fxzcrlmiiffp14s03rv0raagrn4w54pbx1336mylq6saxmfhpf676hk";
     };
 
     patches = [
@@ -173,6 +179,7 @@ in {
       ./no-buildconfig.patch
       missing-documentation-patch
     ];
+    meta.knownVulnerabilities = [ "Support ended around October 2019." ];
   };
 
   # Similarly to firefox-esr-52 above.
@@ -260,6 +267,7 @@ in rec {
       rev   = "95bb92d552876a1f4260edf68fda5faa3eb36ad8";
       sha256 = "1ykn3yg4s36g2cpzxbz7s995c33ij8kgyvghx38z4i8siaqxdddy";
     };
+    meta.knownVulnerabilities = [ "Support ended in August 2018." ];
   }).override {
     gtk3Support = false;
   };
@@ -276,6 +284,7 @@ in rec {
       rev   = "0489ae3158cd8c0e16c2e78b94083d8cbf0209dc";
       sha256 = "0y5s7d8pg8ak990dp8d801j9823igaibfhv9hsa79nib5yllifzs";
     };
+    meta.knownVulnerabilities = [ "Support ended around October 2019." ];
 
     patches = [
       missing-documentation-patch

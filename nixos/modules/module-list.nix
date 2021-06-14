@@ -142,7 +142,6 @@
   ./programs/seahorse.nix
   ./programs/slock.nix
   ./programs/shadow.nix
-  ./programs/shell.nix
   ./programs/spacefm.nix
   ./programs/singularity.nix
   ./programs/ssh.nix
@@ -665,6 +664,7 @@
   ./services/networking/polipo.nix
   ./services/networking/powerdns.nix
   ./services/networking/pdns-recursor.nix
+  ./services/networking/pppd.nix
   ./services/networking/pptpd.nix
   ./services/networking/prayer.nix
   ./services/networking/privoxy.nix
@@ -704,6 +704,7 @@
   ./services/networking/syncthing.nix
   ./services/networking/syncthing-relay.nix
   ./services/networking/syncplay.nix
+  ./services/networking/tailscale.nix
   ./services/networking/tcpcrypt.nix
   ./services/networking/teamspeak3.nix
   ./services/networking/tedicross.nix
@@ -727,6 +728,7 @@
   ./services/networking/xinetd.nix
   ./services/networking/xl2tpd.nix
   ./services/networking/xrdp.nix
+  ./services/networking/yggdrasil.nix
   ./services/networking/zerobin.nix
   ./services/networking/zeronet.nix
   ./services/networking/zerotierone.nix

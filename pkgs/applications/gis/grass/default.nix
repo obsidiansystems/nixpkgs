@@ -24,6 +24,11 @@ stdenv.mkDerivation rec {
   # directory
   patches = [ ./no_symbolic_links.patch ];
 
+  # Correct mysql_config query
+  patchPhase = ''
+      substituteInPlace configure --replace "--libmysqld-libs" "--libs"
+  '';
+
   configureFlags = [
     "--with-proj-share=${proj}/share/proj"
     "--with-proj-includes=${proj.dev}/include"
@@ -37,7 +42,7 @@ stdenv.mkDerivation rec {
     "--with-postgres-libs=${postgresql.lib}/lib/"
     # it complains about missing libmysqld but doesn't really seem to need it
     "--with-mysql"
-    "--with-mysql-includes=${mysql.connector-c}/include/mysql"
+    "--with-mysql-includes=${stdenv.lib.getDev mysql.connector-c}/include/mysql"
     "--with-mysql-libs=${mysql.connector-c}/lib/mysql"
     "--with-blas"
     "--with-liblas=${libLAS}/bin/liblas-config"
