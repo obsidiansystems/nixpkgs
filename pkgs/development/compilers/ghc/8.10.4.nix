@@ -105,6 +105,8 @@ let
     GhcRtsHcOpts += -fPIC
   '' + lib.optionalString targetPlatform.useAndroidPrebuilt ''
     EXTRA_CC_OPTS += -std=gnu99
+  '' + lib.optionalString targetPlatform.isWindows ''
+    SplitSections = NO
   '';
 
   # Splicer will pull out correct variations
@@ -122,7 +124,7 @@ let
   # Use gold either following the default, or to avoid the BFD linker due to some bugs / perf issues.
   # But we cannot avoid BFD when using musl libc due to https://sourceware.org/bugzilla/show_bug.cgi?id=23856
   # see #84670 and #49071 for more background.
-  useLdGold = targetPlatform.linker == "gold" || (targetPlatform.linker == "bfd" && !targetPlatform.isMusl);
+  useLdGold = targetPlatform.linker == "gold" || (targetPlatform.linker == "bfd" && !targetPlatform.isMusl && !targetPlatform.isWindows);
 
   runtimeDeps = [
     targetPackages.stdenv.cc.bintools
@@ -158,6 +160,11 @@ stdenv.mkDerivation (rec {
     # Fix documentation configuration which causes a syntax error with sphinx 4.*
     # See https://gitlab.haskell.org/ghc/ghc/-/issues/19962, remove at 8.10.6.
     ./sphinx-4-configuration.patch
+
+    (fetchpatch {
+      url = "https://raw.githubusercontent.com/input-output-hk/haskell.nix/11ac089c9ad436defc77fd096e00bebc42adda1d/overlays/patches/ghc/cabal-host.patch";
+      sha256 = "sha256:0yd0sajgi24sc1w5m55lkg2lp6kfkgpp3lgija2c8y3cmkwfpdc1";
+    })
   ] ++ lib.optionals stdenv.isDarwin [
     # Make Block.h compile with c++ compilers. Remove with the next release
     (fetchpatch {
