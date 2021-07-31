@@ -48,7 +48,7 @@ let self = stdenv.mkDerivation rec {
     ++ optional (!withStatic && stdenv.hostPlatform.isWindows) "--disable-static --enable-shared"
     # Required for "undefined reference to __memset_chk" error
     # see https://github.com/msys2/MINGW-packages-dev/pull/6
-    ++ optional (targetPlatform.isWindows) "-fstack-protector"
+    ++ optional (stdenv.targetPlatform.isWindows) "CPPFLAGS=-fstack-protector"
     ++ optional (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64) "--disable-assembly";
 
   doCheck = true; # not cross;
