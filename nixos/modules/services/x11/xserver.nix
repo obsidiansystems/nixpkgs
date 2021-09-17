@@ -651,6 +651,7 @@ in
         pkgs.xterm
         pkgs.xdg-utils
         xorg.xf86inputevdev.out # get evdev.4 man page
+        pkgs.nixos-icons # needed for gnome and pantheon about dialog, nixos-manual and maybe more
       ]
       ++ optional (elem "virtualbox" cfg.videoDrivers) xorg.xrefresh;
 
@@ -674,7 +675,7 @@ in
     systemd.services.display-manager =
       { description = "X11 Server";
 
-        after = [ "acpid.service" "systemd-logind.service" ];
+        after = [ "acpid.service" "systemd-logind.service" "systemd-user-sessions.service" ];
 
         restartIfChanged = false;
 

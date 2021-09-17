@@ -1,23 +1,26 @@
-{ pname, ffversion, meta, updateScript ? null
+{ pname, ffversion, meta, updateScript ? null, binaryName ? "firefox", application ? "browser"
 , src, unpackPhase ? null, patches ? []
 , extraNativeBuildInputs ? [], extraConfigureFlags ? [], extraMakeFlags ? [], tests ? [] }:
 
 { lib, stdenv, pkg-config, pango, perl, python3, zip
 , libjpeg, zlib, dbus, dbus-glib, bzip2, xorg
-, freetype, fontconfig, file, nspr, nss, nss_3_53
+, freetype, fontconfig, file, nspr, nss_3_53
 , yasm, libGLU, libGL, sqlite, unzip, makeWrapper
 , hunspell, libevent, libstartup_notification
 , libvpx_1_8
-, icu67, libpng, jemalloc, glib, pciutils
+, icu69, libpng, jemalloc, glib, pciutils
 , autoconf213, which, gnused, rustPackages, rustPackages_1_45
 , rust-cbindgen, nodejs, nasm, fetchpatch
 , gnum4
+, gtk2, gtk3, wrapGAppsHook
 , debugBuild ? false
 
 ### optionals
 
 ## backported libraries
 
+, nspr_latest
+, nss_latest
 , rust-cbindgen_latest
 
 ## optional libraries
@@ -25,7 +28,6 @@
 , alsaSupport ? stdenv.isLinux, alsaLib
 , pulseaudioSupport ? stdenv.isLinux, libpulseaudio
 , ffmpegSupport ? true
-, gtk3Support ? true, gtk2, gtk3, wrapGAppsHook
 , waylandSupport ? true, libxkbcommon, libdrm
 , ltoSupport ? (stdenv.isLinux && stdenv.is64bit), overrideCC, buildPackages
 , gssSupport ? true, libkrb5
@@ -83,9 +85,8 @@ let
   flag = tf: x: [(if tf then "--enable-${x}" else "--disable-${x}")];
 
   default-toolkit = if stdenv.isDarwin then "cairo-cocoa"
-                    else "cairo-gtk${if gtk3Support then "3${lib.optionalString waylandSupport "-wayland"}" else "2"}";
+                    else "cairo-gtk3${lib.optionalString waylandSupport "-wayland"}";
 
-  binaryName = "firefox";
   binaryNameCapitalized = lib.toUpper (lib.substring 0 1 binaryName) + lib.substring 1 (-1) binaryName;
 
   browserName = if stdenv.isDarwin then binaryNameCapitalized else binaryName;
@@ -94,6 +95,7 @@ let
             then "/Applications/${binaryNameCapitalized}.app/Contents/MacOS"
             else "/bin";
 
+  nspr_pkg = if lib.versionAtLeast ffversion "91" then nspr_latest else nspr;
   rust-cbindgen_pkg = if lib.versionAtLeast ffversion "89" then rust-cbindgen_latest else rust-cbindgen;
 
   # 78 ESR won't build with rustc 1.47
@@ -124,7 +126,7 @@ let
 
   # Disable p11-kit support in nss until our cacert packages has caught up exposing CKA_NSS_MOZILLA_CA_POLICY
   # https://github.com/NixOS/nixpkgs/issues/126065
-  nss_pkg = if lib.versionOlder ffversion "83" then nss_3_53 else nss.override { useP11kit = false; };
+  nss_pkg = if lib.versionOlder ffversion "83" then nss_3_53 else nss_latest.override { useP11kit = false; };
 
   # --enable-release adds -ffunction-sections & LTO that require a big amount of
   # RAM and the 32-bit memory space cannot handle that linking
@@ -145,7 +147,7 @@ buildStdenv.mkDerivation ({
   lib.optional (lib.versionOlder ffversion "86") ./env_var_for_system_dir-ff85.patch ++
   lib.optional (lib.versionAtLeast ffversion "86") ./env_var_for_system_dir-ff86.patch ++
   lib.optional (lib.versionOlder ffversion "83") ./no-buildconfig-ffx76.patch ++
-  lib.optional (lib.versionAtLeast ffversion "84") ./no-buildconfig-ffx84.patch ++
+  lib.optional (lib.versionAtLeast ffversion "90") ./no-buildconfig-ffx90.patch ++
   lib.optional (ltoSupport && lib.versionOlder ffversion "84") ./lto-dependentlibs-generation-ffx83.patch ++
   lib.optional (ltoSupport && lib.versionAtLeast ffversion "84" && lib.versionOlder ffversion "86")
     (fetchpatch {
@@ -161,6 +163,23 @@ buildStdenv.mkDerivation ({
       sha256 = "0qc62di5823r7ly2lxkclzj9rhg2z7ms81igz44nv0fzv3dszdab";
     })
 
+  # These fix Firefox on sway and other non-Gnome wayland WMs. They should be
+  # removed whenever the following two patches make it onto a release:
+  # 1. https://hg.mozilla.org/mozilla-central/rev/51c13987d1b8
+  # 2. https://hg.mozilla.org/integration/autoland/rev/3b856ecc00e4
+  # This will probably happen in the next point release, but let's be careful
+  # and double check whether it's working on sway on the next v bump.
+  ++ lib.optionals (lib.versionAtLeast ffversion "92") [
+      (fetchpatch {
+        url = "https://hg.mozilla.org/integration/autoland/raw-rev/3b856ecc00e4";
+        sha256 = "sha256-d8IRJD6ELC3ZgEs1ES/gy2kTNu/ivoUkUNGMEUoq8r8=";
+      })
+      (fetchpatch {
+        url = "https://hg.mozilla.org/mozilla-central/raw-rev/51c13987d1b8";
+        sha256 = "sha256-C2jcoWLuxW0Ic+Mbh3UpEzxTKZInljqVdcuA9WjspoA=";
+      })
+  ]
+
   ++ patches;
 
 
@@ -170,7 +189,7 @@ buildStdenv.mkDerivation ({
   patchFlags = [ "-p1" "-l" ];
 
   buildInputs = [
-    gtk2 perl zip libjpeg zlib bzip2
+    gtk3 perl zip libjpeg zlib bzip2
     dbus dbus-glib pango freetype fontconfig xorg.libXi xorg.libXcursor
     xorg.libX11 xorg.libXrender xorg.libXft xorg.libXt file
     xorg.pixman yasm libGLU libGL
@@ -179,23 +198,23 @@ buildStdenv.mkDerivation ({
     xorg.libXext makeWrapper
     libevent libstartup_notification /* cairo */
     libpng jemalloc glib
-    nasm icu67 libvpx_1_8
+    nasm icu69 libvpx_1_8
     # >= 66 requires nasm for the AV1 lib dav1d
     # yasm can potentially be removed in future versions
     # https://bugzilla.mozilla.org/show_bug.cgi?id=1501796
     # https://groups.google.com/forum/#!msg/mozilla.dev.platform/o-8levmLU80/SM_zQvfzCQAJ
-    nspr nss_pkg
+    nspr_pkg nss_pkg
   ]
   ++ lib.optional  alsaSupport alsaLib
   ++ lib.optional  pulseaudioSupport libpulseaudio # only headers are needed
-  ++ lib.optional  gtk3Support gtk3
   ++ lib.optional  gssSupport libkrb5
   ++ lib.optionals waylandSupport [ libxkbcommon libdrm ]
   ++ lib.optional  pipewireSupport pipewire
   ++ lib.optional  (lib.versionAtLeast ffversion "82") gnum4
   ++ lib.optionals buildStdenv.isDarwin [ CoreMedia ExceptionHandling Kerberos
                                           AVFoundation MediaToolbox CoreLocation
-                                          Foundation libobjc AddressBook cups ];
+                                          Foundation libobjc AddressBook cups ]
+  ++ lib.optional  (lib.versionOlder ffversion "90") gtk2;
 
   NIX_LDFLAGS = lib.optionalString ltoSupport ''
     -rpath ${llvmPackages.libunwind.out}/lib
@@ -238,8 +257,8 @@ buildStdenv.mkDerivation ({
       rustc
       which
       unzip
+      wrapGAppsHook
     ]
-    ++ lib.optional gtk3Support wrapGAppsHook
     ++ lib.optionals buildStdenv.isDarwin [ xcbuild rsync ]
     ++ extraNativeBuildInputs;
 
@@ -278,10 +297,13 @@ buildStdenv.mkDerivation ({
   '') + ''
     # AS=as in the environment causes build failure https://bugzilla.mozilla.org/show_bug.cgi?id=1497286
     unset AS
-  '';
+  '' + (lib.optionalString enableOfficialBranding ''
+    export MOZILLA_OFFICIAL=1
+    export BUILD_OFFICIAL=1
+  '');
 
   configureFlags = [
-    "--enable-application=browser"
+    "--enable-application=${application}"
     "--with-system-jpeg"
     "--with-system-zlib"
     "--with-system-libevent"
@@ -330,11 +352,7 @@ buildStdenv.mkDerivation ({
     cd obj-*
   '';
 
-  makeFlags = lib.optionals enableOfficialBranding [
-    "MOZILLA_OFFICIAL=1"
-    "BUILD_OFFICIAL=1"
-  ]
-  ++ lib.optionals ltoSupport [
+  makeFlags = lib.optionals ltoSupport [
     "AR=${buildStdenv.cc.bintools.bintools}/bin/llvm-ar"
     "LLVM_OBJDUMP=${buildStdenv.cc.bintools.bintools}/bin/llvm-objdump"
     "NM=${buildStdenv.cc.bintools.bintools}/bin/llvm-nm"
@@ -368,17 +386,16 @@ buildStdenv.mkDerivation ({
   passthru = {
     inherit updateScript;
     version = ffversion;
-    isFirefox3Like = true;
-    gtk = gtk2;
     inherit alsaSupport;
     inherit pipewireSupport;
-    inherit nspr;
+    inherit nspr_pkg;
     inherit ffmpegSupport;
     inherit gssSupport;
     inherit execdir;
     inherit browserName;
     inherit tests;
-  } // lib.optionalAttrs gtk3Support { inherit gtk3; };
+    inherit gtk3;
+  };
 
   hardeningDisable = [ "format" ]; # -Werror=format-security
 

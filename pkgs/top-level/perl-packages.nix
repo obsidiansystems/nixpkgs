@@ -2150,6 +2150,21 @@ let
     };
   };
 
+  CatalystPluginPrometheusTiny = buildPerlPackage {
+    pname = "Catalyst-Plugin-PrometheusTiny";
+    version = "0.006";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SY/SYSPETE/Catalyst-Plugin-PrometheusTiny-0.006.tar.gz";
+      sha256 = "1hd2nv21c2mq3yvhsys4a276bdwr5igs4b73m99v7ymzpabvjf9b";
+    };
+    buildInputs = [ HTTPMessage Plack SubOverride TestDeep ];
+    propagatedBuildInputs = [ CatalystRuntime Moose PrometheusTiny PrometheusTinyShared ];
+    meta = {
+      description = "Prometheus metrics for Catalyst";
+      license = with lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
   CatalystPluginSession = buildPerlPackage {
     pname = "Catalyst-Plugin-Session";
     version = "0.41";
@@ -4928,6 +4943,20 @@ let
     propagatedBuildInputs = [ ClonePP FileHomeDir PackageStash SortNaturally ];
     meta = {
       description = "colored pretty-print of Perl data structures and objects";
+      license = with lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  DataRandom = buildPerlPackage {
+    pname = "Data-Random";
+    version = "0.13";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/B/BA/BAREFOOT/Data-Random-0.13.tar.gz";
+      sha256 = "eb590184a8db28a7e49eab09e25f8650c33f1f668b6a472829de74a53256bfc0";
+    };
+    buildInputs = [ FileShareDirInstall TestMockTime ];
+    meta = {
+      description = "Perl module to generate random data";
       license = with lib.licenses; [ artistic1 gpl1Plus ];
     };
   };
@@ -9402,6 +9431,20 @@ let
     };
   };
 
+  HashSharedMem = buildPerlModule {
+    pname = "Hash-SharedMem";
+    version = "0.005";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/Z/ZE/ZEFRAM/Hash-SharedMem-0.005.tar.gz";
+      sha256 = "324776808602f7bdc44adaa937895365454029a926fa611f321c9bf6b940bb5e";
+    };
+    buildInputs = [ ScalarString ];
+    meta = {
+      description = "Efficient shared mutable hash";
+      license = with lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
   HashUtilFieldHashCompat = buildPerlPackage {
     pname = "Hash-Util-FieldHash-Compat";
     version = "0.11";
@@ -11412,10 +11455,10 @@ let
 
   LinkEmbedder = buildPerlPackage {
     pname = "LinkEmbedder";
-    version = "1.18";
+    version = "1.20";
     src = fetchurl {
-      url = "mirror://cpan/authors/id/J/JH/JHTHORSEN/LinkEmbedder-1.18.tar.gz";
-      sha256 = "17gnixbawzr0r1k37dry7axb7ry6sj2xiahki28m8qbk1l69dfjz";
+      url = "mirror://cpan/authors/id/J/JH/JHTHORSEN/LinkEmbedder-1.20.tar.gz";
+      sha256 = "19fwr3y8dd1bya2z86x3904s4dxfx15h7b777529j8n74m78ppmi";
     };
     buildInputs = [ TestDeep ];
     propagatedBuildInputs = [ Mojolicious ];
@@ -15126,6 +15169,20 @@ let
     };
   };
 
+  NetINET6Glue = buildPerlPackage {
+    pname = "Net-INET6Glue";
+    version = "0.604";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SU/SULLR/Net-INET6Glue-0.604.tar.gz";
+      sha256 = "05xvbdrqq88npzg14bjm9wmjykzplwirzcm8rp61852hz6c67hwh";
+    };
+    meta = {
+      homepage = "https://github.com/noxxi/p5-net-inet6glue";
+      description = "Make common modules IPv6 ready by hotpatching";
+      license = lib.licenses.artistic1;
+    };
+  };
+
   NetAddrIP = buildPerlPackage {
     pname = "NetAddr-IP";
     version = "4.079";
@@ -16971,20 +17028,15 @@ let
 
   PerlMagick = buildPerlPackage rec {
     pname = "PerlMagick";
-    version = "7.0.10";
+    version = "7.0.11-1";
     src = fetchurl {
-      url = "mirror://cpan/authors/id/J/JC/JCRISTY/PerlMagick-${version}.tar.gz";
-      sha256 = "1x05hdb3b6qs36x958b4w46qanvkqm6rpc44rlq4rd2w3gbp4lhx";
+      url = "mirror://cpan/authors/id/J/JC/JCRISTY/Image-Magick-${version}.tar.gz";
+      sha256 = "sha256-c0vuFmVq9bypQABBnZElGIQrpkYKwtD/B+PloBAycuI=";
     };
     buildInputs = [ pkgs.imagemagick ];
     preConfigure =
       ''
         sed -i -e 's|my \$INC_magick = .*|my $INC_magick = "-I${pkgs.imagemagick.dev}/include/ImageMagick";|' Makefile.PL
-
-        # Enable HDRI support to match the native ImageMagick 7 defaults
-        # See: https://github.com/ImageMagick/ImageMagick/issues/3402#issuecomment-801195538
-        substituteInPlace Makefile.PL \
-          --replace 'MAGICKCORE_HDRI_ENABLE=0' 'MAGICKCORE_HDRI_ENABLE=1'
       '';
   };
 
@@ -17423,6 +17475,37 @@ let
       sha256 = "1g3l8jzx06x4l4p0x7fyn4wvg6plfzl420irwwb9v447wzsn6xfh";
     };
     propagatedBuildInputs = [ IPCSignal ];
+  };
+
+  PrometheusTiny = buildPerlPackage {
+    pname = "Prometheus-Tiny";
+    version = "0.008";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/R/RO/ROBN/Prometheus-Tiny-0.008.tar.gz";
+      sha256 = "17d7b69chkcq8fprww6m15glndyb0lms2l0xjbnbw04q7f8ncskk";
+    };
+    buildInputs = [ HTTPMessage Plack TestException ];
+    meta = {
+      homepage = "https://github.com/robn/Prometheus-Tiny";
+      description = "A tiny Prometheus client";
+      license = with lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  PrometheusTinyShared = buildPerlPackage {
+    pname = "Prometheus-Tiny-Shared";
+    version = "0.024";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/R/RO/ROBN/Prometheus-Tiny-Shared-0.024.tar.gz";
+      sha256 = "02w24r4amk8dqlavg6abxap48hzxrbda48f1pmrqypgx1cz59g4g";
+    };
+    buildInputs = [ DataRandom HTTPMessage Plack TestDifferences TestException ];
+    propagatedBuildInputs = [ HashSharedMem JSONXS PrometheusTiny ];
+    meta = {
+      homepage = "https://github.com/robn/Prometheus-Tiny-Shared";
+      description = "A tiny Prometheus client with a shared database behind it";
+      license = with lib.licenses; [ artistic1 gpl1Plus ];
+    };
   };
 
   ProtocolRedis = buildPerlPackage {
@@ -18808,7 +18891,19 @@ let
       sha256 = "096fq62iphmxgcfcayg4i0wf09y1rl1ar6hrcxfqsbrsmkwlzk8a";
     };
     buildInputs = [ FileShareDirInstall JSONMaybeXS TestDifferences TestException XMLWriter YAML ];
-    propagatedBuildInputs = [ CarpClan DBI FileShareDir Moo PackageVariant ParseRecDescent TryTiny ];
+    propagatedBuildInputs = [ CarpClan DBI FileShareDir Moo PackageVariant ParseRecDescent TryTiny GraphViz GD ];
+
+    postPatch = ''
+      patchShebangs script
+    '';
+
+    nativeBuildInputs = lib.optional stdenv.isDarwin shortenPerlShebang;
+    postInstall = lib.optionalString stdenv.isDarwin ''
+      for file in $out/bin/*; do
+        shortenPerlShebang $file
+      done
+    '';
+
     meta = {
       description = "SQL DDL transformations and more";
       license = with lib.licenses; [ artistic1 gpl1Plus ];

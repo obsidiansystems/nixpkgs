@@ -1,6 +1,6 @@
 { lib, fetchFromGitHub
 , makeWrapper, makeDesktopItem, mkYarnPackage
-, electron, element-web
+, electron, element-web, fetchpatch
 }:
 # Notes for maintainers:
 # * versions of `element-web` and `element-desktop` should be kept in sync.
@@ -8,21 +8,39 @@
 
 let
   executableName = "element-desktop";
-  version = "1.7.31";
+  version = "1.8.4";
   src = fetchFromGitHub {
     owner = "vector-im";
     repo = "element-desktop";
     rev = "v${version}";
-    sha256 = "14vyqzf69g4n3i7qjm1pgq2kwym6cira0jwvirzdrwxkfsl0dsq6";
+    sha256 = "sha256-MmrO9Ref/qpW7ssjw8IAb7dYZHMRBfdfH2whsZJq/14=";
   };
 in mkYarnPackage rec {
   name = "element-desktop-${version}";
   inherit version src;
 
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/vector-im/element-desktop/commit/96e5389779f60c91b8fe80d7bd9af413d72ec61f.patch";
+      sha256 = "sha256-82I5BDNDWIfp+m2HpzTA5+39hMv2bTbmJlXfM4YUjDY=";
+    })
+  ];
+
   packageJSON = ./element-desktop-package.json;
   yarnNix = ./element-desktop-yarndeps.nix;
 
   nativeBuildInputs = [ makeWrapper ];
+
+  buildPhase = ''
+    runHook preBuild
+    export HOME=$(mktemp -d)
+    pushd deps/element-desktop/
+    npx tsc
+    yarn run i18n
+    node ./scripts/copy-res.js
+    popd
+    runHook postBuild
+  '';
 
   installPhase = ''
     # resources
@@ -32,6 +50,7 @@ in mkYarnPackage rec {
     cp -r './deps/element-desktop/res/img' "$out/share/element"
     rm "$out/share/element/electron/node_modules"
     cp -r './node_modules' "$out/share/element/electron"
+    cp $out/share/element/electron/lib/i18n/strings/en_EN.json $out/share/element/electron/lib/i18n/strings/en-us.json
 
     # icons
     for icon in $out/share/element/electron/build/icons/*.png; do

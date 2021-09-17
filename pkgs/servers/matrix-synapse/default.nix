@@ -4,24 +4,35 @@
 , callPackage
 }:
 
-with python3.pkgs;
-
 let
-  plugins = python3.pkgs.callPackage ./plugins { };
+  py = python3.override {
+    packageOverrides = self: super:  {
+      twisted = super.twisted.overridePythonAttrs (oldAttrs: rec {
+        version = "21.7.0";
+        src = oldAttrs.src.override {
+          inherit version;
+          extension = "tar.gz";
+          sha256 = "01lh225d7lfnmfx4f4kxwl3963gjc9yg8jfkn1w769v34ia55mic";
+        };
+
+        propagatedBuildInputs = with self; oldAttrs.propagatedBuildInputs ++ [ typing-extensions ];
+      });
+    };
+  };
+  plugins = py.pkgs.callPackage ./plugins { };
   tools = callPackage ./tools { };
 in
-buildPythonApplication rec {
+with py.pkgs; buildPythonApplication rec {
   pname = "matrix-synapse";
-  version = "1.36.0";
+  version = "1.42.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-OMbSd64mD2+6GVUxGL4lvQlKAiBuen0PjvyVdk/ePbI=";
+    sha256 = "sha256-wJFjjm9apRqjk5eN/kIEgecHgm/XLbtwXHEpM2pmvO8=";
   };
 
   patches = [
-    # adds an entry point for the service
-    ./homeserver-script.patch
+    ./0001-setup-add-homeserver-as-console-script.patch
   ];
 
   buildInputs = [ openssl ];

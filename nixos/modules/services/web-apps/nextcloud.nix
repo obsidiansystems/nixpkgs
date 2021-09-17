@@ -92,7 +92,7 @@ in {
     package = mkOption {
       type = types.package;
       description = "Which package to use for the Nextcloud instance.";
-      relatedPackages = [ "nextcloud19" "nextcloud20" "nextcloud21" ];
+      relatedPackages = [ "nextcloud19" "nextcloud20" "nextcloud21" "nextcloud22" ];
     };
 
     maxUploadSize = mkOption {
@@ -385,7 +385,7 @@ in {
       ];
 
       warnings = let
-        latest = 21;
+        latest = 22;
         upgradeWarning = major: nixos:
           ''
             A legacy Nextcloud install (from before NixOS ${nixos}) may be installed.
@@ -502,8 +502,6 @@ in {
               ${if c.dbport != null then "--database-port" else null} = ''"${toString c.dbport}"'';
               ${if c.dbuser != null then "--database-user" else null} = ''"${c.dbuser}"'';
               "--database-pass" = dbpass;
-              ${if c.dbtableprefix != null
-                then "--database-table-prefix" else null} = ''"${toString c.dbtableprefix}"'';
               "--admin-user" = ''"${c.adminuser}"'';
               "--admin-pass" = adminpass;
               "--data-dir" = ''"${cfg.home}/data"'';
@@ -701,7 +699,6 @@ in {
         };
         extraConfig = ''
           index index.php index.html /index.php$request_uri;
-          expires 1m;
           add_header X-Content-Type-Options nosniff;
           add_header X-XSS-Protection "1; mode=block";
           add_header X-Robots-Tag none;
