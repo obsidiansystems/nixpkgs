@@ -2497,7 +2497,9 @@ in
 
   electronplayer = callPackage ../applications/video/electronplayer/electronplayer.nix { };
 
-  element-desktop = callPackage ../applications/networking/instant-messengers/element/element-desktop.nix { };
+  element-desktop = callPackage ../applications/networking/instant-messengers/element/element-desktop.nix {
+    inherit (darwin.apple_sdk.frameworks) Security AppKit CoreServices;
+  };
 
   element-web = callPackage ../applications/networking/instant-messengers/element/element-web.nix {
     conf = config.element-web.conf or {};
@@ -12623,7 +12625,8 @@ in
     ansible
     ansible_2_8
     ansible_2_9
-    ansible_2_10;
+    ansible_2_10
+    ansible_2_11;
 
   ansible-lint = with python3.pkgs; toPythonApplication ansible-lint;
 
@@ -23052,6 +23055,8 @@ in
 
   dfilemanager = libsForQt5.callPackage ../applications/misc/dfilemanager { };
 
+  dht = callPackage ../applications/networking/p2p/dht { };
+
   dia = callPackage ../applications/graphics/dia {
     inherit (pkgs.gnome2) libart_lgpl libgnomeui;
   };
@@ -23734,6 +23739,8 @@ in
   foxtrotgps = callPackage ../applications/misc/foxtrotgps { };
 
   fractal = callPackage ../applications/networking/instant-messengers/fractal { };
+
+  fragments = callPackage ../applications/networking/p2p/fragments { };
 
   freecad = libsForQt5.callPackage ../applications/graphics/freecad {
     inherit (python3Packages)
@@ -24831,6 +24838,8 @@ in
 
   libvmi = callPackage ../development/libraries/libvmi { };
 
+  libutp = callPackage ../applications/networking/p2p/libutp { };
+
   lifelines = callPackage ../applications/misc/lifelines { };
 
   liferea = callPackage ../applications/networking/newsreaders/liferea { };
@@ -25427,6 +25436,8 @@ in
   prevo = callPackage ../applications/misc/prevo { };
   prevo-data = callPackage ../applications/misc/prevo/data.nix { };
   prevo-tools = callPackage ../applications/misc/prevo/tools.nix { };
+
+  psi-notify = callPackage ../applications/misc/psi-notify { };
 
   ptex = callPackage ../development/libraries/ptex {};
 

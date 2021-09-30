@@ -85,17 +85,18 @@ let
     in attrs: concatStringsSep " " (attrValues (mapAttrs toFlag attrs));
 
   # https://source.chromium.org/chromium/chromium/src/+/master:build/linux/unbundle/replace_gn_files.py
-  gnSystemLibraries = lib.optionals (!chromiumVersionAtLeast "93") [
-    "ffmpeg"
-    "snappy"
+  gnSystemLibraries = lib.optionals (!chromiumVersionAtLeast "95") [
+    "zlib"
   ] ++ [
+    # TODO:
+    # "ffmpeg"
+    # "snappy"
     "flac"
     "libjpeg"
     "libpng"
     "libwebp"
     "libxslt"
     "opus"
-    "zlib"
   ];
 
   opusWithCustomModes = libopus.override {
@@ -159,9 +160,6 @@ let
       ./patches/no-build-timestamps.patch
       # For bundling Widevine (DRM), might be replaceable via bundle_widevine_cdm=true in gnFlags:
       ./patches/widevine-79.patch
-    ] ++ lib.optionals (versionRange "91" "94") [
-      # Fix the build by adding a missing dependency (s. https://crbug.com/1197837):
-      ./patches/fix-missing-atspi2-dependency.patch
     ];
 
     postPatch = ''
@@ -240,6 +238,7 @@ let
       # e.g. unsafe developer builds have developer-friendly features that may
       # weaken or disable security measures like sandboxing or ASLR):
       is_official_build = true;
+      disable_fieldtrial_testing_config = true;
       # Build Chromium using the system toolchain (for Linux distributions):
       custom_toolchain = "//build/toolchain/linux/unbundle:default";
       host_toolchain = "//build/toolchain/linux/unbundle:default";
@@ -276,10 +275,6 @@ let
       enable_widevine = true;
       # Provides the enable-webrtc-pipewire-capturer flag to support Wayland screen capture:
       rtc_use_pipewire = true;
-    } // optionalAttrs (!chromiumVersionAtLeast "94") {
-      fieldtrial_testing_like_official_build = true;
-    } // optionalAttrs (chromiumVersionAtLeast "94") {
-      disable_fieldtrial_testing_config = true;
     } // optionalAttrs proprietaryCodecs {
       # enable support for the H.264 codec
       proprietary_codecs = true;
