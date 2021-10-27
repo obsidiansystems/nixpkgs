@@ -74,6 +74,10 @@ stdenv.mkDerivation {
     ./0001-x86-Add-a-GNU_PROPERTY_X86_ISA_1_USED-note-if-needed.patch
     ./0001-x86-Properly-merge-GNU_PROPERTY_X86_ISA_1_USED.patch
     ./0001-x86-Properly-add-X86_ISA_1_NEEDED-property.patch
+  ] ++ lib.optionals stdenv.targetPlatform.isAarch64
+  [ # Fix https://sourceware.org/bugzilla/show_bug.cgi?id=23919 which was causing
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1678204 for us 
+    ./fix-elf-compressed-data-alignment.patch
   ] ++ lib.optional stdenv.targetPlatform.isiOS ./support-ios.patch;
 
   outputs = [ "out" "info" "man" ];
@@ -81,8 +85,11 @@ stdenv.mkDerivation {
   depsBuildBuild = [ buildPackages.stdenv.cc ];
   nativeBuildInputs = [
     bison
-  ] ++ (lib.optionals stdenv.targetPlatform.isiOS [
+  ] ++ (lib.optionals (stdenv.targetPlatform.isiOS || stdenv.targetPlatform.isAarch64) [
     autoreconfHook
+  ]) ++ (lib.optionals stdenv.targetPlatform.isAarch64 [
+    # Necessary due to fix-elf-compressed-data-alignment.patch
+    texinfo
   ]) ++ lib.optionals stdenv.targetPlatform.isVc4 [ texinfo flex ];
   buildInputs = [ zlib gettext ];
 
