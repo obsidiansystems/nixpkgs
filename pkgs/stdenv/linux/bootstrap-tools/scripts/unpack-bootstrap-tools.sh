@@ -26,7 +26,7 @@ for i in $out/bin/* $out/libexec/gcc/*/*/*; do
     if [ -z "${i##*/liblto*}" ]; then continue; fi
     echo patching "$i"
     LD_LIBRARY_PATH=$out/lib $LD_BINARY \
-        ./patchelf --set-interpreter $LD_BINARY --set-rpath $out/lib --force-rpath "$i"
+        ./patchelf --set-interpreter $LD_BINARY --set-rpath $out/lib --force-rpath "$i" || true
 done
 
 for i in $out/lib/librt-*.so $out/lib/libpcre*; do
@@ -43,8 +43,8 @@ cat $out/lib/libpthread.so | sed "s|/nix/store/e*-[^/]*/|$out/|g" > $out/lib/lib
 mv $out/lib/libpthread.so.tmp $out/lib/libpthread.so
 
 # Provide some additional symlinks.
-ln -s bash $out/bin/sh
-ln -s bzip2 $out/bin/bunzip2
+#ln -s bash $out/bin/sh
+#ln -s bzip2 $out/bin/bunzip2
 
 # Provide a gunzip script.
 cat > $out/bin/gunzip <<EOF
