@@ -322,6 +322,10 @@ in
         inherit (self) stdenvNoCC coreutils gnugrep;
         shell = self.bash + "/bin/bash";
       };
+      binutils-unwrapped = super.binutils-unwrapped.override (args: {
+        # stdenv = super.overrideCC args.stdenv prevStage.gcc9.cc;
+        buildPackages.stdenv = super.overrideCC args.buildPackages.stdenv prevStage.gcc9;
+      });
     };
     extraNativeBuildInputs = [ prevStage.patchelf prevStage.xz ] ++
       # Many tarballs come with obsolete config.sub/config.guess that don't recognize aarch64.
@@ -403,7 +407,13 @@ in
         ${localSystem.libc} = getLibc prevStage;
       } // lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) {
         # Need to get rid of these when cross-compiling.
-        inherit (prevStage) binutils binutils-unwrapped;
+        inherit (prevStage) binutils;
+        binutils-unwrapped = prevStage.binutils-unwrapped.override {
+          stdenv = self.overrideCC self.stdenv self.gcc9;
+          buildPackages = {
+            stdenv = self.overrideCC self.stdenv self.gcc9;
+          };
+        };
         gcc = cc;
       };
     };
