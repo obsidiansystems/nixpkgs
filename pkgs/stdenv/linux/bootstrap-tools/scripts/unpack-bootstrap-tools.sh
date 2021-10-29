@@ -40,8 +40,8 @@ done
 export PATH=$out/bin
 
 # Provide some additional symlinks.
-#ln -s bash $out/bin/sh
-#ln -s bzip2 $out/bin/bunzip2
+ln -s bash $out/bin/sh
+ln -s bzip2 $out/bin/bunzip2
 
 # Provide a gunzip script.
 cat > $out/bin/gunzip <<EOF
