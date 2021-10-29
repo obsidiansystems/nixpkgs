@@ -26,13 +26,14 @@ for i in $out/bin/* $out/libexec/gcc/*/*/*; do
     if [ -z "${i##*/liblto*}" ]; then continue; fi
     echo patching "$i"
     LD_LIBRARY_PATH=$out/lib $LD_BINARY \
-        ./patchelf --set-interpreter $LD_BINARY --set-rpath $out/lib --force-rpath "$i" || true
+        ./patchelf --page-size 65536 --set-interpreter $LD_BINARY --set-rpath $out/lib --force-rpath "$i" || true
 done
 
 for i in $out/lib/librt-*.so $out/lib/libpcre*; do
     if [ -L "$i" ]; then continue; fi
     echo patching "$i"
-    $out/bin/patchelf --set-rpath $out/lib --force-rpath "$i"
+    LD_LIBRARY_PATH=$out/lib $LD_BINARY \
+        ./patchelf --page-size 65536 --set-rpath $out/lib --force-rpath "$i"
 done
 
 # Fix the libc linker script.
