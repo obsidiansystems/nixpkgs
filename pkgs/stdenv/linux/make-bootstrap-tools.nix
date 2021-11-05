@@ -34,13 +34,22 @@ in with pkgs; rec {
   };
 
   bootGCC = gcc.cc.override { enableLTO = false; };
-  bootBinutils = binutils.bintools.override {
+  bootBinutils = ((pkgs.callPackage (../../development/tools/misc/binutils) {
+    noSysDirs = true;
+  }).override {
     withAllTargets = false;
     # Don't need two linkers, disable whatever's not primary/default.
     gold = false;
     # bootstrap is easier w/static
     enableShared = false;
-  };
+  }).overrideDerivation (drv: {
+    patches = (drv.patches or []) ++ [
+      ./binutils-fix-elf-compressed-data-alignment.patch
+    ];
+    nativeBuildInputs = (drv.nativeBuildInputs or []) ++ [
+      pkgs.texinfo
+    ];
+  });
 
   build =
 
