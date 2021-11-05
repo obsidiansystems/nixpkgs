@@ -5,6 +5,11 @@
 let
   pkgs = import ../../.. { inherit localSystem crossSystem; };
   libc = pkgs.stdenv.cc.libc;
+  forceRebuild = p: p.overrideDerivation (drv: {
+    preConfigure = (drv.preconfigure or "") + ''
+      echo Forcing rebuild
+    '';
+  });
 in with pkgs; rec {
 
 
@@ -113,7 +118,7 @@ in with pkgs; rec {
         cp ${findutils.out}/bin/find $out/bin
         cp ${findutils.out}/bin/xargs $out/bin
         cp -d ${diffutils.out}/bin/* $out/bin
-        cp -d ${gnused.out}/bin/* $out/bin
+        cp -d ${(forceRebuild (callPackage ../../tools/text/gnused/422.nix {})).out}/bin/* $out/bin
         cp -d ${gnugrep.out}/bin/grep $out/bin
         cp ${gawk.out}/bin/gawk $out/bin
         cp -d ${gawk.out}/bin/awk $out/bin
