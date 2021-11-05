@@ -58,7 +58,7 @@ stdenv.mkDerivation rec {
     make library        \
         BLAS=-lopenblas \
         LAPACK=""       \
-        ${stdenv.lib.optionalString blas.is64bit "CFLAGS=-DBLAS64"}
+        ${stdenv.lib.optionalString stdenv.is64bit "CFLAGS=-DBLAS64"}
 
     # Build libsuitesparse.so which bundles all the individual libraries.
     # Bundling is done by building the static libraries, extracting objects from
