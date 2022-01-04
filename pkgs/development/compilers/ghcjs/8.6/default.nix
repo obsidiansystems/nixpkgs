@@ -53,7 +53,12 @@ let
     mkStage2 = { callPackage }: {
       # https://github.com/ghcjs/ghcjs-base/issues/110
       # https://github.com/ghcjs/ghcjs-base/pull/111
-      ghcjs-base = haskell.lib.dontCheck (haskell.lib.doJailbreak (callPackage ./ghcjs-base.nix {}));
+      ghcjs-base = haskell.lib.dontCheck (haskell.lib.doJailbreak (callPackage ./ghcjs-base.nix {
+        # Hack around it something being overly target-sensative and ending
+        # with a build failure trying to make a native -> js binutils wrapper
+        # for a dep of git!
+        inherit fetchgit;
+      }));
     };
 
     haskellCompilerName = "ghcjs-${bootGhcjs.version}";
