@@ -34,10 +34,11 @@ let
             )
           else
             extern;
-        in (if lib.any (x: x == "lib" || x == "rlib") dep.crateType then
-           " --extern ${name}=${dep.lib}/lib/lib${extern}-${dep.metadata}.rlib"
-         else
-           " --extern ${name}=${dep.lib}/lib/lib${extern}-${dep.metadata}${stdenv.hostPlatform.extensions.sharedLibrary}")
+          opts = lib.optionalString (dep.stdlib or false) "noprelude:";
+          filename = if lib.any (x: x == "lib" || x == "rlib") dep.crateType
+            then "${dep.metadata}.rlib"
+            else "${dep.metadata}${stdenv.hostPlatform.extensions.sharedLibrary}";
+        in " --extern ${opts}${name}=${dep.lib}/lib/lib${extern}-${filename}"
       ) dependencies;
 
    # Create feature arguments for rustc.
