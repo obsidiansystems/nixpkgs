@@ -14,12 +14,13 @@ stdenv.mkDerivation rec {
   postPatch = let
     toDisable = [
       "getnameinfo_basic" "udp_send_hang_loop" # probably network-dependent
+      "tcp_connect_timeout" # tries to reach out to 8.8.8.8
       "spawn_setuid_fails" "spawn_setgid_fails" "fs_chown" # user namespaces
       "getaddrinfo_fail" "getaddrinfo_fail_sync"
       "threadpool_multiple_event_loops" # times out on slow machines
       "get_passwd" # passed on NixOS but failed on other Linuxes
-      "tcp_writealot" # times out sometimes
     ] ++ stdenv.lib.optionals stdenv.isDarwin [
+      "tcp_writealot" "udp_multicast_join" "udp_multicast_join6" # times out sometimes
         # Sometimes: timeout (no output), failed uv_listen. Someone
         # should report these failures to libuv team. There tests should
         # be much more robust.
@@ -34,9 +35,9 @@ stdenv.mkDerivation rec {
         "tcp_open" "tcp_write_queue_order" "tcp_try_write" "tcp_writealot"
         "multiple_listen" "delayed_accept"
         "shutdown_close_tcp" "shutdown_eof" "shutdown_twice" "callback_stack"
-        "tty_pty" "condvar_5"
+        "tty_pty" "condvar_5" "hrtime" "udp_multicast_join"
         # Tests that fail when sandboxing is enabled.
-        "fs_event_close_in_callback" "fs_event_watch_dir"
+        "fs_event_close_in_callback" "fs_event_watch_dir" "fs_event_error_reporting"
         "fs_event_watch_dir_recursive" "fs_event_watch_file"
         "fs_event_watch_file_current_dir" "fs_event_watch_file_exact_path"
         "process_priority" "udp_create_early_bad_bind"
