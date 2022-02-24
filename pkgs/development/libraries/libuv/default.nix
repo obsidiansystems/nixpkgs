@@ -35,6 +35,7 @@ stdenv.mkDerivation rec {
         "multiple_listen" "delayed_accept"
         "shutdown_close_tcp" "shutdown_eof" "shutdown_twice" "callback_stack"
         "tty_pty" "condvar_5"
+        "hrtime" "fs_event_error_reporting"
         # Tests that fail when sandboxing is enabled.
         "fs_event_close_in_callback" "fs_event_watch_dir"
         "fs_event_watch_dir_recursive" "fs_event_watch_file"
