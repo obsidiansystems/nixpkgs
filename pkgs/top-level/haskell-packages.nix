@@ -90,7 +90,7 @@ in {
       inherit (buildPackages.darwin) xattr;
       buildLlvmPackages = buildPackages.llvmPackages_9;
       llvmPackages = pkgs.llvmPackages_9;
-      autoconf = pkgs.autoconf213;
+      autoconf = pkgs.autoconf269;
     };
     ghc901 = callPackage ../development/compilers/ghc/9.0.1.nix {
       # aarch64 ghc8102Binary exceeds max output size on hydra
