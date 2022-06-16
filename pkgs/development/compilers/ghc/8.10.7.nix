@@ -239,7 +239,7 @@ stdenv.mkDerivation (rec {
 
   nativeBuildInputs = [
     perl autoconf automake m4 python3 sphinx
-    ghc bootPkgs.alex bootPkgs.happy bootPkgs.hscolour
+    ghc bootPkgs.alex bootPkgs.happy_1_19_12 bootPkgs.hscolour
   ];
 
   # For building runtime libs
