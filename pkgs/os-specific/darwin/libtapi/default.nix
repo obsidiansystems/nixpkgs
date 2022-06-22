@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, cmake, python3, clang_6 }:
+{ lib, stdenv, fetchFromGitHub, cmake, python3, ncurses }:
 
 stdenv.mkDerivation {
   name = "libtapi";
@@ -18,24 +18,33 @@ stdenv.mkDerivation {
       sha256 = "1a19h39a48agvnmal99n9j1fjadiqwib7hfzmn342wmgh9z3vk0g";
     };
 
+  sourceRoot = "source/src/llvm";
+
   nativeBuildInputs = [ cmake python3 ];
 
-  buildInputs = [ clang_6.cc ];
-
-  preConfigure = ''
-    cd src/llvm
-  '';
+  # ncurses is required here to avoid a reference to bootstrap-tools, which is
+  # not allowed for the stdenv.
+  buildInputs = [ ncurses ];
 
   cmakeFlags = [ "-DLLVM_INCLUDE_TESTS=OFF" ];
 
-  buildFlags = [ "libtapi" ];
+  # fixes: fatal error: 'clang/Basic/Diagnostic.h' file not found
+  # adapted from upstream
+  # https://github.com/tpoechtrager/apple-libtapi/blob/3cb307764cc5f1856c8a23bbdf3eb49dfc6bea48/build.sh#L58-L60
+  preConfigure = ''
+    INCLUDE_FIX="-I $PWD/projects/clang/include"
+    INCLUDE_FIX+=" -I $PWD/build/projects/clang/include"
 
-  installTargets = [ "install-libtapi" "install-tapi-headers"];
+    cmakeFlagsArray+=(-DCMAKE_CXX_FLAGS="$INCLUDE_FIX")
+  '';
+
+  buildFlags = [ "clangBasic" "libtapi" ];
+
+  installTargets = [ "install-libtapi" "install-tapi-headers" ];
 
   meta = with lib; {
     license = licenses.apsl20;
     maintainers = with maintainers; [ matthewbauer ];
     broken = stdenv.hostPlatform == stdenv.targetPlatform;
   };
-
 }
