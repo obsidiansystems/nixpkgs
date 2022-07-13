@@ -11,6 +11,7 @@ let
     "ghc922Binary"
     "ghc922BinaryMinimal"
     "ghcjs"
+    "ghcjs86"
     "ghcjs810"
     "integer-simple"
     "native-bignum"
@@ -51,10 +52,11 @@ let
   # Use this rather than `rec { ... }` below for sake of overlays.
   inherit (pkgs.haskell) compiler packages;
 
-in {
+in
+{
   lib = haskellLibUncomposable;
 
-  package-list = callPackage ../development/haskell-modules/package-list.nix {};
+  package-list = callPackage ../development/haskell-modules/package-list.nix { };
 
   compiler = {
 
@@ -87,6 +89,12 @@ in {
       llvmPackages = pkgs.llvmPackages_12;
       minimal = true;
     };
+    ghc865 = callPackage ../development/compilers/ghc/8.6.5.nix {
+      bootPkgs = packages.ghc865Binary;
+      inherit (buildPackages.python3Packages) sphinx;
+      buildLlvmPackages = buildPackages.llvmPackages_6;
+      llvmPackages = pkgs.llvmPackages_6;
+    };
 
     ghc884 = callPackage ../development/compilers/ghc/8.8.4.nix {
       bootPkgs =
@@ -111,7 +119,7 @@ in {
         if stdenv.hostPlatform.isAarch then
           packages.ghc8107BinaryMinimal
         else if stdenv.hostPlatform.isPower64 && stdenv.hostPlatform.isLittleEndian then
-          # to my (@a-m-joseph) knowledge there are no newer official binaries for this platform
+        # to my (@a-m-joseph) knowledge there are no newer official binaries for this platform
           packages.ghc865Binary
         else
           packages.ghc8107Binary;
@@ -163,7 +171,7 @@ in {
 
         # On ARM text won't build with GHC 8.10.*
         if stdenv.hostPlatform.isAarch then
-          # TODO(@sternenseemann): package bindist
+        # TODO(@sternenseemann): package bindist
           packages.ghc902
         # No suitable bindists for powerpc64le
         else if stdenv.hostPlatform.isPower64 && stdenv.hostPlatform.isLittleEndian then
@@ -196,6 +204,12 @@ in {
     };
 
     ghcjs = compiler.ghcjs810;
+    ghcjs86 = callPackage ../development/compilers/ghcjs/8.6 {
+      bootPkgs = packages.ghc865;
+      ghcjsSrcJson = ../development/compilers/ghcjs/8.6/git.json;
+      stage0 = ../development/compilers/ghcjs/8.6/stage0.nix;
+      ghcjsDepOverrides = callPackage ../development/compilers/ghcjs/8.6/dep-overrides.nix { };
+    };
     ghcjs810 = callPackage ../development/compilers/ghcjs/8.10 {
       bootPkgs = packages.ghc8107;
       ghcjsSrcJson = ../development/compilers/ghcjs/8.10/git.json;
@@ -204,31 +218,34 @@ in {
 
     # The integer-simple attribute set contains all the GHC compilers
     # build with integer-simple instead of integer-gmp.
-    integer-simple = let
-      integerSimpleGhcNames = pkgs.lib.filter
-        (name: ! builtins.elem name integerSimpleExcludes)
-        (pkgs.lib.attrNames compiler);
-    in pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
-      integerSimpleGhcNames
-      (name: compiler.${name}.override { enableIntegerSimple = true; }));
+    integer-simple =
+      let
+        integerSimpleGhcNames = pkgs.lib.filter
+          (name: ! builtins.elem name integerSimpleExcludes)
+          (pkgs.lib.attrNames compiler);
+      in
+      pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
+        integerSimpleGhcNames
+        (name: compiler.${name}.override { enableIntegerSimple = true; }));
 
     # Starting from GHC 9, integer-{simple,gmp} is replaced by ghc-bignum
     # with "native" and "gmp" backends.
-    native-bignum = let
-      nativeBignumGhcNames = pkgs.lib.filter
-        (name: builtins.elem name nativeBignumIncludes)
-        (pkgs.lib.attrNames compiler);
-    in pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
-      nativeBignumGhcNames
-      (name: compiler.${name}.override { enableNativeBignum = true; }));
+    native-bignum =
+      let
+        nativeBignumGhcNames = pkgs.lib.filter
+          (name: builtins.elem name nativeBignumIncludes)
+          (pkgs.lib.attrNames compiler);
+      in
+      pkgs.recurseIntoAttrs (pkgs.lib.genAttrs
+        nativeBignumGhcNames
+        (name: compiler.${name}.override { enableNativeBignum = true; }));
   };
 
   # Default overrides that are applied to all package sets.
-  packageOverrides = self : super : {};
+  packageOverrides = self: super: { };
 
   # Always get compilers from `buildPackages`
   packages = let bh = buildPackages.haskell; in {
-
     ghc865Binary = callPackage ../development/haskell-modules {
       buildHaskellPackages = bh.packages.ghc865Binary;
       ghc = bh.compiler.ghc865Binary;
@@ -271,6 +288,11 @@ in {
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-9.2.x.nix { };
       packageSetConfig = bootstrapPackageSet;
     };
+    ghc865 = callPackage ../development/haskell-modules {
+      buildHaskellPackages = bh.packages.ghc865;
+      ghc = bh.compiler.ghc865;
+      compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-8.6.x.nix { };
+    };
     ghc884 = callPackage ../development/haskell-modules {
       buildHaskellPackages = bh.packages.ghc884;
       ghc = bh.compiler.ghc884;
@@ -297,12 +319,18 @@ in {
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-9.4.x.nix { };
     };
     ghcHEAD = callPackage ../development/haskell-modules {
-      buildHaskellPackages = bh.packages.ghcHEAD;
+      buildHaskellPackages = bh.psha256:187ldby9z20r6y4w41j3bcrly2vy927crivd3cz9zakpdpk0dqz2ackages.ghcHEAD;
       ghc = bh.compiler.ghcHEAD;
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-head.nix { };
     };
 
     ghcjs = packages.ghcjs810;
+    ghcjs86 = callPackage ../development/haskell-modules rec {
+      buildHaskellPackages = ghc.bootPkgs;
+      ghc = bh.compiler.ghcjs86;
+      compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-8.6.x.nix { };
+      packageSetConfig = callPackage ../development/haskell-modules/configuration-ghcjs-8.6.nix { };
+    };
     ghcjs810 = callPackage ../development/haskell-modules rec {
       buildHaskellPackages = ghc.bootPkgs;
       ghc = bh.compiler.ghcjs810;
@@ -325,7 +353,7 @@ in {
             buildHaskellPackages = bh.packages.integer-simple.${name};
             overrides =
               pkgs.lib.composeExtensions
-                (oldAttrs.overrides or (_: _: {}))
+                (oldAttrs.overrides or (_: _: { }))
                 (_: _: { integer-simple = null; });
           })
         );
