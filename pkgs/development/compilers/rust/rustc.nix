@@ -71,7 +71,7 @@ in stdenv.mkDerivation rec {
     # we need to add the host platform as well so rustc can compile build.rs
     # scripts.
     "--target=${concatStringsSep "," ([
-      (rust.toRustTargetSpec stdenv.targetPlatform)
+      (rust.toRustTarget stdenv.targetPlatform)
     ] ++ optionals (stdenv.hostPlatform != stdenv.targetPlatform) [
       (rust.toRustTargetSpec stdenv.hostPlatform)
     ])}"
