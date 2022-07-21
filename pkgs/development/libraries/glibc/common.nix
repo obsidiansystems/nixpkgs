@@ -153,6 +153,12 @@ stdenv.mkDerivation ({
       EOF
     '';
 
+  # Make unconditional next mass rebuild
+  dontAddStaticConfigureFlags =
+    if stdenv.hostPlatform.isStatic
+    then true
+    else null;
+
   configureFlags =
     [ "-C"
       "--enable-add-ons"
