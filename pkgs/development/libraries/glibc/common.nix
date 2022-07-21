@@ -154,6 +154,7 @@ stdenv.mkDerivation ({
     '';
 
   # Make unconditional next mass rebuild
+  # https://sourceware.org/bugzilla/show_bug.cgi?id=20845
   dontAddStaticConfigureFlags =
     if stdenv.hostPlatform.isStatic
     then true
