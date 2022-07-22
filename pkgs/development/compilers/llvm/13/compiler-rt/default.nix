@@ -4,7 +4,7 @@ let
 
   useLLVM = stdenv.hostPlatform.useLLVM or false;
   bareMetal = stdenv.hostPlatform.parsed.kernel.name == "none";
-  haveLibc = stdenv.cc.libc != null;
+  haveLibc = if stdenv.hostPlatform.libc == "newlib" then false else stdenv.cc.libc != null;
   inherit (stdenv.hostPlatform) isMusl isAarch64;
 
 in
