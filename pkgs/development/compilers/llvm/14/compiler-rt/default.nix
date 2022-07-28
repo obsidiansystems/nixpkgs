@@ -73,30 +73,30 @@ stdenv.mkDerivation {
     # extra `/`.
     ./normalize-var.patch
   ] # Prevent a compilation error on darwin
-    ++ lib.optional stdenv.hostPlatform.isDarwin ./darwin-targetconditionals.patch
-    ++ lib.optional stdenv.hostPlatform.isAarch32 ./armv7l.patch;
+    ++ lib.optional stdenv.hostPlatform.isDarwin ./darwin-targetconditionals.patch;
+    # ++ lib.optional stdenv.hostPlatform.isAarch32 ./armv7l.patch;
 
   # TSAN requires XPC on Darwin, which we have no public/free source files for. We can depend on the Apple frameworks
   # to get it, but they're unfree. Since LLVM is rather central to the stdenv, we patch out TSAN support so that Hydra
   # can build this. If we didn't do it, basically the entire nixpkgs on Darwin would have an unfree dependency and we'd
   # get no binary cache for the entire platform. If you really find yourself wanting the TSAN, make this controllable by
   # a flag and turn the flag off during the stdenv build.
-  postPatch = lib.optionalString (!stdenv.isDarwin) ''
-    substituteInPlace cmake/builtin-config-ix.cmake \
-      --replace 'set(X86 i386)' 'set(X86 i386 i486 i586 i686)'
-  '' + lib.optionalString stdenv.isDarwin ''
-    substituteInPlace cmake/builtin-config-ix.cmake \
-      --replace 'set(ARM64 arm64 arm64e)' 'set(ARM64)'
-    substituteInPlace cmake/config-ix.cmake \
-      --replace 'set(COMPILER_RT_HAS_TSAN TRUE)' 'set(COMPILER_RT_HAS_TSAN FALSE)'
-  '' + lib.optionalString (useLLVM) ''
-    substituteInPlace lib/builtins/int_util.c \
-      --replace "#include <stdlib.h>" ""
-    substituteInPlace lib/builtins/clear_cache.c \
-      --replace "#include <assert.h>" ""
-    substituteInPlace lib/builtins/cpu_model.c \
-      --replace "#include <assert.h>" ""
-  '';
+  # postPatch = lib.optionalString (!stdenv.isDarwin) ''
+  #   substituteInPlace cmake/builtin-config-ix.cmake \
+  #     --replace 'set(X86 i386)' 'set(X86 i386 i486 i586 i686)'
+  # '' + lib.optionalString stdenv.isDarwin ''
+  #   substituteInPlace cmake/builtin-config-ix.cmake \
+  #     --replace 'set(ARM64 arm64 arm64e)' 'set(ARM64)'
+  #   substituteInPlace cmake/config-ix.cmake \
+  #     --replace 'set(COMPILER_RT_HAS_TSAN TRUE)' 'set(COMPILER_RT_HAS_TSAN FALSE)'
+  # '' + lib.optionalString (useLLVM) ''
+  #   substituteInPlace lib/builtins/int_util.c \
+  #     --replace "#include <stdlib.h>" ""
+  #   substituteInPlace lib/builtins/clear_cache.c \
+  #     --replace "#include <assert.h>" ""
+  #   substituteInPlace lib/builtins/cpu_model.c \
+  #     --replace "#include <assert.h>" ""
+  # '';
 
   # Hack around weird upsream RPATH bug
   postInstall = lib.optionalString (stdenv.hostPlatform.isDarwin || stdenv.hostPlatform.isWasm) ''
