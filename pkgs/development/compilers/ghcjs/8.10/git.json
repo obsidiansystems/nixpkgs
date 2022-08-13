@@ -1,6 +1,6 @@
 {
   "url": "https://github.com/obsidiansystems/ghcjs",
-  "rev": "9fc935f2c3ba6c33ec62eb83afc9f52a893eb68c",
-  "sha256": "sha256:063dmir39c4i1z8ypnmq86g1x2vhqndmdpzc4hyzsy5jjqcbx6i3",
+  "rev": "ecc3175624e70f0c91c2bc956f7ef6c228e90557",
+  "sha256": "0vzpbknv5bp0qjna9k210ngmmdqxr2w12brnyk2jlrfxg1cz6bbd",
   "fetchSubmodules": true
 }
