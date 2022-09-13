@@ -11371,7 +11371,7 @@ in
     # This returns the minimum suported version for the platform. The
     # assumption is that or any later version is good.
     choose = platform:
-      /**/ if platform.isDarwin then (if platform.isAarch64 then 11 else 7)
+      /**/ if platform.isDarwin then (if platform.isAarch64 then 14 else 7)
       else if platform.isFreeBSD then 7
       else if platform.isAndroid then 12
       else if platform.isLinux then 7
@@ -11440,6 +11440,14 @@ in
     inherit (stdenvAdapters) overrideCC;
     buildLlvmTools = buildPackages.llvmPackages_13.tools;
     targetLlvmLibraries = targetPackages.llvmPackages_13.libraries;
+  } // lib.optionalAttrs (stdenv.hostPlatform.isi686 && buildPackages.stdenv.cc.isGNU) {
+    stdenv = gcc7Stdenv;
+  }));
+
+  llvmPackages_14 = recurseIntoAttrs (callPackage ../development/compilers/llvm/14 ({
+    inherit (stdenvAdapters) overrideCC;
+    buildLlvmTools = buildPackages.llvmPackages_14.tools;
+    targetLlvmLibraries = targetPackages.llvmPackages_14.libraries;
   } // lib.optionalAttrs (stdenv.hostPlatform.isi686 && buildPackages.stdenv.cc.isGNU) {
     stdenv = gcc7Stdenv;
   }));
