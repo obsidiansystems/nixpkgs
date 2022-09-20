@@ -56,7 +56,10 @@ rec {
   binaries = runCommand "ndk-toolchain-binutils" {
     pname = "ndk-toolchain-binutils";
     inherit (androidndk) version;
-    isClang = true; # clang based cc, but bintools ld
+    passthru = {
+      targetPrefix = prefix;
+      isClang = true; # clang based cc, but binutils ld
+    };
     nativeBuildInputs = [ makeWrapper ];
     propagatedBuildInputs = [ androidndk ];
   } ''
