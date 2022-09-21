@@ -60,6 +60,7 @@ rec {
     nativeBuildInputs = [ makeWrapper autoPatchelfHook ];
     propagatedBuildInputs = [ androidndk ];
     passthru = {
+      targetPrefix = prefix;
       isClang = true; # clang based cc, but bintools ld
     };
     dontUnpack = true;
