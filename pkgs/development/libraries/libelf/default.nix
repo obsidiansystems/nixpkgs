@@ -27,6 +27,11 @@ stdenv.mkDerivation rec {
 
   doCheck = true;
 
+  preConfigure = if (stdenv.hostPlatform.useAndroidPrebuilt or false) then ''
+    sed -i 's|DISTSUBDIRS = lib po|DISTSUBDIRS = lib|g' Makefile.in
+    sed -i 's|SUBDIRS = lib @POSUB@|SUBDIRS = lib|g' Makefile.in
+  '' else "";
+
   configureFlags = []
        # Configure check for dynamic lib support is broken, see
        # http://lists.uclibc.org/pipermail/uclibc-cvs/2005-August/019383.html
