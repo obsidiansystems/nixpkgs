@@ -33,7 +33,8 @@ stdenv.mkDerivation rec {
     sha256 = "1alv68wplnfdm6mh39hm57060xgssb9vqca4yr1cyva0c342n0fc";
   };
 
-  hardeningDisable = [ "format" ];
+  hardeningDisable = [ "format" ]
+  ++ optional (stdenv.hostPlatform.useAndroidPrebuilt or false) "fortify";
 
   outputs = [ "out" "dev" "man" "doc" "info" ];
 
