@@ -160,9 +160,6 @@ rec {
     cp $lpath/*.so $lpath/*.a $out/lib
     chmod +w $out/lib/*
     cp $lpath/* $out/lib
-
-    cp -r ${buildAndroidndk}/libexec/android-sdk/ndk-bundle/sysroot/usr/include $out/include
-    chmod +w $out/include
-    cp -r ${buildAndroidndk}/libexec/android-sdk/ndk-bundle/sysroot/usr/include/${targetInfo.triple}/* $out/include
+    cp -r ${androidndk}/libexec/android-sdk/ndk-bundle/toolchains/llvm/prebuilt/${buildInfo.double}/usr/include $out/include
   '';
 }
