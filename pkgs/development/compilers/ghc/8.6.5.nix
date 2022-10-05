@@ -29,6 +29,12 @@
   buildLlvmPackages
 , llvmPackages
 
+# They just don't work
+, enableDocs ? false
+
+# Neither does this
+, enableHaddockProgram ? false
+
 , # If enabled, GHC will be built with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
   enableIntegerSimple ? !(lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms)
@@ -77,6 +83,11 @@ let
     endif
     DYNAMIC_GHC_PROGRAMS = ${if enableShared then "YES" else "NO"}
     INTEGER_LIBRARY = ${if enableIntegerSimple then "integer-simple" else "integer-gmp"}
+    HADDOCK_DOCS = ${if enableHaddockProgram then "YES" else "NO"}
+  '' + lib.optionalString (!enableDocs) ''
+    BUILD_SPHINX_HTML = NO
+    BUILD_SPHINX_PDF = NO
+    BUILD_SPHINX_PS = NO
   ''
   # We only need to build stage1 on most cross-compilation because
   # we will be running the compiler on the native system. In some
@@ -87,9 +98,6 @@ let
   + lib.optionalString (targetPlatform != hostPlatform) ''
     Stage1Only = ${if (targetPlatform.system == hostPlatform.system && !targetPlatform.isiOS) then "NO" else "YES"}
     CrossCompilePrefix = ${targetPrefix}
-    HADDOCK_DOCS = NO
-    BUILD_SPHINX_HTML = NO
-    BUILD_SPHINX_PDF = NO
   '' + lib.optionalString enableRelocatedStaticLibs ''
     GhcLibHcOpts += -fPIC
     GhcRtsHcOpts += -fPIC
@@ -108,10 +116,15 @@ let
   ] ++ lib.optional useLLVM buildLlvmPackages.llvm;
 
   targetCC = builtins.head toolsForTarget;
+
+  variantSuffix = lib.concatStrings [
+    (lib.optionalString stdenv.hostPlatform.isMusl "-musl")
+    (lib.optionalString enableIntegerSimple "-integer-simple")
+  ];
 in
 stdenv.mkDerivation (rec {
   version = "8.6.5";
-  name = "${targetPrefix}ghc-${version}";
+  name = "${targetPrefix}ghc-${version}${variantSuffix}";
 
   src = fetchurl {
     url = "https://downloads.haskell.org/ghc/${version}/ghc-${version}-src.tar.xz";
@@ -225,11 +238,12 @@ stdenv.mkDerivation (rec {
     automake
     m4
     python3
-    sphinx
     ghc
     bootPkgs.alex
     bootPkgs.happy
     bootPkgs.hscolour
+  ]  ++ lib.optionals enableDocs [
+    sphinx
   ];
 
   # For building runtime libs
@@ -276,6 +290,9 @@ stdenv.mkDerivation (rec {
 
     inherit llvmPackages;
     inherit enableShared;
+    inherit buildMK;
+    # Do we have haddock?
+    hasHaddock = enableHaddockProgram;
 
     # Our Cabal compiler name
     haskellCompilerName = "ghc-${version}";
