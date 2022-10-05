@@ -41,6 +41,10 @@
   # platform). Static libs are always built.
   enableShared ? !stdenv.targetPlatform.isWindows && !stdenv.targetPlatform.useiOSPrebuilt
 
+  # ld.gold is disabled for musl libc due to https://sourceware.org/bugzilla/show_bug.cgi?id=23856
+  # see #84670 and #49071 for more background.  
+, useLdGold ?  stdenv.targetPlatform.isLinux && !(stdenv.targetPlatform.useLLVM or false) && !stdenv.targetPlatform.isMusl
+
 , # Whether to build terminfo.
   enableTerminfo ? !stdenv.targetPlatform.isWindows
 
@@ -104,11 +108,6 @@ let
   ] ++ lib.optional useLLVM buildLlvmPackages.llvm;
 
   targetCC = builtins.head toolsForTarget;
-
-  # ld.gold is disabled for musl libc due to https://sourceware.org/bugzilla/show_bug.cgi?id=23856
-  # see #84670 and #49071 for more background.
-  useLdGold = targetPlatform.isLinux && !(targetPlatform.useLLVM or false) && !targetPlatform.isMusl;
-
 in
 stdenv.mkDerivation (rec {
   version = "8.6.5";
