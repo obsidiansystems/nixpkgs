@@ -49,7 +49,9 @@ self: super: {
 
   # Needs Cabal 3.0.x.
   jailbreak-cabal = super.jailbreak-cabal.override { Cabal = self.Cabal_3_2_1_0; };
-
+  Cabal-syntax = super.Cabal-syntax.override {
+    Cabal = self.Cabal_3_2_1_0;
+  };
   # https://github.com/tibbe/unordered-containers/issues/214
   unordered-containers = dontCheck super.unordered-containers;
 
