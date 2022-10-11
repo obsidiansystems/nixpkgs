@@ -3,7 +3,7 @@
 {
 
   ghcjs = callPackage
-    ({ mkDerivation, aeson, array, attoparsec, base, base16-bytestring
+    ({ mkDerivation, lib, aeson, array, attoparsec, base, base16-bytestring
     , base64-bytestring, binary, bytestring, Cabal, containers
     , cryptohash, data-default, deepseq, directory, executable-path
     , filepath, ghc-api-ghcjs, ghc-boot, ghc-paths, ghci-ghcjs
@@ -55,7 +55,7 @@
         websockets yaml
       ];
       description = "Haskell to JavaScript compiler";
-      license = stdenv.lib.licenses.mit;
+      license = lib.licenses.mit;
       doCheck = false;
     }) {};
 
@@ -114,7 +114,7 @@
     }) {};
 
   ghc-api-ghcjs = callPackage
-    ({ mkDerivation, alex, array, base, binary, bytestring, containers
+    ({ mkDerivation, lib, alex, array, base, binary, bytestring, containers
     , deepseq, directory, filepath, ghc-boot, ghc-boot-th, ghc-heap
     , ghci-ghcjs, happy_1_19_9, hpc, process, stdenv, template-haskell-ghcjs
     , terminfo, time, transformers, unix
@@ -131,11 +131,11 @@
       libraryToolDepends = [ alex happy_1_19_9 ];
       homepage = "http://www.haskell.org/ghc/";
       description = "The GHC API (customized for GHCJS)";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     }) {};
 
   ghci-ghcjs = callPackage
-    ({ mkDerivation, array, base, binary, bytestring, containers
+    ({ mkDerivation, lib, array, base, binary, bytestring, containers
     , deepseq, filepath, ghc-boot, ghc-boot-th, ghc-heap, stdenv
     , template-haskell-ghcjs, transformers, unix
     }:
@@ -148,11 +148,11 @@
         ghc-boot-th ghc-heap template-haskell-ghcjs transformers unix
       ];
       description = "The library supporting GHC's interactive interpreter (customized for GHCJS)";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     }) {};
 
   ghcjs-th = callPackage
-    ({ mkDerivation, base, binary, bytestring, containers, ghc-prim
+    ({ mkDerivation, lib, base, binary, bytestring, containers, ghc-prim
     , ghci-ghcjs, stdenv, template-haskell-ghcjs
     }:
     mkDerivation {
@@ -164,11 +164,11 @@
         template-haskell-ghcjs
       ];
       homepage = "http://github.com/ghcjs";
-      license = stdenv.lib.licenses.mit;
+      license = lib.licenses.mit;
     }) {};
 
   haddock-api-ghcjs = callPackage
-    ({ mkDerivation, array, base, bytestring, Cabal, containers, deepseq
+    ({ mkDerivation, lib, array, base, bytestring, Cabal, containers, deepseq
     , directory, filepath, ghc-api-ghcjs, ghc-boot, ghc-paths
     , haddock-library-ghcjs, hspec, hspec-discover, QuickCheck, stdenv
     , transformers, xhtml
@@ -191,11 +191,11 @@
       testToolDepends = [ hspec-discover ];
       homepage = "http://www.haskell.org/haddock/";
       description = "A documentation-generation tool for Haskell libraries";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     }) {};
 
   haddock-library-ghcjs = callPackage
-    ({ mkDerivation, base, base-compat, bytestring, containers, deepseq
+    ({ mkDerivation, lib, base, base-compat, bytestring, containers, deepseq
     , directory, filepath, haddock-library, hspec, hspec-discover
     , optparse-applicative, parsec, QuickCheck, stdenv, text
     , transformers, tree-diff
@@ -215,18 +215,18 @@
       testToolDepends = [ hspec-discover ];
       homepage = "http://www.haskell.org/haddock/";
       description = "Library exposing some functionality of Haddock";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     }) {};
 
   template-haskell-ghcjs = callPackage
-    ({ mkDerivation, base, ghc-boot-th, pretty, stdenv }:
+    ({ mkDerivation, lib, base, ghc-boot-th, pretty, stdenv }:
     mkDerivation {
       pname = "template-haskell-ghcjs";
       version = "2.14.0.0";
       src = configuredSrc + /lib/template-haskell-ghcjs;
       libraryHaskellDepends = [ base ghc-boot-th pretty ];
       description = "Support library for Template Haskell (customized for GHCJS)";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     }) {};
 
 }

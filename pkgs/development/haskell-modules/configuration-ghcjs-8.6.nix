@@ -11,6 +11,9 @@ in
 
 with haskellLib;
 
+
+#### NOTE:
+#### Nixpkgs upstream now calls "haskell.lib.compose" for haskell lib, so most arguments are reversed compared to "regular" haskell.lib
 self: super:
 
 ## GENERAL SETUP BASE PACKAGES
@@ -25,12 +28,12 @@ self: super:
 
   # GHCJS does not ship with the same core packages as GHC.
   # https://github.com/ghcjs/ghcjs/issues/676
-  stm = self.stm_2_5_0_0;
+  stm = self.stm_2_5_1_0;
   ghc-compact = self.ghc-compact_0_1_0_0;
 
-  network = addBuildTools super.network (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv);
-  zlib = addBuildTools super.zlib (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv);
-  unix-compat = addBuildTools super.unix-compat (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv);
+  network = addBuildTools (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv) super.network;
+  zlib = addBuildTools (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv) super.zlib;
+  unix-compat = addBuildTools super.unix-compat (pkgs.lib.optional pkgs.buildPlatform.isDarwin pkgs.buildPackages.darwin.libiconv) super.unix-compat;
 
   # LLVM is not supported on this GHC; use the latest one.
   inherit (pkgs) llvmPackages;
@@ -45,9 +48,9 @@ self: super:
 
   # These packages are core libraries in GHC 8.6..x, but not here.
   bin-package-db = null;
-  haskeline = self.haskeline_0_7_5_0;
+  haskeline = self.haskeline_0_8_2;
   hpc = self.hpc_0_6_0_3;
-  terminfo = self.terminfo_0_4_1_4;
+  terminfo = self.terminfo_0_4_1_5;
   xhtml = self.xhtml_3000_2_2_1;
 
 ## OTHER PACKAGES
@@ -55,25 +58,25 @@ self: super:
   # haddock throws the error: No input file(s).
   fail = dontHaddock super.fail;
 
-  cereal = addBuildDepend super.cereal [ self.fail ];
+  cereal = addBuildDepend [ self.fail ] super.cereal;
 
-  entropy = overrideCabal super.entropy (old: {
+  entropy = overrideCabal (old: {
     postPatch = old.postPatch or "" + ''
       # cabal doesn’t find ghc in this script, since it’s in the bootPkgs
       sed -e '/Simple.Program/a import Distribution.Simple.Program.Types' \
           -e 's|mConf.*=.*$|mConf = Just $ simpleConfiguredProgram "ghc" (FoundOnSystem "${self.ghc.bootPkgs.ghc}/bin/ghc")|g' -i Setup.hs
     '';
-  });
+  }) super.entropy;
 
   # https://github.com/kazu-yamamoto/logger/issues/97
-  fast-logger = overrideCabal super.fast-logger (old: {
+  fast-logger = overrideCabal (old: {
     postPatch = old.postPatch or "" + ''
       # remove the Safe extensions, since ghcjs-boot directory
       # doesn’t provide Trustworthy
       sed -ie '/LANGUAGE Safe/d' System/Log/FastLogger/*.hs
       cat System/Log/FastLogger/Date.hs
     '';
-  });
+  }) super.fast-logger;
 
   # experimental
   ghcjs-ffiqq = self.callPackage
@@ -116,37 +119,37 @@ self: super:
       description = "bindings for https://github.com/Matt-Esch/virtual-dom";
     }) {};
 
-  ghcjs-dom = overrideCabal super.ghcjs-dom (drv: {
+  ghcjs-dom = super.ghcjs-dom (drv: {
     libraryHaskellDepends = with self; [
       ghcjs-base ghcjs-dom-jsffi text transformers
     ];
     configureFlags = [ "-fjsffi" "-f-webkit" ];
-  });
+  }) super.ghcjs-dom;
 
-  ghcjs-dom-jsffi = overrideCabal super.ghcjs-dom-jsffi (drv: {
+  ghcjs-dom-jsffi = overrideCabal (drv: {
     libraryHaskellDepends = (drv.libraryHaskellDepends or []) ++ [ self.ghcjs-base self.text ];
     isLibrary = true;
-  });
+  }) super.ghcjs-dom-jsffi;
 
-  ghc-paths = overrideCabal super.ghc-paths (drv: {
+  ghc-paths = overrideCabal (drv: {
     patches = [ ./patches/ghc-paths-nix-ghcjs.patch ];
-  });
+  }) super.ghc-paths;
 
-  http2 = addBuildDepends super.http2 [ self.aeson self.aeson-pretty self.hex self.unordered-containers self.vector self.word8 ];
+  http2 = addBuildDepends [ self.aeson self.aeson-pretty self.hex self.unordered-containers self.vector self.word8 ] super.http2;
   # ghcjsBoot uses async 2.0.1.6, protolude wants 2.1.*
 
   # These are the correct dependencies specified when calling `cabal2nix --compiler ghcjs`
   # By default, the `miso` derivation present in hackage-packages.nix
   # does not contain dependencies suitable for ghcjs
-  miso = overrideCabal super.miso (drv: {
+  miso = overrideCabal (drv: {
       libraryHaskellDepends = with self; [
         BoundedChan bytestring containers ghcjs-base aeson base
         http-api-data http-types network-uri scientific servant text
         transformers unordered-containers vector
       ];
-    });
+    }) super.miso;
 
-  pqueue = overrideCabal super.pqueue (drv: {
+  pqueue = overrideCabal (drv: {
     postPatch = ''
       sed -i -e '12s|null|Data.PQueue.Internals.null|' Data/PQueue/Internals.hs
       sed -i -e '64s|null|Data.PQueue.Internals.null|' Data/PQueue/Internals.hs
@@ -155,28 +158,28 @@ self: super:
       sed -i -e '42s|null|Data.PQueue.Prio.Internals.null|' Data/PQueue/Prio/Min.hs
       sed -i -e '42s|null|Data.PQueue.Prio.Max.null|' Data/PQueue/Prio/Max.hs
     '';
-  });
+  }) super.pqueue;
 
-  profunctors = overrideCabal super.profunctors (drv: {
+  profunctors = overrideCabal (drv: {
     preConfigure = ''
       sed -i 's/^{-# ANN .* #-}//' src/Data/Profunctor/Unsafe.hs
     '';
-  });
+  }) super.profunctors;
 
   protolude = doJailbreak super.protolude;
 
   # reflex 0.3, made compatible with the newest GHCJS.
-  reflex = overrideCabal super.reflex (drv: {
+  reflex = overrideCabal (drv: {
     src = pkgs.fetchFromGitHub {
       owner = "ryantrinkle";
       repo = "reflex";
       rev = "cc62c11a6cde31412582758c236919d4bb766ada";
       sha256 = "1j4vw0636bkl46lj8ry16i04vgpivjc6bs3ls54ppp1wfp63q7w4";
     };
-  });
+  }) super.reflex;
 
   # reflex-dom 0.2, made compatible with the newest GHCJS.
-  reflex-dom = overrideCabal super.reflex-dom (drv: {
+  reflex-dom = overrideCabal (drv: {
     src = pkgs.fetchFromGitHub {
       owner = "ryantrinkle";
       repo = "reflex-dom";
@@ -187,11 +190,11 @@ self: super:
       removeLibraryHaskellDepends [
         "glib" "gtk3" "webkitgtk3" "webkitgtk3-javascriptcore" "raw-strings-qq" "unix"
       ] drv.libraryHaskellDepends;
-  });
+  }) super.reflex-dom;
 
-  transformers-compat = overrideCabal super.transformers-compat (drv: {
+  transformers-compat = overrideCabal (drv: {
     configureFlags = [];
-  });
+  }) super.transformers-compat;
 
   # triggers an internal pattern match failure in haddock
   # https://github.com/haskell/haddock/issues/553
