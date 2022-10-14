@@ -96,8 +96,8 @@ in {
       # https://github.com/xattr/xattr/issues/44 and
       # https://github.com/xattr/xattr/issues/55 are solved.
       inherit (buildPackages.darwin) xattr;
-      buildLlvmPackages = buildPackages.llvmPackages_14;
-      llvmPackages = pkgs.llvmPackages_14;
+      buildLlvmPackages = if stdenv.hostPlatform.useAndroidPrebuilt or false then buildPackages.llvmPackages_14 else buildPackages.llvmPackages_9;
+      llvmPackages = if stdenv.hostPlatform.useAndroidPrebuilt or false then pkgs.llvmPackages_14 else pkgs.llvmPackages_9;
     };
     ghc901 = callPackage ../development/compilers/ghc/9.0.1.nix {
       # aarch64 ghc8102Binary exceeds max output size on hydra
