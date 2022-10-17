@@ -6,9 +6,16 @@ let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
 in
 
-self: super: {
+self: super: rec {
 
   llvmPackages = pkgs.lib.dontRecurseIntoAttrs self.ghc.llvmPackages;
+
+  # Aeson 1.5.6.0 is easier on 8.6.5
+  aeson = self.callHackage "aeson" "1.5.6.0" {};
+  hashable-time = self.callHackage "hashable-time" "0.2.1" {};
+  time-compat = dontCheck (self.callHackage "time-compat" "1.9.5" {});
+  http2 = self.callHackage "http2" "3.0.2" {};
+  http-date = dontCheck super.http-date;
 
   # Disable GHC 8.6.x core libraries.
   array = null;
@@ -55,6 +62,20 @@ self: super: {
   # https://github.com/tibbe/unordered-containers/issues/214
   unordered-containers = dontCheck super.unordered-containers;
 
+  basement = super.callHackage "basement" "0.0.11" {};
+  text-metrics = self.callHackage "text-metrics" "0.3.0" {};
+  ghc-lib-parser = super.callHackage "ghc-lib-parser" "8.10.7.20220219" {};
+  ghc-lib-parser-ex = addBuildDepend ghc-lib-parser (self.callHackage "ghc-lib-parser-ex" "8.10.0.24" { });
+  stylish-haskell = doJailbreak (self.callHackage "stylish-haskell" "0.12.2.0" {});
+  hlint = super.callHackage "hlint" "3.2.8" {};
+  colour = haskellLib.overrideCabal (drv: {
+    doCheck = false;
+    testHaskellDepends = [];
+  }) (super.callHackage "colour" "2.3.5" {});
+  mono-traversable = self.callHackage "mono-traversable" "1.0.15.1" { };
+  
+  foundation = self.callHackage "foundation" "0.0.25" { };
+
   # Test suite does not compile.
   data-clist = doJailbreak super.data-clist; # won't cope with QuickCheck 2.12.x
   dates = doJailbreak super.dates; # base >=4.9 && <4.12
@@ -94,7 +115,6 @@ self: super: {
   haddock-library_1_7_0 = dontCheck super.haddock-library_1_7_0;
 
   # ghc versions prior to 8.8.x needs additional dependency to compile successfully.
-  ghc-lib-parser-ex = addBuildDepend self.ghc-lib-parser super.ghc-lib-parser-ex;
 
   # This became a core library in ghc 8.10., so we don‘t have an "exception" attribute anymore.
   exceptions = super.exceptions_0_10_5;
@@ -108,7 +128,7 @@ self: super: {
   mmorph = super.mmorph_1_1_3;
 
   # https://github.com/haskellari/time-compat/issues/23
-  time-compat = dontCheck super.time-compat;
+  #time-compat = dontCheck super.time-compat;
 
   mime-string = disableOptimization super.mime-string;
 

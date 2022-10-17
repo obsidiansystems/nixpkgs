@@ -2,6 +2,7 @@
 , pkgsHostHost
 , callPackage
 , fetchgit
+, fetchpatch
 , ghcjsSrcJson ? null
 , ghcjsSrc ? fetchgit (builtins.fromJSON (builtins.readFile ghcjsSrcJson))
 , bootPkgs
