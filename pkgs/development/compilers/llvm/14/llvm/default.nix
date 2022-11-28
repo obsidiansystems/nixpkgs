@@ -61,6 +61,7 @@ in stdenv.mkDerivation (rec {
 
   patches = [
     ./gnu-install-dirs.patch
+    ./llvm.patch
   ] ++ lib.optional enablePolly ./gnu-install-dirs-polly.patch;
 
   postPatch = optionalString stdenv.isDarwin ''

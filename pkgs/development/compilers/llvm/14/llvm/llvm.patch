@@ -1,0 +1,21 @@
+diff --git a/lib/MC/MCParser/DarwinAsmParser.cpp b/llvm/lib/MC/MCParser/DarwinAsmParser.cpp
+index 308b3842c61e..b7de799527d3 100644
+--- a/lib/MC/MCParser/DarwinAsmParser.cpp
++++ b/lib/MC/MCParser/DarwinAsmParser.cpp
+@@ -1153,7 +1153,7 @@ static Triple::OSType getOSTypeFromPlatform(MachO::PlatformType Type) {
+   case MachO::PLATFORM_WATCHOS: return Triple::WatchOS;
+   case MachO::PLATFORM_BRIDGEOS:         /* silence warning */ break;
+   case MachO::PLATFORM_MACCATALYST: return Triple::IOS;
+-  case MachO::PLATFORM_IOSSIMULATOR:     /* silence warning */ break;
++  case MachO::PLATFORM_IOSSIMULATOR:     return Triple::IOS;
+   case MachO::PLATFORM_TVOSSIMULATOR:    /* silence warning */ break;
+   case MachO::PLATFORM_WATCHOSSIMULATOR: /* silence warning */ break;
+   case MachO::PLATFORM_DRIVERKIT:        /* silence warning */ break;
+@@ -1175,6 +1175,7 @@ bool DarwinAsmParser::parseBuildVersion(StringRef Directive, SMLoc Loc) {
+     .Case("tvos", MachO::PLATFORM_TVOS)
+     .Case("watchos", MachO::PLATFORM_WATCHOS)
+     .Case("macCatalyst", MachO::PLATFORM_MACCATALYST)
++    .Case("iossimulator", MachO::PLATFORM_IOSSIMULATOR)
+     .Default(0);
+   if (Platform == 0)
+     return Error(PlatformLoc, "unknown platform name");
