@@ -6,7 +6,6 @@
 
 { lib
 , stdenv
-, defaultCrateOverrides
 , fetchCrate
 , pkgsBuildBuild
 , rustc
@@ -90,7 +89,7 @@ in
     * Any unrecognized parameters will be passed as to
     * the underlying stdenv.mkDerivation.
   */
-crate_: lib.makeOverridable
+crate: lib.makeOverridable
   (
     # The rust compiler to use.
     #
@@ -114,17 +113,6 @@ crate_: lib.makeOverridable
       #
       # Example: [ pkgs.openssl ]
     , buildInputs
-      # Allows to override the parameters to buildRustCrate
-      # for any rust dependency in the transitive build tree.
-      #
-      # Default: pkgs.defaultCrateOverrides
-      #
-      # Example:
-      #
-      # pkgs.defaultCrateOverrides // {
-      #   hello = attrs: { buildInputs = [ openssl ]; };
-      # }
-    , crateOverrides
       # Rust library dependencies, i.e. other libaries that were built
       # with buildRustCrate.
     , dependencies
@@ -217,7 +205,6 @@ crate_: lib.makeOverridable
     }:
 
     let
-      crate = crate_ // (lib.attrByPath [ crate_.crateName ] (attr: { }) crateOverrides crate_);
       dependencies_ = dependencies;
       buildDependencies_ = buildDependencies;
       processedAttrs = [
@@ -365,27 +352,26 @@ crate_: lib.makeOverridable
   )
 {
   rust = rustc;
-  release = crate_.release or true;
-  verbose = crate_.verbose or true;
+  release = crate.release or true;
+  verbose = crate.verbose or true;
   extraRustcOpts = [ ];
   extraRustcOptsForBuildRs = [ ];
   features = [ ];
   nativeBuildInputs = [ ];
   buildInputs = [ ];
-  crateOverrides = defaultCrateOverrides;
-  preUnpack = crate_.preUnpack or "";
-  postUnpack = crate_.postUnpack or "";
-  prePatch = crate_.prePatch or "";
-  patches = crate_.patches or [ ];
-  postPatch = crate_.postPatch or "";
-  preConfigure = crate_.preConfigure or "";
-  postConfigure = crate_.postConfigure or "";
-  preBuild = crate_.preBuild or "";
-  postBuild = crate_.postBuild or "";
-  preInstall = crate_.preInstall or "";
-  postInstall = crate_.postInstall or "";
-  dependencies = crate_.dependencies or [ ];
-  buildDependencies = crate_.buildDependencies or [ ];
-  crateRenames = crate_.crateRenames or { };
-  buildTests = crate_.buildTests or false;
+  preUnpack = crate.preUnpack or "";
+  postUnpack = crate.postUnpack or "";
+  prePatch = crate.prePatch or "";
+  patches = crate.patches or [ ];
+  postPatch = crate.postPatch or "";
+  preConfigure = crate.preConfigure or "";
+  postConfigure = crate.postConfigure or "";
+  preBuild = crate.preBuild or "";
+  postBuild = crate.postBuild or "";
+  preInstall = crate.preInstall or "";
+  postInstall = crate.postInstall or "";
+  dependencies = crate.dependencies or [ ];
+  buildDependencies = crate.buildDependencies or [ ];
+  crateRenames = crate.crateRenames or { };
+  buildTests = crate.buildTests or false;
 }
