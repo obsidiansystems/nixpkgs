@@ -16,6 +16,8 @@ build_lib() {
     --out-dir target/lib \
     -L dependency=target/deps \
     --cap-lints allow \
+    $EXTRA_LINK_ARGS \
+    $EXTRA_LINK_ARGS_LIB \
     $LIB_RUSTC_OPTS \
     $BUILD_OUT_DIR \
     $EXTRA_BUILD \
@@ -46,6 +48,8 @@ build_bin() {
     --out-dir target/bin \
     -L dependency=target/deps \
     $LINK \
+    $EXTRA_LINK_ARGS \
+    $EXTRA_LINK_ARGS_BINS \
     $EXTRA_LIB \
     --cap-lints allow \
     $BUILD_OUT_DIR \
@@ -93,7 +97,7 @@ setup_link_paths() {
        done
      fi
   done
-  echo "$EXTRA_LINK" | while read i; do
+  echo "$EXTRA_LINK_LIBS" | while read i; do
      if [[ ! -z "$i" ]]; then
        for library in $i; do
          echo "-l $library" >> target/link
