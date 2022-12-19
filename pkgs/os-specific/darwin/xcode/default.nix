@@ -68,6 +68,7 @@ in lib.makeExtensible (self: {
   xcode_12_3 = requireXcode "12.3" "0kwf1y4llysf1p0nsbqyzccn7d77my0ldagr5fi3by4k0xy3d189";
   xcode_13 = requireXcode "13" "18czs16nwhmbjv5n44rbkn3xgwhd65qv6cdr82787fy1j1vkldmr";
   xcode_13_4_1 = requireXcode "13.4.1" "18a41n79nrmi4p3ilz9lpq243fiafkssjjg5hq43lf771cp1ykr6";
+  xcode_14_1 = requireXcode "14.1" "409180515221b83632cc336db413efe6520639fbe462a74e152500af9b6591fb";
   xcode = self."xcode_${lib.replaceStrings ["."] ["_"] (if (targetPlatform ? xcodeVer) then targetPlatform.xcodeVer else "12.3")}";
 })
 
