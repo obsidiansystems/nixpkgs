@@ -63,7 +63,7 @@ rustPlatform.buildRustPackage rec {
   ];
   RELEASE_TURBO_CLI = "true";
 
-  cargoSha256 = "ENw6NU3Fedd+OJEEWgL8A54aowNqjn3iv7rxlr+/4ZE=";
+  cargoSha256 = "sha256-jdVus8Ca/iO6tdeaXhAM3FxtDBptTRcuBTKL/rD+OFo=";
   RUSTC_BOOTSTRAP = 1;
   nativeBuildInputs = [
     pkg-config
