@@ -19,7 +19,7 @@ let
     owner = "vercel";
     repo = "turbo";
     rev = "v${version}";
-    sha256 = "YTuEv2S3jNV2o7HJML+P6OMazgwgRhUPnd/zaTWfDWs=";
+    sha256 = "sha256-KARLBdoXaGXCcVtBFHasltrWub5Y0eI53I/Q2MTQ3xU=";
   };
 
   go-turbo = buildGoModule rec {
