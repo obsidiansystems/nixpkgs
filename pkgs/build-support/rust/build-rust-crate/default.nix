@@ -50,6 +50,8 @@ let
           filename =
             if lib.any (x: x == "lib" || x == "rlib") dep.crateType
             then "${dep.metadata}.rlib"
+            else if lib.any (x: x == "proc-macro") dep.crateType # Actually a build-time dependency
+            then "${dep.metadata}${stdenv.buildPlatform.extensions.sharedLibrary}"
             else "${dep.metadata}${stdenv.hostPlatform.extensions.sharedLibrary}";
         in
         " --extern ${opts}${name}=${dep.lib}/lib/lib${extern}-${filename}"
