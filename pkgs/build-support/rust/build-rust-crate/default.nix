@@ -283,6 +283,9 @@ crate_: lib.makeOverridable
       dependencies = map lib.getLib dependencies_;
       buildDependencies = map lib.getLib buildDependencies_;
 
+      # Completely borked with new cctools
+      dontStrip = stdenv.isDarwin;
+
       completeDeps = lib.unique (dependencies ++ lib.concatMap (dep: dep.completeDeps) dependencies);
       completeBuildDeps = lib.unique (
         buildDependencies
