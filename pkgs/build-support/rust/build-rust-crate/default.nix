@@ -352,7 +352,7 @@ crate_: lib.makeOverridable
           metadata hasCrateBin crateBin verbose colors
           extraRustcOpts buildTests codegenUnits;
       };
-      dontStrip = !release;
+      dontStrip = !release || stdenv.isDarwin;
       installPhase = installCrate crateName metadata buildTests;
 
       # depending on the test setting we are either producing something with bins
