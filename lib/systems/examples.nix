@@ -223,8 +223,8 @@ rec {
   iphone64-simulator = {
     config = "x86_64-apple-ios";
     # config = "x86_64-apple-darwin14";
-    sdkVer = "14.3";
-    xcodeVer = "12.3";
+    sdkVer = "15.5";
+    xcodeVer = "13.4.1";
     xcodePlatform = "iPhoneSimulator";
     darwinPlatform = "ios-simulator";
     useiOSPrebuilt = true;
