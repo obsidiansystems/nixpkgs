@@ -87,6 +87,11 @@ in lib.init bootStages ++ [
            # to recognize 64-bit DLLs
         ++ lib.optional (hostPlatform.config == "x86_64-w64-mingw32") buildPackages.file
         ;
+      # temp hack to avoid ios macos clash
+      preHook = lib.optionalString (crossSystem.useiOSPrebuilt && crossSystem.isx86_64) ''
+        export DYLD_ROOT_PATH=${buildPackages.darwin.iosSdkPkgs.sdk.iPhoneOSRoot}/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot
+        echo -e "\n!! iOS Simulator in use !!\nDYLD_ROOT_PATH: $DYLD_ROOT_PATH\n!! iOS Simulator !!\n"
+      ''
     }));
   })
 
