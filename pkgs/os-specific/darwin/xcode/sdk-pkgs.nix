@@ -22,6 +22,8 @@ rec {
     type = "derivation";
     outPath = xcode + "/Contents/Developer/Platforms/${platform}.platform/Developer/SDKs/${platform}${version}.sdk";
 
+    iPhoneOSRoot = xcode + "/Contents/Developer/Platforms/iPhoneOS.platform";
+
     platform = targetPlatform.xcodePlatform;
     version = targetPlatform.sdkVer;
   };
