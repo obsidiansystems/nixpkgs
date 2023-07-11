@@ -1,4 +1,4 @@
-{ lib, stdenv, haskellPackages, symlinkJoin, makeWrapper
+{ lib, stdenv, darwin, haskellPackages, symlinkJoin, makeWrapper
 # GHC will have LLVM available if necessary for the respective target,
 # so useLLVM only needs to be changed if -fllvm is to be used for a
 # platform that has NCG support
@@ -56,6 +56,10 @@ let
   packageCfgDir = "${libDir}/package.conf.d";
   paths         = lib.filter (x: x ? isHaskellLibrary) (lib.closePropagation packages);
   hasLibraries  = lib.any (x: x.isHaskellLibrary) paths;
+
+  dyld_root_path = "${darwin.iosSdkPkgs.sdk.iPhoneOSRoot}/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot";
+  isSimulator = stdenv.targetPlatform.isiOS && stdenv.targetPlatform.isx86_64;
+
   # CLang is needed on Darwin for -fllvm to work:
   # https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/codegens.html#llvm-code-generator-fllvm
   llvm          = lib.makeBinPath
@@ -88,6 +92,9 @@ symlinkJoin {
           ${lib.optionalString (ghc.isGhcjs or false)
             ''--set NODE_PATH "${ghc.socket-io}/lib/node_modules"''
           } \
+          ${lib.optionalString (isSimulator)
+            ''--set DYLD_ROOT_PATH "${dyld_root_path}" \''
+          }
           ${lib.optionalString useLLVM ''--prefix "PATH" ":" "${llvm}"''}
       fi
     done
@@ -107,7 +114,7 @@ symlinkJoin {
     for prg in ${ghcCommand}-pkg ${ghcCommand}-pkg-${ghc.version}; do
       if [[ -x "${ghc}/bin/$prg" ]]; then
         rm -f $out/bin/$prg
-        makeWrapper ${ghc}/bin/$prg $out/bin/$prg --add-flags "${packageDBFlag}=${packageCfgDir}"
+        makeWrapper ${ghc}/bin/$prg $out/bin/$prg --add-flags "${packageDBFlag}=${packageCfgDir}" ${lib.optionalString (isSimulator) ''--set DYLD_ROOT_PATH "${dyld_root_path}"''}
       fi
     done
 
