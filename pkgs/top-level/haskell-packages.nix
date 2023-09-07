@@ -6,6 +6,8 @@ let
     "ghc865Binary"
     "ghc8102Binary"
     "ghc8102BinaryMinimal"
+    "ghc8107Binary"
+    "ghc8107BinaryMinimal"
     "ghcjs"
     "ghcjs86"
     "ghcjs810"
@@ -57,6 +59,15 @@ in {
       llvmPackages = pkgs.llvmPackages_9;
       minimal = true;
     };
+    ghc8107Binary = callPackage ../development/compilers/ghc/8.10.7-binary.nix {
+      llvmPackages = pkgs.llvmPackages_9;
+    };
+
+    ghc8107BinaryMinimal = callPackage ../development/compilers/ghc/8.10.7-binary.nix {
+      llvmPackages = pkgs.llvmPackages_9;
+      minimal = true;
+    };
+
 
     ghc865 = callPackage ../development/compilers/ghc/8.6.5.nix {
       bootPkgs = packages.ghc865Binary;
@@ -88,7 +99,7 @@ in {
     ghc8107 = callPackage ../development/compilers/ghc/8.10.7.nix {
       # aarch64 ghc865Binary gets SEGVs due to haskell#15449 or similar
       bootPkgs = if stdenv.isAarch64 || stdenv.isAarch32 then
-          packages.ghc8102BinaryMinimal
+          packages.ghc8107BinaryMinimal
         else
           packages.ghc865Binary;
       inherit (buildPackages.python3Packages) sphinx;
@@ -172,6 +183,18 @@ in {
     ghc8102BinaryMinimal = callPackage ../development/haskell-modules {
       buildHaskellPackages = bh.packages.ghc8102BinaryMinimal;
       ghc = bh.compiler.ghc8102BinaryMinimal;
+      compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-8.10.x.nix { };
+      packageSetConfig = bootstrapPackageSet;
+    };
+    ghc8107Binary = callPackage ../development/haskell-modules {
+      buildHaskellPackages = bh.packages.ghc8107Binary;
+      ghc = bh.compiler.ghc8107Binary;
+      compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-8.10.x.nix { };
+      packageSetConfig = bootstrapPackageSet;
+    };
+    ghc8107BinaryMinimal = callPackage ../development/haskell-modules {
+      buildHaskellPackages = bh.packages.ghc8107BinaryMinimal;
+      ghc = bh.compiler.ghc8107BinaryMinimal;
       compilerConfig = callPackage ../development/haskell-modules/configuration-ghc-8.10.x.nix { };
       packageSetConfig = bootstrapPackageSet;
     };
