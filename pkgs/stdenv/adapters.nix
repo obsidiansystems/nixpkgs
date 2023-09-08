@@ -97,11 +97,11 @@ rec {
     extraBuildInputs = [ pkgs.buildPackages.darwin.CF ];
     mkDerivationFromStdenv = extendMkDerivationArgs old (args: {
       NIX_CFLAGS_LINK = toString (args.NIX_CFLAGS_LINK or "")
-        + lib.optionalString (stdenv.cc.isGNU or false) " -static-libgcc";
+        + lib.optionalString (pkgs.buildPackages.stdenv.cc.isGNU or false) " -static-libgcc";
       nativeBuildInputs = (args.nativeBuildInputs or []) ++ [
         (pkgs.buildPackages.makeSetupHook {
           substitutions = {
-            libsystem = "${stdenv.cc.libc}/lib/libSystem.B.dylib";
+            libsystem = "${pkgs.buildPackages.stdenv.cc.libc}/lib/libSystem.B.dylib";
           };
         } ./darwin/portable-libsystem.sh)
       ];
