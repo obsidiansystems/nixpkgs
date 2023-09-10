@@ -212,7 +212,11 @@ in
     };
     ghcjs810 = callPackage ../development/compilers/ghcjs/8.10 {
       bootPkgs = packages.ghc8107;
-      ghcjsSrcJson = ../development/compilers/ghcjs/8.10/git.json;
+      ghcjsSrcJson =
+        if (stdenv.buildPlatform.isAarch64 && stdenv.buildPlatform.isDarwin)
+        then ../development/compilers/ghcjs/8.10/git_aarch64-darwin.json
+
+        else ../development/compilers/ghcjs/8.10/git.json;
       stage0 = ../development/compilers/ghcjs/8.10/stage0.nix;
     };
 
