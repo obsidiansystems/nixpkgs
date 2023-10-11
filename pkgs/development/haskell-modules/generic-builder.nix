@@ -7,7 +7,7 @@ let
   isCross = stdenv.buildPlatform != stdenv.hostPlatform;
   inherit (buildPackages)
     fetchurl removeReferencesTo
-    pkg-config coreutils gnugrep gnused glibcLocales;
+    pkg-config coreutils gnugrep gnused glibcLocales llvmPackages;
 in
 
 { pname
@@ -253,7 +253,11 @@ let
     optionals doBenchmark benchmarkToolDepends;
   nativeBuildInputs =
     [ ghc removeReferencesTo ] ++ optional (allPkgconfigDepends != []) pkg-config ++
-    setupHaskellDepends ++ collectedToolDepends;
+    setupHaskellDepends ++ collectedToolDepends
+    # Gross hack to make simulator work
+    ++ lib.optionals (stdenv.hostPlatform.isiOS) [
+      llvmPackages.llvm.out
+    ];
   propagatedBuildInputs = buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryFrameworkDepends;
   otherBuildInputsHaskell =
     optionals doCheck (testDepends ++ testHaskellDepends) ++

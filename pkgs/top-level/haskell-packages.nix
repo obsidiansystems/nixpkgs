@@ -128,8 +128,9 @@ in
       # https://github.com/xattr/xattr/issues/44 and
       # https://github.com/xattr/xattr/issues/55 are solved.
       inherit (buildPackages.darwin) xattr autoSignDarwinBinariesHook;
-      buildTargetLlvmPackages = pkgsBuildTarget.llvmPackages_12;
-      llvmPackages = pkgs.llvmPackages_12;
+      # Use the llvmPackages defined in top-level/all-packages.nix
+      buildTargetLlvmPackages = pkgsBuildTarget.llvmPackages;
+      llvmPackages = pkgs.llvmPackages;
     };
     ghc902 = callPackage ../development/compilers/ghc/9.0.2.nix {
       bootPkgs =
