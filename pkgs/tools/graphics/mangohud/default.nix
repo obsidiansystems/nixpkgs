@@ -15,6 +15,7 @@
 , mangohud32
 , addOpenGLRunpath
 , appstream
+, git
 , glslang
 , mako
 , meson
@@ -30,12 +31,13 @@
 , glfw
 , xorg
 , gamescopeSupport ? true # build mangoapp and mangohudctl
+, lowerBitnessSupport ? stdenv.hostPlatform.isx86_64 # Support 32 bit on 64bit
 , nix-update-script
 }:
 
 let
   # Derived from subprojects/cmocka.wrap
-  cmocka = rec {
+  cmocka = {
     version = "1.81";
     src = fetchFromGitLab {
       owner = "cmocka";
@@ -77,14 +79,14 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "mangohud";
-  version = "0.6.9-1";
+  version = "0.7.0";
 
   src = fetchFromGitHub {
     owner = "flightlessmango";
     repo = "MangoHud";
     rev = "refs/tags/v${finalAttrs.version}";
     fetchSubmodules = true;
-    hash = "sha256-AX4m1XZ+yXp74E3slFGyI3CGu2eYU+eXNN2EY+ivdfk=";
+    hash = "sha256-KkMN7A3AcS/v+b9GCs0pI6MBBk3WwOMciaoiBzL5xOQ=";
   };
 
   outputs = [ "out" "doc" "man" ];
@@ -92,7 +94,7 @@ stdenv.mkDerivation (finalAttrs: {
   # Unpack subproject sources
   postUnpack = ''(
     cd "$sourceRoot/subprojects"
-    ${lib.optionalString finalAttrs.doCheck ''
+    ${lib.optionalString finalAttrs.finalPackage.doCheck ''
       cp -R --no-preserve=mode,ownership ${cmocka.src} cmocka
     ''}
     cp -R --no-preserve=mode,ownership ${imgui.src} imgui-${imgui.version}
@@ -128,9 +130,10 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace bin/mangohud.in \
       --subst-var-by libraryPath ${lib.makeSearchPath "lib/mangohud" ([
         (placeholder "out")
-      ] ++ lib.optionals (stdenv.hostPlatform.system == "x86_64-linux") [
+      ] ++ lib.optionals lowerBitnessSupport [
         mangohud32
       ])} \
+      --subst-var-by version "${finalAttrs.version}" \
       --subst-var-by dataDir ${placeholder "out"}/share
 
     (
@@ -143,7 +146,7 @@ stdenv.mkDerivation (finalAttrs: {
   mesonFlags = [
     "-Dwith_wayland=enabled"
     "-Duse_system_spdlog=enabled"
-    "-Dtests=${if finalAttrs.doCheck then "enabled" else "disabled"}"
+    "-Dtests=${if finalAttrs.finalPackage.doCheck then "enabled" else "disabled"}"
   ] ++ lib.optionals gamescopeSupport [
     "-Dmangoapp=true"
     "-Dmangoapp_layer=true"
@@ -152,6 +155,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [
     addOpenGLRunpath
+    git
     glslang
     mako
     meson
@@ -184,7 +188,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   # Support 32bit Vulkan applications by linking in 32bit Vulkan layers
   # This is needed for the same reason the 32bit preload workaround is needed.
-  postInstall = lib.optionalString (stdenv.hostPlatform.system == "x86_64-linux") ''
+  postInstall = lib.optionalString lowerBitnessSupport ''
     ln -s ${mangohud32}/share/vulkan/implicit_layer.d/MangoHud.x86.json \
       "$out/share/vulkan/implicit_layer.d"
 
@@ -194,16 +198,26 @@ stdenv.mkDerivation (finalAttrs: {
     ''}
   '';
 
-  postFixup = ''
+  postFixup = let
+    archMap = {
+      "x86_64-linux" = "x86_64";
+      "i686-linux" = "x86";
+    };
+    layerPlatform = archMap."${stdenv.hostPlatform.system}" or null;
+    # We need to give the different layers separate names or else the loader
+    # might try the 32-bit one first, fail and not attempt to load the 64-bit
+    # layer under the same name.
+  in lib.optionalString (layerPlatform != null) ''
+    substituteInPlace $out/share/vulkan/implicit_layer.d/MangoHud.${layerPlatform}.json \
+      --replace "VK_LAYER_MANGOHUD_overlay" "VK_LAYER_MANGOHUD_overlay_${toString stdenv.hostPlatform.parsed.cpu.bits}"
+  '' + ''
     # Add OpenGL driver path to RUNPATH to support NVIDIA cards
     addOpenGLRunpath "$out/lib/mangohud/libMangoHud.so"
-    ${lib.optionalString gamescopeSupport ''
-      addOpenGLRunpath "$out/bin/mangoapp"
-    ''}
-    ${lib.optionalString finalAttrs.doCheck ''
-      # libcmocka.so is only used for tests
-      rm "$out/lib/libcmocka.so"
-    ''}
+  '' + lib.optionalString gamescopeSupport ''
+    addOpenGLRunpath "$out/bin/mangoapp"
+  '' + lib.optionalString finalAttrs.finalPackage.doCheck ''
+    # libcmocka.so is only used for tests
+    rm "$out/lib/libcmocka.so"
   '';
 
   passthru.updateScript = nix-update-script { };

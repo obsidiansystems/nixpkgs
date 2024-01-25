@@ -1,10 +1,11 @@
 { lib
 , stdenv
-, buildPythonPackage
 , aiohttp
 , aioresponses
+, buildPythonPackage
 , cachetools
 , cryptography
+, fetchpatch
 , fetchPypi
 , flask
 , freezegun
@@ -27,21 +28,34 @@
 
 buildPythonPackage rec {
   pname = "google-auth";
-  version = "2.17.3";
+  version = "2.21.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-zjEeK8WLEw/d8xbfV8mzlDwqe09uwx3pZjqTM+QGTvw=";
+    hash = "sha256-so6ASOV3J+fPDlvY5ydrISrvR2ZUoJURNUqoJ1O0XGY=";
   };
+
+  patches = [
+    # Although the migration to urllib3-2.0.0 is incomplete,
+    # the discussion in the following PR has addressed the concerns.
+    # https://github.com/googleapis/google-auth-library-python/pull/1290
+    (fetchpatch {
+      name = "support-urllib3_2.patch";
+      url = "https://github.com/googleapis/google-auth-library-python/commit/9ed006d02d7c9de3e6898ee819648c2fd3367c1d.patch";
+      hash = "sha256-64g0GzZeyO8l/s1jqfsogr8pTOBbG9xfp/UeVZNA4q8=";
+      includes = [ "google/auth/transport/urllib3.py" ];
+    })
+  ];
 
   propagatedBuildInputs = [
     cachetools
     pyasn1-modules
     rsa
     six
+    urllib3
   ];
 
   passthru.optional-dependencies = {
@@ -75,7 +89,6 @@ buildPythonPackage rec {
     pytest-localserver
     pytestCheckHook
     responses
-    urllib3
   ] ++ passthru.optional-dependencies.aiohttp
   # `cryptography` is still required on `aarch64-darwin` for `tests/crypt/*`
   ++ (if (stdenv.isDarwin && stdenv.isAarch64) then [ cryptography ] else passthru.optional-dependencies.enterprise_cert)
@@ -105,6 +118,6 @@ buildPythonPackage rec {
     homepage = "https://github.com/googleapis/google-auth-library-python";
     changelog = "https://github.com/googleapis/google-auth-library-python/blob/v${version}/CHANGELOG.md";
     license = licenses.asl20;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    maintainers = with maintainers; [ ];
   };
 }

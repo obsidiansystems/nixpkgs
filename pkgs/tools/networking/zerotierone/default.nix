@@ -2,25 +2,25 @@
 , stdenv
 , rustPlatform
 , fetchFromGitHub
-
 , buildPackages
-, iproute2
+, cargo
 , lzo
 , openssl
 , pkg-config
 , ronn
+, rustc
 , zlib
 }:
 
 let
   pname = "zerotierone";
-  version = "1.10.6";
+  version = "1.12.2";
 
   src = fetchFromGitHub {
     owner = "zerotier";
     repo = "ZeroTierOne";
     rev = version;
-    sha256 = "sha256-mapFKeF+8jMGkxSuHaw5oUdTdSQgAdxEwF/S6iyVLbY=";
+    sha256 = "sha256-p0zrYgbHTLefj5GTrMnYLytCXZ/nRuqTL+6dEeC+uVw=";
   };
 
 in stdenv.mkDerivation {
@@ -53,11 +53,10 @@ in stdenv.mkDerivation {
     pkg-config
     ronn
     rustPlatform.cargoSetupHook
-    rustPlatform.rust.cargo
-    rustPlatform.rust.rustc
+    cargo
+    rustc
   ];
   buildInputs = [
-    iproute2
     lzo
     openssl
     zlib
@@ -94,6 +93,6 @@ in stdenv.mkDerivation {
     homepage = "https://www.zerotier.com";
     license = licenses.bsl11;
     maintainers = with maintainers; [ sjmackenzie zimbatm ehmry obadz danielfullmer ];
-    platforms = platforms.all;
+    platforms = platforms.linux;
   };
 }

@@ -2,14 +2,14 @@
 
 let
   pname = "php-cs-fixer";
-  version = "3.16.0";
+  version = "3.48.0";
 in
 mkDerivation {
   inherit pname version;
 
   src = fetchurl {
     url = "https://github.com/FriendsOfPHP/PHP-CS-Fixer/releases/download/v${version}/php-cs-fixer.phar";
-    sha256 = "sha256-B4VzfsSwcffR/t4eREMLH9jRWCTumYel6GM4rpumVBY=";
+    sha256 = "sha256-JPFZ297l83PqJv+yyzTN6DIKsk82MJuo9IEdMPPAPGM=";
   };
 
   dontUnpack = true;
@@ -30,6 +30,6 @@ mkDerivation {
     description = "A tool to automatically fix PHP coding standards issues";
     license = licenses.mit;
     homepage = "https://cs.symfony.com/";
-    maintainers = with maintainers; [ jtojnar ] ++ teams.php.members;
+    maintainers = with maintainers; [ ] ++ teams.php.members;
   };
 }

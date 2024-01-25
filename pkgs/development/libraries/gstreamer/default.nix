@@ -11,8 +11,10 @@
 , IOKit
 , MediaToolbox
 , OpenGL
+, Security
 , VideoToolbox
 , ipu6ep-camera-hal
+, ipu6epmtl-camera-hal
 }:
 
 {
@@ -30,6 +32,8 @@
 
   gst-plugins-viperfx = callPackage ./viperfx { };
 
+  gst-plugins-rs = callPackage ./rs { inherit Security; };
+
   gst-rtsp-server = callPackage ./rtsp-server { };
 
   gst-libav = callPackage ./libav { };
@@ -44,6 +48,9 @@
   icamerasrc-ipu6ep = callPackage ./icamerasrc {
     ipu6-camera-hal = ipu6ep-camera-hal;
   };
+  icamerasrc-ipu6epmtl = callPackage ./icamerasrc {
+    ipu6-camera-hal = ipu6epmtl-camera-hal;
+  };
 
-  # note: gst-python is in ./python/default.nix - called under pythonPackages
+  # note: gst-python is in ../../python-modules/gst-python - called under python3Packages
 }

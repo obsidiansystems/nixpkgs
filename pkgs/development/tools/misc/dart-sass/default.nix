@@ -1,54 +1,87 @@
 { lib
-, stdenvNoCC
 , fetchFromGitHub
-, dart
-, callPackage
+, buildDartApplication
+, buf
+, protoc-gen-dart
+, testers
+, dart-sass
+, runCommand
+, writeText
 }:
 
-stdenvNoCC.mkDerivation (finalAttrs: rec {
+let
+  embedded-protocol-version = "2.4.0";
+
+  embedded-protocol = fetchFromGitHub {
+    owner = "sass";
+    repo = "sass";
+    rev = "refs/tags/embedded-protocol-${embedded-protocol-version}";
+    hash = "sha256-19YQTda5su2PI2vLzVRCn7fQoH5vEg3539gXEeLLvV8=";
+  };
+in
+buildDartApplication rec {
   pname = "dart-sass";
-  version = "1.62.1";
+  version = "1.70.0";
 
   src = fetchFromGitHub {
     owner = "sass";
     repo = pname;
-    rev = finalAttrs.version;
-    hash = "sha256-U6enz8yJcc4Wf8m54eYIAnVg/jsGi247Wy8lp1r1wg4=";
+    rev = version;
+    hash = "sha256-JLVcoDAngP1y8EC4K6fIJdPu2Xm8LLAxUm8BTK5tSVk=";
   };
 
+  pubspecLock = lib.importJSON ./pubspec.lock.json;
+
   nativeBuildInputs = [
-    dart
-    (callPackage ../../../../build-support/dart/fetch-dart-deps { } {
-      buildDrvArgs = finalAttrs;
-      pubspecLockFile = ./pubspec.lock;
-      vendorHash = "sha256-Atm7zfnDambN/BmmUf4BG0yUz/y6xWzf0reDw3Ad41s=";
-    })
+    buf
+    protoc-gen-dart
   ];
 
-  configurePhase = ''
-    runHook preConfigure
-    dart pub get --offline
-    runHook postConfigure
+  preConfigure = ''
+    mkdir -p build
+    ln -s ${embedded-protocol} build/language
+    HOME="$TMPDIR" buf generate
   '';
 
-  buildPhase = ''
-    runHook preBuild
-    dart compile exe --define=version=${finalAttrs.version} ./bin/sass.dart
-    runHook postBuild
-  '';
-
-  installPhase = ''
-    runHook preInstall
-    install -D ./bin/sass.exe $out/bin/sass
-    runHook postInstall
-  '';
+  dartCompileFlags = [ "--define=version=${version}" ];
 
   meta = with lib; {
-    inherit (dart.meta) platforms;
     homepage = "https://github.com/sass/dart-sass";
     description = "The reference implementation of Sass, written in Dart";
     mainProgram = "sass";
     license = licenses.mit;
     maintainers = with maintainers; [ lelgenio ];
   };
-})
+
+  passthru = {
+    inherit embedded-protocol-version embedded-protocol;
+    updateScript = ./update.sh;
+    tests = {
+      version = testers.testVersion {
+        package = dart-sass;
+        command = "dart-sass --version";
+      };
+
+      simple = testers.testEqualContents {
+        assertion = "dart-sass compiles a basic scss file";
+        expected = writeText "expected" ''
+          body h1{color:#123}
+        '';
+        actual = runCommand "actual"
+          {
+            nativeBuildInputs = [ dart-sass ];
+            base = writeText "base" ''
+              body {
+                $color: #123;
+                h1 {
+                  color: $color;
+                }
+              }
+            '';
+          } ''
+          dart-sass --style=compressed $base > $out
+        '';
+      };
+    };
+  };
+}

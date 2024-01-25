@@ -1,39 +1,52 @@
-{ lib, buildGoModule, fetchFromGitHub, installShellFiles }:
+{ lib
+, stdenv
+, buildGoModule
+, fetchFromGitHub
+, installShellFiles
+, nix-update-script
+}:
 
 buildGoModule rec {
   pname = "cmctl";
-  version = "1.11.1";
+  version = "1.13.3";
 
   src = fetchFromGitHub {
     owner = "cert-manager";
     repo = "cert-manager";
-    rev = "e3a2a803e8ed7f8a88d5f535d6e9a061c1571194";
-    sha256 = "0484dh520plgmrv39lbih44z1dz0r3sf115kqvcpfmg13b0328d0";
+    rev = "v${version}";
+    hash = "sha256-bmlM5WyJd5EtL3e4mPHwCqoIyDAgN7Ce7/vS6bhVuP0=";
   };
 
-  vendorSha256 = "sha256-tKvvqYGwLEoSfGzBRLx8xC/0Kz1uLmHYQ+gcHOW+550=";
+  sourceRoot = "${src.name}/cmd/ctl";
 
-  subPackages = [ "cmd/ctl" ];
+  vendorHash = "sha256-PQKPZXgp6ggWymVBOErmLps0cilOsE54t108ApZoiDQ=";
 
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X github.com/cert-manager/cert-manager/cmd/ctl/pkg/build.name=cmctl"
     "-X github.com/cert-manager/cert-manager/cmd/ctl/pkg/build/commands.registerCompletion=true"
     "-X github.com/cert-manager/cert-manager/pkg/util.AppVersion=v${version}"
     "-X github.com/cert-manager/cert-manager/pkg/util.AppGitCommit=${src.rev}"
   ];
 
-  nativeBuildInputs = [ installShellFiles ];
+  nativeBuildInputs = [
+    installShellFiles
+  ];
+
+  # Trusted by this computer: no: x509: “cert-manager” certificate is not trusted
+  doCheck = !stdenv.isDarwin;
 
   postInstall = ''
     mv $out/bin/ctl $out/bin/cmctl
+  '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     installShellCompletion --cmd cmctl \
       --bash <($out/bin/cmctl completion bash) \
       --fish <($out/bin/cmctl completion fish) \
       --zsh <($out/bin/cmctl completion zsh)
   '';
 
-  passthru.updateScript = ./update.sh;
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "A CLI tool for managing cert-manager service on Kubernetes clusters";

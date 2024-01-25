@@ -2,6 +2,7 @@
 , buildPythonPackage
 , fetchFromGitHub
 , fetchpatch
+, flit-core
 , pytestCheckHook
 , pythonOlder
 , borgbackup
@@ -19,8 +20,8 @@
 
 buildPythonPackage rec {
   pname = "emborg";
-  version = "1.35";
-  format = "flit";
+  version = "1.38";
+  format = "pyproject";
 
   disabled = pythonOlder "3.7";
 
@@ -28,8 +29,12 @@ buildPythonPackage rec {
     owner = "KenKundert";
     repo = "emborg";
     rev = "refs/tags/v${version}";
-    hash = "sha256-T6RfZNJ4k7ONYByy4J6Iuc7sVLKHlXti7p7x1QKgkNo=";
+    hash = "sha256-dK/6y1cjegomiy3fta2grUm4T0ZrylmstXfkJo4mDCE=";
   };
+
+  nativeBuildInputs = [
+    flit-core
+  ];
 
   propagatedBuildInputs = [
     appdirs

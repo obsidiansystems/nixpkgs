@@ -2,7 +2,7 @@
 , installShellFiles
 , lib
 , libftdi1
-, libgpiod
+, libgpiod_1
 , libjaylink
 , libusb1
 , pciutils
@@ -27,20 +27,22 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     libftdi1
-    libgpiod
     libjaylink
     libusb1
+  ] ++ lib.optionals (!stdenv.isDarwin) [
+    libgpiod_1
     pciutils
   ];
 
-  makeFlags = [ "PREFIX=$(out)" "libinstall" ];
+  makeFlags = [ "PREFIX=$(out)" "libinstall" ] ++ lib.optionals stdenv.isDarwin [ "CONFIG_ENABLE_LIBPCI_PROGRAMMERS=no" ]
+    ++ lib.optionals (stdenv.isDarwin && stdenv.isx86_64) [ "CONFIG_INTERNAL_X86=no" "CONFIG_INTERNAL_DMI=no" "CONFIG_RAYER_SPI=0" ];
 
   meta = with lib; {
     homepage = "https://www.flashrom.org";
-    description = "Utility for reading, writing, erasing and verifying flash ROM chips.";
+    description = "Utility for reading, writing, erasing and verifying flash ROM chips";
     license = with licenses; [ gpl2 gpl2Plus ];
     maintainers = with maintainers; [ felixsinger ];
     platforms = platforms.all;
-    broken = stdenv.isDarwin; # requires DirectHW
+    mainProgram = "flashrom";
   };
 }

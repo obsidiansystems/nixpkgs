@@ -2,34 +2,37 @@
 , lib
 , rustPlatform
 , nushell
-, nix-update-script
 , IOKit
 , CoreFoundation
+, libclang
+, nix-update-script
 }:
 
-let
-  pname = "nushell_plugin_query";
-in
 rustPlatform.buildRustPackage {
-  inherit pname;
-  version = nushell.version;
+  pname = "nushell_plugin_query";
+  inherit (nushell) version src;
+  cargoHash = "sha256-IAMfd76+Sx01d4axn3qcLvXZW6nxu0fjy9CvupUTHBM=";
 
-  src = nushell.src;
-
-  cargoHash = "sha256-BKeEAgvhHP01K/q8itwFfFIH8BAS9e1dat449i3M4ig=";
-
+  env = lib.optionalAttrs stdenv.cc.isClang {
+    LIBCLANG_PATH = "${libclang.lib}/lib";
+  };
   buildInputs = lib.optionals stdenv.isDarwin [ IOKit CoreFoundation ];
-
   cargoBuildFlags = [ "--package nu_plugin_query" ];
 
-  # compilation fails with a missing symbol
-  doCheck = false;
+  checkPhase = ''
+    cargo test --manifest-path crates/nu_plugin_query/Cargo.toml
+  '';
+
+  passthru.updateScript = nix-update-script {
+    # Skip the version check and only check the hash because we inherit version from nushell.
+    extraArgs = [ "--version=skip" ];
+  };
 
   meta = with lib; {
     description = "A Nushell plugin to query JSON, XML, and various web data";
-    homepage = "https://github.com/nushell/nushell/tree/main/crates/nu_plugin_query";
+    homepage = "https://github.com/nushell/nushell/tree/${version}/crates/nu_plugin_query";
     license = licenses.mpl20;
-    maintainers = with maintainers; [ happysalada ];
+    maintainers = with maintainers; [ happysalada aidalgol ];
     platforms = with platforms; all;
   };
 }

@@ -2,9 +2,10 @@
 , buildPythonPackage
 , fetchFromGitHub
 
-# build-sytem
+# build-system
 , cython_3
 , numpy
+, oldest-supported-numpy
 , setuptools
 , setuptools-scm
 , gnutar
@@ -18,7 +19,7 @@
 
 buildPythonPackage rec {
   pname = "soxr";
-  version = "0.3.4";
+  version = "0.3.6";
   format = "pyproject";
 
   src = fetchFromGitHub {
@@ -26,15 +27,14 @@ buildPythonPackage rec {
     repo = "python-soxr";
     rev = "refs/tags/v${version}";
     fetchSubmodules = true;
-    hash = "sha256-/NFGzOF1X9c0yccgtVNUO+1aIWoNdJqP/OKcNj+uKpk=";
+    hash = "sha256-H2sueQq32o/9EHENANKVoiWlFoSF88P0LZ7DfEh/Esg=";
   };
-
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
 
   nativeBuildInputs = [
     cython_3
     gnutar
     numpy
+    oldest-supported-numpy
     setuptools
     setuptools-scm
   ];

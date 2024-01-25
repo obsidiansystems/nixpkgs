@@ -1,12 +1,15 @@
 { lib
 , stdenv
 , buildPythonPackage
+, fetchpatch
 , fetchPypi
+, cargo
 , configobj
 , cython
 , dulwich
 , fastbencode
 , fastimport
+, pygithub
 , libiconv
 , merge3
 , patiencediff
@@ -18,6 +21,7 @@
 , pythonOlder
 , installShellFiles
 , rustPlatform
+, rustc
 , setuptools-gettext
 , setuptools-rust
 , testers
@@ -25,15 +29,23 @@
 
 buildPythonPackage rec {
   pname = "breezy";
-  version = "3.3.2";
+  version = "3.3.4";
   format = "pyproject";
 
   disabled = pythonOlder "3.5";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-TqaUn8uwdrl4VFsJn6xoq6011voYmd7vT2uCo9uiV8E=";
+    hash = "sha256-fEEvOfo8YWhx+xuiqD/KNstlso5/K1XJnGY64tkLIwE=";
   };
+
+  patches = [
+    # Explicitly track which URLs are used for GitLab
+    (fetchpatch {
+      url = "https://github.com/breezy-team/breezy/commit/cc9fdf3774253183f726127c2ee191c24640d898.patch";
+      hash = "sha256-HTDAW3CPEZ1YBe0wnv6ncWEd0QRHwHawfTplbVDiOGc=";
+    })
+  ];
 
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
@@ -43,14 +55,12 @@ buildPythonPackage rec {
     ln -s ${./Cargo.lock} Cargo.lock
   '';
 
-  cargoHash = "sha256-xYZh/evNp036/wRlNWWUYeD2EkleM+OeY4qbYMCE00I=";
-
   nativeBuildInputs = [
     cython
     installShellFiles
     rustPlatform.cargoSetupHook
-    rustPlatform.rust.cargo
-    rustPlatform.rust.rustc
+    cargo
+    rustc
     setuptools-gettext
     setuptools-rust
   ];
@@ -66,7 +76,8 @@ buildPythonPackage rec {
     pyyaml
     urllib3
   ] ++ passthru.optional-dependencies.launchpad
-    ++ passthru.optional-dependencies.fastimport;
+    ++ passthru.optional-dependencies.fastimport
+    ++ passthru.optional-dependencies.github;
 
   nativeCheckInputs = [
     testtools
@@ -109,12 +120,16 @@ buildPythonPackage rec {
       fastimport = [
         fastimport
       ];
+      github = [
+        pygithub
+      ];
     };
   };
 
   meta = with lib; {
     description = "Friendly distributed version control system";
     homepage = "https://www.breezy-vcs.org/";
+    changelog = "https://github.com/breezy-team/breezy/blob/brz-${version}/doc/en/release-notes/brz-${versions.majorMinor version}.txt";
     license = licenses.gpl2Only;
     maintainers = [ maintainers.marsam ];
     mainProgram = "brz";

@@ -9,14 +9,18 @@
 
 stdenv.mkDerivation rec {
   pname = "libcint";
-  version = "5.2.1";
+  version = "6.1.0";
 
   src = fetchFromGitHub {
     owner = "sunqm";
     repo = "libcint";
     rev = "v${version}";
-    hash = "sha256-sFdigOlS5fAi2dV4dhcPg3roqFdvpnh580WDqTA6DGg=";
+    hash = "sha256-qcVVp+81S3Y0fxDWA/PWQeFT2g0N6tIHNUaOHSru2GA=";
   };
+
+  postPatch = ''
+    sed -i 's/libcint.so/libcint${stdenv.hostPlatform.extensions.sharedLibrary}/g' testsuite/*.py
+  '';
 
   nativeBuildInputs = [ cmake ];
   buildInputs = [ blas ];
@@ -46,5 +50,6 @@ stdenv.mkDerivation rec {
     changelog = "https://github.com/sunqm/libcint/blob/master/ChangeLog";
     license = licenses.bsd2;
     maintainers = with maintainers; [ drewrisinger ];
+    platforms = platforms.unix;
   };
 }

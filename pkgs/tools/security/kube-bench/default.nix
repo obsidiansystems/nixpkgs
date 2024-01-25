@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "kube-bench";
-  version = "0.6.13";
+  version = "0.7.0";
 
   src = fetchFromGitHub {
     owner = "aquasecurity";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-tr6QQAxFAejX05rv8/cx6LXAATlutXX6UmrIv7ru3gM=";
+    hash = "sha256-yJJEWxz8EWdLi2rhw42QVdG9AcGO0OWnihg153hALNE=";
   };
 
-  vendorHash = "sha256-kOY9cIkh272A8PJTpMfNVlVNkY9PqPTOVYw25rTwd84=";
+  vendorHash = "sha256-zKw6d3UWs2kb+DCXmLZ09Lw3m8wMhm9QJYkeXJYcFA8=";
 
   nativeBuildInputs = [ installShellFiles ];
 

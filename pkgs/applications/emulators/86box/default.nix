@@ -1,6 +1,6 @@
 { stdenv, lib, fetchFromGitHub, cmake, pkg-config, makeWrapper, freetype, SDL2
 , glib, pcre2, openal, rtmidi, fluidsynth, jack2, alsa-lib, qt5, libvncserver
-, discord-gamesdk, libpcap
+, discord-gamesdk, libpcap, libslirp
 
 , enableDynarec ? with stdenv.hostPlatform; isx86 || isAarch
 , enableNewDynarec ? enableDynarec && stdenv.hostPlatform.isAarch
@@ -10,13 +10,13 @@
 
 stdenv.mkDerivation rec {
   pname = "86Box";
-  version = "3.11";
+  version = "4.0.1";
 
   src = fetchFromGitHub {
     owner = "86Box";
     repo = "86Box";
     rev = "v${version}";
-    hash = "sha256-n3Q/NUiaC6/EZyBUn6jUomnQCqr8tvYKPI5JrRRFScI=";
+    hash = "sha256-1005Czm4CftL96G0+sKV1wx/ogXTKS0vQAzZHtIMlKA=";
   };
 
   nativeBuildInputs = [
@@ -28,6 +28,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     freetype
+    fluidsynth
     SDL2
     glib
     openal
@@ -35,6 +36,7 @@ stdenv.mkDerivation rec {
     pcre2
     jack2
     libpcap
+    libslirp
     qt5.qtbase
     qt5.qttools
   ] ++ lib.optional stdenv.isLinux alsa-lib
@@ -46,12 +48,20 @@ stdenv.mkDerivation rec {
     ++ lib.optional (!enableDynarec) "-DDYNAREC=OFF"
     ++ lib.optional (!unfreeEnableDiscord) "-DDISCORD=OFF";
 
+  postInstall = lib.optional stdenv.isLinux ''
+    install -Dm644 -t $out/share/applications $src/src/unix/assets/net.86box.86Box.desktop
+
+    for size in 48 64 72 96 128 192 256 512; do
+      install -Dm644 -t $out/share/icons/hicolor/"$size"x"$size"/apps \
+        $src/src/unix/assets/"$size"x"$size"/net.86box.86Box.png
+    done;
+  '';
+
   # Some libraries are loaded dynamically, but QLibrary doesn't seem to search
   # the runpath, so use a wrapper instead.
   postFixup = let
     libPath = lib.makeLibraryPath ([
       libpcap
-      fluidsynth
     ] ++ lib.optional unfreeEnableDiscord discord-gamesdk);
     libPathVar = if stdenv.isDarwin then "DYLD_LIBRARY_PATH" else "LD_LIBRARY_PATH";
   in

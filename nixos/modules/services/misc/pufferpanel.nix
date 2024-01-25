@@ -19,7 +19,7 @@ in
           services.pufferpanel = {
             enable = true;
             extraPackages = with pkgs; [ bash curl gawk gnutar gzip ];
-            package = pkgs.buildFHSUserEnv {
+            package = pkgs.buildFHSEnv {
               name = "pufferpanel-fhs";
               runScript = lib.getExe pkgs.pufferpanel;
               targetPkgs = pkgs': with pkgs'; [ icu openssl zlib ];
@@ -33,7 +33,7 @@ in
       '';
     };
 
-    package = lib.mkPackageOptionMD pkgs "pufferpanel" { };
+    package = lib.mkPackageOption pkgs "pufferpanel" { };
 
     extraGroups = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -162,7 +162,7 @@ in
         PrivateUsers = true;
         PrivateDevices = true;
         RestrictRealtime = true;
-        RestrictNamespaces = [ "user" "mnt" ]; # allow buildFHSUserEnv
+        RestrictNamespaces = [ "user" "mnt" ]; # allow buildFHSEnv
         RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
         LockPersonality = true;
         DeviceAllow = [ "" ];

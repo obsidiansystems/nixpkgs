@@ -14,7 +14,7 @@ let
       options = {
         enable = mkEnableOption (mdDoc "this ${flavour} instance") // { default = true; };
 
-        package = mkPackageOptionMD pkgs pkgName { };
+        package = mkPackageOption pkgs pkgName { };
 
         user = mkOption {
           type = types.str;
@@ -123,6 +123,6 @@ in
       })
     [ "consul-template" "vault-agent" ]);
 
-  meta.maintainers = with maintainers; [ indeednotjames tcheronneau ];
+  meta.maintainers = with maintainers; [ emilylange tcheronneau ];
 }
 

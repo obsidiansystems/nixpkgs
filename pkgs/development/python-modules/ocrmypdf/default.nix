@@ -1,9 +1,9 @@
 { lib
 , buildPythonPackage
-, coloredlogs
 , deprecation
 , fetchFromGitHub
 , ghostscript
+, hypothesis
 , img2pdf
 , importlib-resources
 , jbig2enc
@@ -16,6 +16,7 @@
 , pytest-xdist
 , pytestCheckHook
 , pythonOlder
+, rich
 , reportlab
 , setuptools
 , setuptools-scm
@@ -24,16 +25,17 @@
 , tqdm
 , typing-extensions
 , unpaper
+, wheel
 , installShellFiles
 }:
 
 buildPythonPackage rec {
   pname = "ocrmypdf";
-  version = "14.1.0";
+  version = "15.4.4";
 
-  disabled = pythonOlder "3.8";
+  disabled = pythonOlder "3.9";
 
-  format = "pyproject";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "ocrmypdf";
@@ -45,30 +47,28 @@ buildPythonPackage rec {
     postFetch = ''
       rm "$out/.git_archival.txt"
     '';
-    hash = "sha256-Jyx9FPXNjcA04s+l2wY/LVX83RqExt78/EAHsL1VNMU=";
+    hash = "sha256-Ff0OrSJFglVPpSNB0KvDMnatj+P57zWdcVAFaM+Sg0s=";
   };
-
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
 
   patches = [
     (substituteAll {
       src = ./paths.patch;
-      gs = "${lib.getBin ghostscript}/bin/gs";
-      jbig2 = "${lib.getBin jbig2enc}/bin/jbig2";
-      pngquant = "${lib.getBin pngquant}/bin/pngquant";
-      tesseract = "${lib.getBin tesseract}/bin/tesseract";
-      unpaper = "${lib.getBin unpaper}/bin/unpaper";
+      gs = lib.getExe ghostscript;
+      jbig2 = lib.getExe jbig2enc;
+      pngquant = lib.getExe pngquant;
+      tesseract = lib.getExe tesseract;
+      unpaper = lib.getExe unpaper;
     })
   ];
 
   nativeBuildInputs = [
     setuptools
     setuptools-scm
+    wheel
     installShellFiles
   ];
 
   propagatedBuildInputs = [
-    coloredlogs
     deprecation
     img2pdf
     packaging
@@ -77,14 +77,13 @@ buildPythonPackage rec {
     pillow
     pluggy
     reportlab
-    tqdm
-  ] ++ lib.optionals (pythonOlder "3.9") [
-    importlib-resources
+    rich
   ] ++ lib.optionals (pythonOlder "3.10") [
     typing-extensions
   ];
 
   nativeCheckInputs = [
+    hypothesis
     pytest-xdist
     pytestCheckHook
   ];
@@ -105,5 +104,6 @@ buildPythonPackage rec {
     license = with licenses; [ mpl20 mit ];
     maintainers = with maintainers; [ kiwi dotlambda ];
     changelog = "https://github.com/ocrmypdf/OCRmyPDF/blob/${src.rev}/docs/release_notes.rst";
+    mainProgram = "ocrmypdf";
   };
 }

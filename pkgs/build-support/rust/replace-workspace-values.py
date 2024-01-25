@@ -18,7 +18,11 @@ def load_file(path: str) -> dict[str, Any]:
 def replace_key(
     workspace_manifest: dict[str, Any], table: dict[str, Any], section: str, key: str
 ) -> bool:
-    if "workspace" in table[key] and table[key]["workspace"] is True:
+    if (
+        isinstance(table[key], dict)
+        and "workspace" in table[key]
+        and table[key]["workspace"] is True
+    ):
         print("replacing " + key)
 
         replaced = table[key]
@@ -91,6 +95,13 @@ def main() -> None:
             changed |= replace_dependencies(
                 workspace_manifest, crate_manifest["target"][key]
             )
+
+    if (
+        "lints" in crate_manifest
+        and "workspace" in crate_manifest["lints"]
+        and crate_manifest["lints"]["workspace"] is True
+    ):
+        crate_manifest["lints"] = workspace_manifest["lints"]
 
     if not changed:
         return

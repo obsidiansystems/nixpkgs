@@ -1,44 +1,29 @@
 { lib
 , stdenv
-, buildPackages
+, meson
 , cmake
 , ninja
 , fetchFromGitHub
-, fetchpatch
 }:
 
-# Fix regression in precomputing CMAKE_SIZEOF_VOID_P
-# See https://github.com/mesonbuild/meson/pull/11761
-let fixedMeson =
-      buildPackages.meson.overrideAttrs (
-        {patches ? [], ...}: {
-          patches = patches ++ [
-            (fetchpatch {
-              url = "https://github.com/mesonbuild/meson/commit/7c78c2b5a0314078bdabb998ead56925dc8b0fc0.patch";
-              sha256 = "sha256-vSnHhuOIXf/1X+bUkUmGND5b30ES0O8EDArwb4p2/w4=";
-            })
-          ];
-        }
-      ); in
-
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "tomlplusplus";
-  version = "3.3.0";
+  version = "3.4.0";
 
   src = fetchFromGitHub {
     owner = "marzer";
-    repo = pname;
-    rev = "v${version}";
-    hash = "sha256-INX8TOEumz4B5coSxhiV7opc3rYJuQXT2k1BJ3Aje1M=";
+    repo = "tomlplusplus";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-h5tbO0Rv2tZezY58yUbyRVpsfRjY3i+5TPkkxr6La8M=";
   };
 
-  nativeBuildInputs = [ fixedMeson cmake ninja ];
+  nativeBuildInputs = [ meson cmake ninja ];
 
-  meta = with lib;{
+  meta = with lib; {
     homepage = "https://github.com/marzer/tomlplusplus";
     description = "Header-only TOML config file parser and serializer for C++17";
     license = licenses.mit;
     maintainers = with maintainers; [ Scrumplex ];
-    platforms = with platforms; unix;
+    platforms = platforms.unix;
   };
-}
+})

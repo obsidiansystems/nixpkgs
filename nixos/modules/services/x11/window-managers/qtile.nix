@@ -11,7 +11,7 @@ in
   options.services.xserver.windowManager.qtile = {
     enable = mkEnableOption (lib.mdDoc "qtile");
 
-    package = mkPackageOptionMD pkgs "qtile-unwrapped" { };
+    package = mkPackageOption pkgs "qtile-unwrapped" { };
 
     configFile = mkOption {
       type = with types; nullOr path;
@@ -40,7 +40,7 @@ in
         description = lib.mdDoc ''
           Extra Python packages available to Qtile.
           An example would be to include `python3Packages.qtile-extras`
-          for additional unoffical widgets.
+          for additional unofficial widgets.
         '';
         example = literalExpression ''
           python3Packages: with python3Packages; [

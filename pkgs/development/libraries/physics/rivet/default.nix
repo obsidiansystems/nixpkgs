@@ -1,16 +1,15 @@
-{ lib, stdenv, fetchurl, fetchpatch, fastjet, fastjet-contrib, ghostscript, hepmc, imagemagick, less, python3, rsync, texlive, yoda, which, makeWrapper }:
+{ lib, stdenv, fetchurl, fetchpatch, fastjet, fastjet-contrib, ghostscript, hepmc, imagemagick, less, python3, rsync, texliveBasic, yoda, which, makeWrapper }:
 
 stdenv.mkDerivation rec {
   pname = "rivet";
-  version = "3.1.7";
+  version = "3.1.9";
 
   src = fetchurl {
     url = "https://www.hepforge.org/archive/rivet/Rivet-${version}.tar.bz2";
-    hash = "sha256-J8fbvLX9fugcrxNtr06WC8oOwlXZ+hq+YC9NQwhhsno=";
+    hash = "sha256-9lMgRdph7rKtwgqavEFmtLLUGrLByltQDNYWuxuS57E=";
   };
 
-  latex = texlive.combine { inherit (texlive)
-    scheme-basic
+  latex = texliveBasic.withPackages (ps: with ps; [
     collection-pstricks
     collection-fontsrecommended
     l3kernel
@@ -24,7 +23,7 @@ stdenv.mkDerivation rec {
     xcolor
     xkeyval
     xstring
-    ;};
+  ]);
 
   nativeBuildInputs = [ rsync makeWrapper ];
   buildInputs = [ hepmc imagemagick python3 latex python3.pkgs.yoda ];

@@ -6,17 +6,18 @@
 , SDL2
 , SDL2_image
 , SDL2_mixer
+, Cocoa
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "doomretro";
-  version = "4.9.1";
+  version = "5.2.1";
 
   src = fetchFromGitHub {
     owner = "bradharding";
     repo = "doomretro";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-WCTCDOjBxVOkD06jF9wF2ELoyMhWa4lnZz82GbI1Axs=";
+    hash = "sha256-jM7SNZ8VsF0caB2Q2qOX8W6SuFxyZWpCo3+jD53R3qU=";
   };
 
   nativeBuildInputs = [
@@ -28,6 +29,8 @@ stdenv.mkDerivation (finalAttrs: {
     SDL2
     SDL2_image
     SDL2_mixer
+  ] ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    Cocoa
   ];
 
   meta = {

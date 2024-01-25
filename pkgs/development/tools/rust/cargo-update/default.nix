@@ -16,14 +16,14 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-update";
-  version = "13.0.1";
+  version = "13.3.0";
 
   src = fetchCrate {
     inherit pname version;
-    sha256 = "sha256-152tOUzFwkxR8B06PcnfYbrn0uLMUCOKNWh9b9LG3K0=";
+    sha256 = "sha256-owiMVeH7m4LoM8c4qjLyFx3v/+Flzt+C+O8qEuXazvc=";
   };
 
-  cargoHash = "sha256-QN1K/Hsy0kDQUi7D22+k5fa+LqlVFa4G5BG5Ckrouhs=";
+  cargoHash = "sha256-WtNH62DBo6WFOUcHnZxn0Jco4SUmhO0+1wXPRB2wxic=";
 
   nativeBuildInputs = [
     cmake
@@ -60,6 +60,6 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://github.com/nabijaczleweli/cargo-update";
     changelog = "https://github.com/nabijaczleweli/cargo-update/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ gerschtli Br1ght0ne johntitor ];
+    maintainers = with maintainers; [ gerschtli Br1ght0ne johntitor matthiasbeyer ];
   };
 }

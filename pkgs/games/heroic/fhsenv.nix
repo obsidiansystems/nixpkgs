@@ -1,5 +1,4 @@
-{ lib
-, buildFHSEnv
+{ buildFHSEnv
 , heroic-unwrapped
 , extraPkgs ? pkgs: [ ]
 , extraLibraries ? pkgs: [ ]
@@ -9,6 +8,12 @@ buildFHSEnv {
   name = "heroic";
 
   runScript = "heroic";
+
+  # Many Wine and native games need 32-bit libraries.
+  multiArch = true;
+
+  # required by Electron
+  unshareIpc = false;
 
   targetPkgs = pkgs: with pkgs; [
     heroic-unwrapped
@@ -24,6 +29,7 @@ buildFHSEnv {
     perl
     psmisc
     python3
+    unzip
     which
     xorg.xrandr
     zstd
@@ -48,6 +54,14 @@ buildFHSEnv {
       libXv
       libXxf86vm
     ];
+    gstreamerDeps = pkgs: with pkgs.gst_all_1; [
+      gstreamer
+      gst-plugins-base
+      gst-plugins-good
+      gst-plugins-ugly
+      gst-plugins-bad
+      gst-libav
+    ];
   in pkgs: with pkgs; [
     alsa-lib
     alsa-plugins
@@ -63,7 +77,6 @@ buildFHSEnv {
     giflib
     glib
     gnutls
-    gst_all_1.gst-plugins-base
     gtk3
     lcms2
     libevdev
@@ -81,10 +94,10 @@ buildFHSEnv {
     libpulseaudio
     libselinux
     libsndfile
-    libsndfile
     libsoup
     libtheora
     libtiff
+    libunwind
     libusb1
     libv4l
     libva
@@ -100,7 +113,6 @@ buildFHSEnv {
     openal
     openldap
     openssl
-    openssl_1_1
     pango
     pipewire
     samba4
@@ -109,7 +121,6 @@ buildFHSEnv {
     speex
     sqlite
     udev
-    udev
     unixODBC
     util-linux
     v4l-utils
@@ -117,6 +128,7 @@ buildFHSEnv {
     wayland
     zlib
   ] ++ xorgDeps pkgs
+    ++ gstreamerDeps pkgs
     ++ extraLibraries pkgs;
 
   extraInstallCommands = ''

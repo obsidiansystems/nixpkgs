@@ -13,7 +13,7 @@ in
   options.services.grafana-agent = {
     enable = mkEnableOption (lib.mdDoc "grafana-agent");
 
-    package = mkPackageOptionMD pkgs "grafana-agent" { };
+    package = mkPackageOption pkgs "grafana-agent" { };
 
     credentials = mkOption {
       description = lib.mdDoc ''
@@ -65,7 +65,6 @@ in
             agent.enabled = true;
             agent.scrape_integration = true;
             node_exporter.enabled = true;
-            replace_instance_label = true;
           };
         }
       '';
@@ -122,7 +121,6 @@ in
         agent.enabled = mkDefault true;
         agent.scrape_integration = mkDefault true;
         node_exporter.enabled = mkDefault true;
-        replace_instance_label = mkDefault true;
       };
     };
 

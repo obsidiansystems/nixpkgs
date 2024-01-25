@@ -1,13 +1,16 @@
 { webcord
 , substituteAll
-, callPackage
 , lib
+, vencord-web-extension
 }:
+
 webcord.overrideAttrs (old: {
+  pname = "webcord-vencord";
+
   patches = (old.patches or [ ]) ++ [
     (substituteAll {
       src = ./add-extension.patch;
-      vencord = callPackage ./vencord-web-extension { };
+      vencord = vencord-web-extension;
     })
   ];
 

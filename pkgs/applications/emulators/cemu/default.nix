@@ -13,8 +13,10 @@
 , fmt_9
 , glm
 , gtk3
+, hidapi
 , imgui
 , libpng
+, libusb1
 , libzip
 , libXrender
 , pugixml
@@ -23,7 +25,7 @@
 , wayland
 , wxGTK32
 , zarchive
-
+, gamemode
 , vulkan-loader
 
 , nix-update-script
@@ -31,13 +33,13 @@
 
 stdenv.mkDerivation rec {
   pname = "cemu";
-  version = "2.0-36";
+  version = "2.0-65";
 
   src = fetchFromGitHub {
     owner = "cemu-project";
     repo = "Cemu";
     rev = "v${version}";
-    hash = "sha256-RO8c9gLK00LLwDzcD8UOS3kh3kwTwFyrpuRlIXcInPo=";
+    hash = "sha256-jsDmxol3zZMmpo4whDeUXTzfO+QVK/h6lItXTyJyoak=";
   };
 
   patches = [
@@ -64,8 +66,10 @@ stdenv.mkDerivation rec {
     fmt_9
     glm
     gtk3
+    hidapi
     imgui
     libpng
+    libusb1
     libzip
     libXrender
     pugixml
@@ -80,6 +84,7 @@ stdenv.mkDerivation rec {
     "-DCMAKE_C_FLAGS_RELEASE=-DNDEBUG"
     "-DCMAKE_CXX_FLAGS_RELEASE=-DNDEBUG"
     "-DENABLE_VCPKG=OFF"
+    "-DENABLE_FERAL_GAMEMODE=ON"
 
     # PORTABLE:
     # "All data created and maintained by Cemu will be in the directory where the executable file is located"
@@ -91,7 +96,8 @@ stdenv.mkDerivation rec {
   in ''
     rm -rf dependencies/imgui
     ln -s ${imgui}/include/imgui dependencies/imgui
-    sed 's/\(EMULATOR_VERSION_SUFFIX\).*experimental.*/\1 "-${tag} (experimental)"/' -i src/Common/version.h
+    substituteInPlace src/Common/version.h --replace " (experimental)" "-${tag} (experimental)"
+    substituteInPlace dependencies/gamemode/lib/gamemode_client.h --replace "libgamemode.so.0" "${gamemode.lib}/lib/libgamemode.so.0"
   '';
 
   installPhase = ''
@@ -126,5 +132,6 @@ stdenv.mkDerivation rec {
     license = licenses.mpl20;
     platforms = [ "x86_64-linux" ];
     maintainers = with maintainers; [ zhaofengli baduhai ];
+    mainProgram = "cemu";
   };
 }

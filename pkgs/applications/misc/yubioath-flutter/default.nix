@@ -1,8 +1,12 @@
 { lib
+, writeText
 , flutter
 , python3
 , fetchFromGitHub
 , pcre2
+, libnotify
+, libappindicator
+, pkg-config
 , gnome
 , makeWrapper
 , removeReferencesTo
@@ -10,21 +14,25 @@
 
 flutter.buildFlutterApplication rec {
   pname = "yubioath-flutter";
-  version = "6.1.0";
+  version = "6.2.0";
 
   src = fetchFromGitHub {
     owner = "Yubico";
     repo = "yubioath-flutter";
     rev = version;
-    sha256 = "sha256-N9/qwC79mG9r+zMPLHSPjNSQ+srGtnXuKsf0ijtH7CI=";
+    hash = "sha256-NgzijuvyWNl9sFQzq1Jzk1povF8c/rKuVyVKeve+Vic=";
   };
 
   passthru.helper = python3.pkgs.callPackage ./helper.nix { inherit src version meta; };
 
-  depsListFile = ./deps.json;
-  vendorHash = "sha256-WfZiB7MO4wHUg81xm67BMu4zQdC9CfhN5BQol+AI2S8=";
+  pubspecLock = lib.importJSON ./pubspec.lock.json;
 
   postPatch = ''
+    rm -f pubspec.lock
+    ln -s "${writeText "${pname}-overrides.yaml" (builtins.toJSON {
+      dependency_overrides.intl = "^0.18.1";
+    })}" pubspec_overrides.yaml
+
     substituteInPlace linux/CMakeLists.txt \
       --replace "../build/linux/helper" "${passthru.helper}/libexec/helper"
   '';
@@ -60,23 +68,18 @@ flutter.buildFlutterApplication rec {
     substituteInPlace "$out/share/applications/com.yubico.authenticator.desktop" \
       --replace "@EXEC_PATH/authenticator" "$out/bin/yubioath-flutter" \
       --replace "@EXEC_PATH/linux_support/com.yubico.yubioath.png" "$out/share/icons/com.yubico.yubioath.png"
-
-    # Remove unnecessary references to Flutter.
-    remove-references-to -t ${flutter.unwrapped} $out/app/data/flutter_assets/shaders/ink_sparkle.frag
   '';
 
   nativeBuildInputs = [
     makeWrapper
     removeReferencesTo
+    pkg-config
   ];
 
   buildInputs = [
     pcre2
-  ];
-
-  disallowedReferences = [
-    flutter
-    flutter.unwrapped
+    libnotify
+    libappindicator
   ];
 
   meta = with lib; {

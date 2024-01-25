@@ -1,25 +1,28 @@
 { lib
 , ddcutil
+, easyeffects
 , gjs
+, glib
 , gnome
 , gobject-introspection
 , gsound
 , hddtemp
 , libgda
+, libgtop
 , liquidctl
 , lm_sensors
 , netcat-gnu
 , nvme-cli
 , procps
 , pulseaudio
-, libgtop
 , python3
 , smartmontools
 , substituteAll
 , touchegg
+, util-linux
 , vte
 , wrapGAppsHook
-, xprop
+, xdg-utils
 }:
 let
   # Helper method to reduce redundancy
@@ -38,18 +41,16 @@ super: lib.trivial.pipe super [
     meta.maintainers = with lib.maintainers; [ eperuffo ];
   }))
 
+  (patchExtension "dash-to-dock@micxgx.gmail.com" (old: {
+    meta.maintainers = with lib.maintainers; [ rhoriguchi ];
+  }))
+
   (patchExtension "ddterm@amezin.github.com" (old: {
-    # Requires gjs, zenity & vte via the typelib
     nativeBuildInputs = [ gobject-introspection wrapGAppsHook ];
     buildInputs = [ vte ];
-    postPatch = ''
-      for file in *.js com.github.amezin.ddterm; do
-        substituteInPlace $file --replace "gjs" "${gjs}/bin/gjs"
-        substituteInPlace $file --replace "zenity" "${gnome.zenity}/bin/zenity"
-      done
-    '';
     postFixup = ''
-      wrapGApp "$out/share/gnome-shell/extensions/ddterm@amezin.github.com/com.github.amezin.ddterm"
+      substituteInPlace "$out/share/gnome-shell/extensions/ddterm@amezin.github.com/bin/com.github.amezin.ddterm" --replace "gjs" "${gjs}/bin/gjs"
+      wrapGApp "$out/share/gnome-shell/extensions/ddterm@amezin.github.com/bin/com.github.amezin.ddterm"
     '';
   }))
 
@@ -59,6 +60,16 @@ super: lib.trivial.pipe super [
     postPatch = ''
       substituteInPlace "extension.js" --replace "/usr/bin/ddcutil" "${ddcutil}/bin/ddcutil"
     '';
+  }))
+
+  (patchExtension "eepresetselector@ulville.github.io" (old: {
+    patches = [
+      # Needed to find the currently set preset
+      (substituteAll {
+        src = ./extensionOverridesPatches/eepresetselector_at_ulville.github.io.patch;
+        easyeffects_gsettings_path = "${glib.getSchemaPath easyeffects}";
+      })
+    ];
   }))
 
   (patchExtension "freon@UshakovVasilii_Github.yahoo.com" (old: {
@@ -82,6 +93,23 @@ super: lib.trivial.pipe super [
     '';
   }))
 
+  (patchExtension "gtk4-ding@smedius.gitlab.com" (old: {
+    nativeBuildInputs = [ wrapGAppsHook ];
+    patches = [
+      (substituteAll {
+        inherit gjs util-linux xdg-utils;
+        util_linux = util-linux;
+        xdg_utils = xdg-utils;
+        src = ./extensionOverridesPatches/gtk4-ding_at_smedius.gitlab.com.patch;
+        nautilus_gsettings_path = "${glib.getSchemaPath gnome.nautilus}";
+      })
+    ];
+    postFixup = ''
+      wrapGApp "$out/share/gnome-shell/extensions/gtk4-ding@smedius.gitlab.com/app/ding.js"
+      wrapGApp "$out/share/gnome-shell/extensions/gtk4-ding@smedius.gitlab.com/app/createThumbnail.js"
+    '';
+  }))
+
   (patchExtension "pano@elhan.io" (old: {
     patches = [
       (substituteAll {
@@ -89,6 +117,16 @@ super: lib.trivial.pipe super [
         inherit gsound libgda;
       })
     ];
+  }))
+
+  (patchExtension "system-monitor-next@paradoxxx.zero.gmail.com" (old: {
+    patches = [
+      (substituteAll {
+        src = ./extensionOverridesPatches/system-monitor-next_at_paradoxxx.zero.gmail.com.patch;
+        gtop_path = "${libgtop}/lib/girepository-1.0";
+      })
+    ];
+    meta.maintainers = with lib.maintainers; [ andersk ];
   }))
 
   (patchExtension "tophat@fflewddur.github.io" (old: {
@@ -107,12 +145,6 @@ super: lib.trivial.pipe super [
         gtop_path = "${libgtop}/lib/girepository-1.0";
       })
     ];
-  }))
-
-  (patchExtension "unite@hardpixel.eu" (old: {
-    buildInputs = [ xprop ];
-
-    meta.maintainers = with lib.maintainers; [ rhoriguchi ];
   }))
 
   (patchExtension "x11gestures@joseexposito.github.io" (old: {

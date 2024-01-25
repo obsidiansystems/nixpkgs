@@ -11,12 +11,12 @@
 , setuptools
 , setuptools-scm
 , pythonOlder
-, sip_4
+, sip
 }:
 
 buildPythonPackage rec {
   pname = "enaml";
-  version = "0.16.1";
+  version = "0.17.0";
   format = "pyproject";
 
   disabled = pythonOlder "3.8";
@@ -25,10 +25,8 @@ buildPythonPackage rec {
     owner = "nucleic";
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-bXbexHd/SJjfAAREhQ8V4PekI9mle3GcUPjMn0zDAyw=";
+    hash = "sha256-DYLDQ9QwdK/a8eY0bFX31UNgxm8FUOaeNAnisFcyFNI=";
   };
-
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
 
   nativeBuildInputs = [
     setuptools
@@ -43,7 +41,7 @@ buildPythonPackage rec {
     pegen
     ply
     qtpy
-    sip_4
+    sip
   ];
 
   # qt bindings cannot be found during tests

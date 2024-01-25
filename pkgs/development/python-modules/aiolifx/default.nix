@@ -1,31 +1,40 @@
 { lib
 , async-timeout
+, click
 , fetchPypi
 , buildPythonPackage
 , pythonOlder
 , ifaddr
+, inquirerpy
 , bitstring
+, setuptools
 }:
 
 buildPythonPackage rec {
   pname = "aiolifx";
-  version = "0.8.10";
-  format = "setuptools";
+  version = "1.0.1";
+  pyproject = true;
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-NiNKFrWxpGkwbb7tFEDD5jZ6ETW20BBIqrdjCsL/DkY=";
+    hash = "sha256-r42M7aqKKLdGgRaCym44M1nvu0vTGK7ricBp/AsbFRk=";
   };
+
+  nativeBuildInputs = [
+    setuptools
+  ];
 
   propagatedBuildInputs = [
     async-timeout
     bitstring
+    click
     ifaddr
+    inquirerpy
   ];
 
-  # tests are not implemented
+  # Module has no tests
   doCheck = false;
 
   pythonImportsCheck = [

@@ -2,32 +2,24 @@
 , fetchFromGitHub
 , nixosTests
 , python3
-, fetchpatch
 }:
 
 let
   python = python3.override {
     packageOverrides = self: super: {
-      sqlalchemy = super.sqlalchemy.overridePythonAttrs (old: rec {
-        version = "1.4.46";
-        src = self.fetchPypi {
-          pname = "SQLAlchemy";
-          inherit version;
-          hash = "sha256-aRO4JH2KKS74MVFipRkx4rQM6RaB8bbxj2lwRSAMSjA=";
-        };
-      });
+      sqlalchemy = super.sqlalchemy_1_4;
     };
   };
 in
 python.pkgs.buildPythonApplication rec {
   pname = "calibre-web";
-  version = "0.6.20";
+  version = "0.6.21";
 
   src = fetchFromGitHub {
     owner = "janeczku";
     repo = "calibre-web";
     rev = version;
-    hash = "sha256-0lArY1aTpO4sgIVDSqClYMGlip92f9hE/L2UouTLK8Q=";
+    hash = "sha256-tRrOquetn3P2NmrXq7DQHRGP1sWnLR7bV2Lw0W/lUPQ=";
   };
 
   propagatedBuildInputs = with python.pkgs; [
@@ -36,10 +28,11 @@ python.pkgs.buildPythonApplication rec {
     chardet
     flask-babel
     flask-login
-    flask_principal
+    flask-principal
     flask-wtf
     flask-limiter
     iso-639
+    jsonschema
     lxml
     pypdf
     requests
@@ -82,7 +75,7 @@ python.pkgs.buildPythonApplication rec {
       --replace "lxml>=3.8.0,<4.9.0" "lxml>=3.8.0" \
       --replace "tornado>=4.1,<6.2" "tornado>=4.1,<7" \
       --replace "PyPDF>=3.0.0,<3.6.0" "PyPDF>=3.0.0" \
-      --replace "requests>=2.11.1,<2.28.0" "requests" \
+      --replace "requests>=2.11.1,<2.29.0" "requests" \
       --replace "unidecode>=0.04.19,<1.4.0" "unidecode>=0.04.19" \
       --replace "werkzeug<2.1.0" ""
   '';
@@ -98,5 +91,6 @@ python.pkgs.buildPythonApplication rec {
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ pborzenkov ];
     platforms = platforms.all;
+    mainProgram = "calibre-web";
   };
 }

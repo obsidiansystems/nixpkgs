@@ -35,6 +35,7 @@ let
   compressMimeTypes = [
     "application/atom+xml"
     "application/geo+json"
+    "application/javascript" # Deprecated by IETF RFC 9239, but still widely used
     "application/json"
     "application/ld+json"
     "application/manifest+json"
@@ -145,6 +146,10 @@ let
     pid /run/nginx/nginx.pid;
     error_log ${cfg.logError};
     daemon off;
+
+    ${optionalString cfg.enableQuicBPF ''
+      quic_bpf on;
+    ''}
 
     ${cfg.config}
 
@@ -261,23 +266,6 @@ let
 
       ${proxyCachePathConfig}
 
-      ${optionalString cfg.statusPage ''
-        server {
-          listen ${toString cfg.defaultHTTPListenPort};
-          ${optionalString enableIPv6 "listen [::]:${toString cfg.defaultHTTPListenPort};" }
-
-          server_name localhost;
-
-          location /nginx_status {
-            stub_status on;
-            access_log off;
-            allow 127.0.0.1;
-            ${optionalString enableIPv6 "allow ::1;"}
-            deny all;
-          }
-        }
-      ''}
-
       ${vhosts}
 
       ${cfg.appendHttpConfig}
@@ -309,45 +297,66 @@ let
         onlySSL = vhost.onlySSL || vhost.enableSSL;
         hasSSL = onlySSL || vhost.addSSL || vhost.forceSSL;
 
+        # First evaluation of defaultListen based on a set of listen lines.
+        mkDefaultListenVhost = listenLines:
+          # If this vhost has SSL or is a SSL rejection host.
+          # We enable a TLS variant for lines without explicit ssl or ssl = true.
+          optionals (hasSSL || vhost.rejectSSL)
+            (map (listen: { port = cfg.defaultSSLListenPort; ssl = true; } // listen)
+            (filter (listen: !(listen ? ssl) || listen.ssl) listenLines))
+          # If this vhost is supposed to serve HTTP
+          # We provide listen lines for those without explicit ssl or ssl = false.
+          ++ optionals (!onlySSL)
+            (map (listen: { port = cfg.defaultHTTPListenPort; ssl = false; } // listen)
+            (filter (listen: !(listen ? ssl) || !listen.ssl) listenLines));
+
         defaultListen =
           if vhost.listen != [] then vhost.listen
           else
+          if cfg.defaultListen != [] then mkDefaultListenVhost
+            # Cleanup nulls which will mess up with //.
+            # TODO: is there a better way to achieve this? i.e. mergeButIgnoreNullPlease?
+            (map (listenLine: filterAttrs (_: v: (v != null)) listenLine) cfg.defaultListen)
+          else
             let addrs = if vhost.listenAddresses != [] then vhost.listenAddresses else cfg.defaultListenAddresses;
-            in optionals (hasSSL || vhost.rejectSSL) (map (addr: { inherit addr; port = cfg.defaultSSLListenPort; ssl = true; }) addrs)
-              ++ optionals (!onlySSL) (map (addr: { inherit addr; port = cfg.defaultHTTPListenPort; ssl = false; }) addrs);
+            in mkDefaultListenVhost (map (addr: { inherit addr; }) addrs);
+
 
         hostListen =
           if vhost.forceSSL
             then filter (x: x.ssl) defaultListen
             else defaultListen;
 
-        listenString = { addr, port, ssl, extraParameters ? [], ... }:
+        listenString = { addr, port, ssl, proxyProtocol ? false, extraParameters ? [], ... }:
           # UDP listener for QUIC transport protocol.
           (optionalString (ssl && vhost.quic) ("
-            listen ${addr}:${toString port} quic "
+            listen ${addr}${optionalString (port != null) ":${toString port}"} quic "
           + optionalString vhost.default "default_server "
           + optionalString vhost.reuseport "reuseport "
-          + optionalString (extraParameters != []) (concatStringsSep " " (
-            let inCompatibleParameters = [ "ssl" "proxy_protocol" "http2" ];
-                isCompatibleParameter = param: !(any (p: p == param) inCompatibleParameters);
+          + optionalString (extraParameters != []) (concatStringsSep " "
+            (let inCompatibleParameters = [ "accept_filter" "backlog" "deferred" "fastopen" "http2" "proxy_protocol" "so_keepalive" "ssl" ];
+                isCompatibleParameter = param: !(any (p: lib.hasPrefix p param) inCompatibleParameters);
             in filter isCompatibleParameter extraParameters))
           + ";"))
           + "
-
-            listen ${addr}:${toString port} "
-          + optionalString (ssl && vhost.http2) "http2 "
+            listen ${addr}${optionalString (port != null) ":${toString port}"} "
+          + optionalString (ssl && vhost.http2 && oldHTTP2) "http2 "
           + optionalString ssl "ssl "
           + optionalString vhost.default "default_server "
           + optionalString vhost.reuseport "reuseport "
+          + optionalString proxyProtocol "proxy_protocol "
           + optionalString (extraParameters != []) (concatStringsSep " " extraParameters)
           + ";";
 
         redirectListen = filter (x: !x.ssl) defaultListen;
 
-        acmeLocation = optionalString (vhost.enableACME || vhost.useACMEHost != null) ''
+        # The acme-challenge location doesn't need to be added if we are not using any automated
+        # certificate provisioning and can also be omitted when we use a certificate obtained via a DNS-01 challenge
+        acmeLocation = optionalString (vhost.enableACME || (vhost.useACMEHost != null && config.security.acme.certs.${vhost.useACMEHost}.dnsProvider == null))
           # Rule for legitimate ACME Challenge requests (like /.well-known/acme-challenge/xxxxxxxxx)
           # We use ^~ here, so that we don't check any regexes (which could
           # otherwise easily override this intended match accidentally).
+        ''
           location ^~ /.well-known/acme-challenge/ {
             ${optionalString (vhost.acmeFallbackHost != null) "try_files $uri @acme-fallback;"}
             ${optionalString (vhost.acmeRoot != null) "root ${vhost.acmeRoot};"}
@@ -367,26 +376,23 @@ let
             ${concatMapStringsSep "\n" listenString redirectListen}
 
             server_name ${vhost.serverName} ${concatStringsSep " " vhost.serverAliases};
-            ${acmeLocation}
+
             location / {
-              return 301 https://$host$request_uri;
+              return ${toString vhost.redirectCode} https://$host$request_uri;
             }
+            ${acmeLocation}
           }
         ''}
 
         server {
           ${concatMapStringsSep "\n" listenString hostListen}
           server_name ${vhost.serverName} ${concatStringsSep " " vhost.serverAliases};
+          ${optionalString (hasSSL && vhost.http2 && !oldHTTP2) ''
+            http2 on;
+          ''}
           ${optionalString (hasSSL && vhost.quic) ''
             http3 ${if vhost.http3 then "on" else "off"};
             http3_hq ${if vhost.http3_hq then "on" else "off"};
-          ''}
-          ${acmeLocation}
-          ${optionalString (vhost.root != null) "root ${vhost.root};"}
-          ${optionalString (vhost.globalRedirect != null) ''
-            location / {
-              return 301 http${optionalString hasSSL "s"}://${vhost.globalRedirect}$request_uri;
-            }
           ''}
           ${optionalString hasSSL ''
             ssl_certificate ${vhost.sslCertificate};
@@ -402,14 +408,16 @@ let
             ssl_conf_command Options KTLS;
           ''}
 
-          ${optionalString (hasSSL && vhost.quic && vhost.http3)
-            # Advertise that HTTP/3 is available
-          ''
-            add_header Alt-Svc 'h3=":$server_port"; ma=86400';
-          ''}
-
           ${mkBasicAuth vhostName vhost}
 
+          ${optionalString (vhost.root != null) "root ${vhost.root};"}
+
+          ${optionalString (vhost.globalRedirect != null) ''
+            location / {
+              return ${toString vhost.redirectCode} http${optionalString hasSSL "s"}://${vhost.globalRedirect}$request_uri;
+            }
+          ''}
+          ${acmeLocation}
           ${mkLocations vhost.locations}
 
           ${vhost.extraConfig}
@@ -438,7 +446,7 @@ let
       ${optionalString (config.tryFiles != null) "try_files ${config.tryFiles};"}
       ${optionalString (config.root != null) "root ${config.root};"}
       ${optionalString (config.alias != null) "alias ${config.alias};"}
-      ${optionalString (config.return != null) "return ${config.return};"}
+      ${optionalString (config.return != null) "return ${toString config.return};"}
       ${config.extraConfig}
       ${optionalString (config.proxyPass != null && config.recommendedProxySettings) "include ${recommendedProxyConfig};"}
       ${mkBasicAuth "sublocation" config}
@@ -460,6 +468,8 @@ let
   );
 
   mkCertOwnershipAssertion = import ../../../security/acme/mk-cert-ownership-assertion.nix;
+
+  oldHTTP2 = (versionOlder cfg.package.version "1.25.1" && !(cfg.package.pname == "angie" || cfg.package.pname == "angieQuic"));
 in
 
 {
@@ -539,6 +549,51 @@ in
         '';
       };
 
+      defaultListen = mkOption {
+        type = with types; listOf (submodule {
+          options = {
+            addr = mkOption {
+              type = str;
+              description = lib.mdDoc "IP address.";
+            };
+            port = mkOption {
+              type = nullOr port;
+              description = lib.mdDoc "Port number.";
+              default = null;
+            };
+            ssl  = mkOption {
+              type = nullOr bool;
+              default = null;
+              description = lib.mdDoc "Enable SSL.";
+            };
+            proxyProtocol = mkOption {
+              type = bool;
+              description = lib.mdDoc "Enable PROXY protocol.";
+              default = false;
+            };
+            extraParameters = mkOption {
+              type = listOf str;
+              description = lib.mdDoc "Extra parameters of this listen directive.";
+              default = [ ];
+              example = [ "backlog=1024" "deferred" ];
+            };
+          };
+        });
+        default = [];
+        example = literalExpression ''
+          [
+            { addr = "10.0.0.12"; proxyProtocol = true; ssl = true; }
+            { addr = "0.0.0.0"; }
+            { addr = "[::0]"; }
+          ]
+        '';
+        description = lib.mdDoc ''
+          If vhosts do not specify listen, use these addresses by default.
+          This option takes precedence over {option}`defaultListenAddresses` and
+          other listen-related defaults options.
+        '';
+      };
+
       defaultListenAddresses = mkOption {
         type = types.listOf types.str;
         default = [ "0.0.0.0" ] ++ optional enableIPv6 "[::0]";
@@ -546,6 +601,7 @@ in
         example = literalExpression ''[ "10.0.0.12" "[2002:a00:1::]" ]'';
         description = lib.mdDoc ''
           If vhosts do not specify listenAddresses, use these addresses by default.
+          This is akin to writing `defaultListen = [ { addr = "0.0.0.0" } ]`.
         '';
       };
 
@@ -590,6 +646,8 @@ in
           Nginx package to use. This defaults to the stable version. Note
           that the nginx team recommends to use the mainline version which
           available in nixpkgs as `nginxMainline`.
+          Supported Nginx forks include `angie`, `openresty` and `tengine`.
+          For HTTP/3 support use `nginxQuic` or `angieQuic`.
         '';
       };
 
@@ -651,7 +709,7 @@ in
           Configuration lines appended to the generated Nginx
           configuration file. Commonly used by different modules
           providing http snippets. {option}`appendConfig`
-          can be specified more than once and it's value will be
+          can be specified more than once and its value will be
           concatenated (contrary to {option}`config` which
           can be set only once).
         '';
@@ -726,6 +784,19 @@ in
           Reload nginx when configuration file changes (instead of restart).
           The configuration file is exposed at {file}`/etc/nginx/nginx.conf`.
           See also `systemd.services.*.restartIfChanged`.
+        '';
+      };
+
+      enableQuicBPF = mkOption {
+        default = false;
+        type = types.bool;
+        description = lib.mdDoc ''
+          Enables routing of QUIC packets using eBPF. When enabled, this allows
+          to support QUIC connection migration. The directive is only supported
+          on Linux 5.7+.
+          Note that enabling this option will make nginx run with extended
+          capabilities that are usually limited to processes running as root
+          namely `CAP_SYS_ADMIN` and `CAP_NET_ADMIN`.
         '';
       };
 
@@ -883,7 +954,7 @@ in
         default = {};
         description = lib.mdDoc ''
           Configure a proxy cache path entry.
-          See <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_path> for documentation.
+          See <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_path> for documentation.
         '';
       };
 
@@ -1056,14 +1127,6 @@ in
       }
 
       {
-        assertion = any (host: host.kTLS) (attrValues virtualHosts) -> versionAtLeast cfg.package.version "1.21.4";
-        message = ''
-          services.nginx.virtualHosts.<name>.kTLS requires nginx version
-          1.21.4 or above; see the documentation for services.nginx.package.
-        '';
-      }
-
-      {
         assertion = all (host: !(host.enableACME && host.useACMEHost != null)) (attrValues virtualHosts);
         message = ''
           Options services.nginx.service.virtualHosts.<name>.enableACME and
@@ -1072,10 +1135,46 @@ in
       }
 
       {
-        assertion = cfg.package.pname != "nginxQuic" -> all (host: !host.quic) (attrValues virtualHosts);
+        assertion = cfg.package.pname != "nginxQuic" && cfg.package.pname != "angieQuic" -> !(cfg.enableQuicBPF);
         message = ''
-          services.nginx.service.virtualHosts.<name>.quic requires using nginxQuic package,
-          which can be achieved by setting `services.nginx.package = pkgs.nginxQuic;`.
+          services.nginx.enableQuicBPF requires using nginxQuic package,
+          which can be achieved by setting `services.nginx.package = pkgs.nginxQuic;` or
+          `services.nginx.package = pkgs.angieQuic;`.
+        '';
+      }
+
+      {
+        assertion = cfg.package.pname != "nginxQuic" && cfg.package.pname != "angieQuic" -> all (host: !host.quic) (attrValues virtualHosts);
+        message = ''
+          services.nginx.service.virtualHosts.<name>.quic requires using nginxQuic or angie packages,
+          which can be achieved by setting `services.nginx.package = pkgs.nginxQuic;` or
+          `services.nginx.package = pkgs.angieQuic;`.
+        '';
+      }
+
+      {
+        # The idea is to understand whether there is a virtual host with a listen configuration
+        # that requires ACME configuration but has no HTTP listener which will make deterministically fail
+        # this operation.
+        # Options' priorities are the following at the moment:
+        # listen (vhost) > defaultListen (server) > listenAddresses (vhost) > defaultListenAddresses (server)
+        assertion =
+        let
+          hasAtLeastHttpListener = listenOptions: any (listenLine: if listenLine ? proxyProtocol then !listenLine.proxyProtocol else true) listenOptions;
+          hasAtLeastDefaultHttpListener = if cfg.defaultListen != [] then hasAtLeastHttpListener cfg.defaultListen else (cfg.defaultListenAddresses != []);
+        in
+          all (host:
+            let
+              hasAtLeastVhostHttpListener = if host.listen != [] then hasAtLeastHttpListener host.listen else (host.listenAddresses != []);
+              vhostAuthority = host.listen != [] || (cfg.defaultListen == [] && host.listenAddresses != []);
+            in
+              # Either vhost has precedence and we need a vhost specific http listener
+              # Either vhost set nothing and inherit from server settings
+              host.enableACME -> ((vhostAuthority && hasAtLeastVhostHttpListener) || (!vhostAuthority && hasAtLeastDefaultHttpListener))
+          ) (attrValues virtualHosts);
+        message = ''
+          services.nginx.virtualHosts.<name>.enableACME requires a HTTP listener
+          to answer to ACME requests.
         '';
       }
     ] ++ map (name: mkCertOwnershipAssertion {
@@ -1086,6 +1185,21 @@ in
 
     services.nginx.additionalModules = optional cfg.recommendedBrotliSettings pkgs.nginxModules.brotli
       ++ lib.optional cfg.recommendedZstdSettings pkgs.nginxModules.zstd;
+
+    services.nginx.virtualHosts.localhost = mkIf cfg.statusPage {
+      listenAddresses = lib.mkDefault ([
+        "0.0.0.0"
+      ] ++ lib.optional enableIPv6 "[::]");
+      locations."/nginx_status" = {
+        extraConfig = ''
+          stub_status on;
+          access_log off;
+          allow 127.0.0.1;
+          ${optionalString enableIPv6 "allow ::1;"}
+          deny all;
+        '';
+      };
+    };
 
     systemd.services.nginx = {
       description = "Nginx Web Server";
@@ -1129,8 +1243,8 @@ in
         # New file permissions
         UMask = "0027"; # 0640 / 0750
         # Capabilities
-        AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ];
-        CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ];
+        AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ] ++ optionals cfg.enableQuicBPF [ "CAP_SYS_ADMIN" "CAP_NET_ADMIN" ];
+        CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ] ++ optionals cfg.enableQuicBPF [ "CAP_SYS_ADMIN" "CAP_NET_ADMIN" ];
         # Security
         NoNewPrivileges = true;
         # Sandboxing (sorted by occurrence in https://www.freedesktop.org/software/systemd/man/systemd.exec.html)
@@ -1155,6 +1269,7 @@ in
         # System Call Filtering
         SystemCallArchitectures = "native";
         SystemCallFilter = [ "~@cpu-emulation @debug @keyring @mount @obsolete @privileged @setuid" ]
+          ++ optional cfg.enableQuicBPF [ "bpf" ]
           ++ optionals ((cfg.package != pkgs.tengine) && (cfg.package != pkgs.openresty) && (!lib.any (mod: (mod.disableIPC or false)) cfg.package.modules)) [ "~@ipc" ];
       };
     };
@@ -1218,6 +1333,13 @@ in
     users.groups = optionalAttrs (cfg.group == "nginx") {
       nginx.gid = config.ids.gids.nginx;
     };
+
+    boot.kernelModules = optional (versionAtLeast config.boot.kernelPackages.kernel.version "4.17") "tls";
+
+    # do not delete the default temp directories created upon nginx startup
+    systemd.tmpfiles.rules = [
+      "X /tmp/systemd-private-%b-nginx.service-*/tmp/nginx_*"
+    ];
 
     services.logrotate.settings.nginx = mapAttrs (_: mkDefault) {
       files = "/var/log/nginx/*.log";

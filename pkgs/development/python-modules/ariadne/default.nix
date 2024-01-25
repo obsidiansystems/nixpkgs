@@ -1,9 +1,9 @@
 { lib
 , buildPythonPackage
 , fetchFromGitHub
+, hatchling
 , freezegun
 , graphql-core
-, opentracing
 , pytest-asyncio
 , pytest-mock
 , pytestCheckHook
@@ -16,8 +16,8 @@
 
 buildPythonPackage rec {
   pname = "ariadne";
-  version = "0.18.1";
-  format = "setuptools";
+  version = "0.21.0";
+  format = "pyproject";
 
   disabled = pythonOlder "3.7";
 
@@ -25,8 +25,15 @@ buildPythonPackage rec {
     owner = "mirumee";
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-E7uC+l0Yjol8UPLF4CV+PN49tOUJXNUS5yYdF1oyfwU=";
+    hash = "sha256-T5J0xAF33PDkC8sDOzHADpQJxwdXwKary0y/jaUJ9Fk=";
   };
+  patches = [
+    ./remove-opentracing.patch
+  ];
+
+  nativeBuildInputs = [
+    hatchling
+  ];
 
   propagatedBuildInputs = [
     graphql-core
@@ -36,7 +43,6 @@ buildPythonPackage rec {
 
   nativeCheckInputs = [
     freezegun
-    opentracing
     pytest-asyncio
     pytest-mock
     pytestCheckHook
@@ -53,6 +59,18 @@ buildPythonPackage rec {
     "test_attempt_parse_request_missing_content_type_raises_bad_request_error"
     "test_attempt_parse_non_json_request_raises_bad_request_error"
     "test_attempt_parse_non_json_request_body_raises_bad_request_error"
+    # opentracing
+    "test_query_is_executed_for_multipart_form_request_with_file"
+    "test_query_is_executed_for_multipart_request_with_large_file_with_tracing"
+  ];
+
+  disabledTestPaths = [
+    # missing graphql-sync-dataloader test dep
+    "tests/test_dataloaders.py"
+    "tests/wsgi/test_configuration.py"
+    # both include opentracing module, which has been removed from nixpkgs
+    "tests/tracing/test_opentracing.py"
+    "tests/tracing/test_opentelemetry.py"
   ];
 
   meta = with lib; {

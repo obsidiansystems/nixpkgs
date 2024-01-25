@@ -3,12 +3,12 @@
 , rustPlatform
 , fetchFromGitHub
 , Security
-, DiskArbitration
-, Foundation
+, SystemConfiguration
 , nixosTests
+, nix-update-script
 }:
 
-let version = "1.1.0";
+let version = "1.6.0";
 in
 rustPlatform.buildRustPackage {
   pname = "meilisearch";
@@ -18,7 +18,7 @@ rustPlatform.buildRustPackage {
     owner = "meilisearch";
     repo = "MeiliSearch";
     rev = "refs/tags/v${version}";
-    hash = "sha256-mwrWHrndcLwdXJo+UISJdPxZFDgtZh9jEquz7jIHGP0=";
+    hash = "sha256-B1psJeGWG0E5oPu+OVAxkdJNblqaBzB/CurpLxdESB8=";
   };
 
   cargoBuildFlags = [
@@ -29,9 +29,11 @@ rustPlatform.buildRustPackage {
     lockFile = ./Cargo.lock;
     outputHashes = {
       "actix-web-static-files-3.0.5" = "sha256-2BN0RzLhdykvN3ceRLkaKwSZtel2DBqZ+uz4Qut+nII=";
-      "heed-0.12.5" = "sha256-atkKiK8rzqji47tJvUzbIXMw8U1uddHkHakPuEUvmFg=";
-      "lmdb-rkv-sys-0.15.1" = "sha256-zLHTprwF7aa+2jaD7dGYmOZpJYFijMTb4I3ODflNUII=";
+      "arroy-0.1.0" = "sha256-ybKdB0eP8AdxLMNM7Si9onWITNc2SPNTXMgKdWdy34E=";
+      "candle-core-0.3.1" = "sha256-KlkjTUcbnP+uZoA0fDZlEPT5qKC2ogMAuR8X14xRFgA=";
+      "hf-hub-0.3.2" = "sha256-tsn76b+/HRvPnZ7cWd8SBcEdnMPtjUEIRJipOJUbz54=";
       "nelson-0.1.0" = "sha256-eF672quU576wmZSisk7oDR7QiDafuKlSg0BTQkXnzqY=";
+      "tokenizers-0.14.1" = "sha256-cq7dQLttNkV5UUhXujxKKMuzhD7hz+zTTKxUKlvz1s0=";
     };
   };
 
@@ -39,13 +41,14 @@ rustPlatform.buildRustPackage {
   buildNoDefaultFeatures = true;
 
   buildInputs = lib.optionals stdenv.isDarwin [
-    Security
-    DiskArbitration
-    Foundation
+    Security SystemConfiguration
   ];
 
-  passthru.tests = {
-    meilisearch = nixosTests.meilisearch;
+  passthru = {
+    updateScript = nix-update-script { };
+    tests = {
+      meilisearch = nixosTests.meilisearch;
+    };
   };
 
   # Tests will try to compile with mini-dashboard features which downloads something from the internet.
@@ -57,6 +60,6 @@ rustPlatform.buildRustPackage {
     changelog = "https://github.com/meilisearch/meilisearch/releases/tag/v${version}";
     license = licenses.mit;
     maintainers = with maintainers; [ happysalada ];
-    platforms = [ "aarch64-darwin" "x86_64-linux" "x86_64-darwin" ];
+    platforms = [ "aarch64-linux" "aarch64-darwin" "x86_64-linux" "x86_64-darwin" ];
   };
 }

@@ -3,7 +3,6 @@
 , pythonOlder
 , fetchFromGitHub
 , poetry-core
-, setuptools
 , pytestCheckHook
 , multidict
 , xmljson
@@ -11,7 +10,7 @@
 
 buildPythonPackage rec {
   pname = "latex2mathml";
-  version = "3.75.3";
+  version = "3.77.0";
 
   disabled = pythonOlder "3.8";
 
@@ -19,17 +18,13 @@ buildPythonPackage rec {
     owner = "roniemartinez";
     repo = pname;
     rev = version;
-    hash = "sha256-i1OJ6hmF04cdDOG1gfyseCJu+e0LEr1I3UwLXbdQJqQ=";
+    hash = "sha256-DLdSFMsNA0gD6Iw0kn+0IrbvyI0VEGOpz0ZYD48nRkY=";
   };
 
   format = "pyproject";
 
   nativeBuildInputs = [
     poetry-core
-  ];
-
-  propagatedBuildInputs = [
-    setuptools  # needs pkg_resources at runtime
   ];
 
   nativeCheckInputs = [

@@ -15,13 +15,13 @@ in
 
 stdenv.mkDerivation rec {
   pname = "janus-gateway";
-  version = "1.1.3";
+  version = "1.2.1";
 
   src = fetchFromGitHub {
     owner = "meetecho";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-2UlIpxixTl16VG6lgcfk+9LXSWn0jV1IfIkCeV/SO5w=";
+    sha256 = "sha256-Bqb4UO4R5CnV8+2OthGrEVORzH+k+zgzI4UsvwRHgk8=";
   };
 
   nativeBuildInputs = [ autoreconfHook pkg-config gengetopt ];

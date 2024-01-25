@@ -15,6 +15,7 @@ let
   ]
   ++ optional cfg.btrfs.enable btrfs-progs
   ++ optional cfg.ext4.enable e2fsprogs
+  ++ optional cfg.xfs.enable xfsprogs
   ;
   settingsFormat = pkgs.formats.yaml { };
   cfgfile = settingsFormat.generate "cloud.cfg" cfg.settings;
@@ -57,6 +58,14 @@ in
         '';
       };
 
+      xfs.enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = mdDoc ''
+          Allow the cloud-init service to operate `xfs` filesystem.
+        '';
+      };
+
       network.enable = mkOption {
         type = types.bool;
         default = false;
@@ -90,7 +99,7 @@ in
 
   };
 
-  config = {
+  config = mkIf cfg.enable {
     services.cloud-init.settings = {
       system_info = mkDefault {
         distro = "nixos";
@@ -142,7 +151,6 @@ in
         "power-state-change"
       ];
     };
-  } // (mkIf cfg.enable {
 
     environment.etc."cloud/cloud.cfg" =
       if cfg.config == "" then
@@ -156,7 +164,10 @@ in
     systemd.services.cloud-init-local = {
       description = "Initial cloud-init job (pre-networking)";
       wantedBy = [ "multi-user.target" ];
-      before = [ "systemd-networkd.service" ];
+      # In certain environments (AWS for example), cloud-init-local will
+      # first configure an IP through DHCP, and later delete it.
+      # This can cause race conditions with anything else trying to set IP through DHCP.
+      before = [ "systemd-networkd.service" "dhcpcd.service" ];
       path = path;
       serviceConfig = {
         Type = "oneshot";
@@ -225,5 +236,7 @@ in
       description = "Cloud-config availability";
       requires = [ "cloud-init-local.service" "cloud-init.service" ];
     };
-  });
+  };
+
+  meta.maintainers = [ maintainers.zimbatm ];
 }

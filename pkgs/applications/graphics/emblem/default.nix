@@ -3,11 +3,13 @@
 , fetchFromGitLab
 , rustPlatform
 , appstream-glib
+, cargo
 , desktop-file-utils
 , glib
 , meson
 , ninja
 , pkg-config
+, rustc
 , wrapGAppsHook4
 , gtk4
 , libadwaita
@@ -17,7 +19,7 @@
 
 stdenv.mkDerivation rec {
   pname = "emblem";
-  version = "1.2.0";
+  version = "1.3.0";
 
   src = fetchFromGitLab {
     domain = "gitlab.gnome.org";
@@ -25,14 +27,11 @@ stdenv.mkDerivation rec {
     owner = "design";
     repo = "emblem";
     rev = version;
-    sha256 = "sha256-sgo6rGwmybouTTBTPFrPJv8Wo9I6dcoT7sUVQGFUqkQ=";
+    sha256 = "sha256-VA4KZ8x/MMAA/g/x59h1CyHhlj0vbZqwAFdsfTPA2Ds=";
   };
 
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
-    outputHashes = {
-      "librsvg-2.56.0" = "sha256-PIrec3nfeMo94bkYUrp6B7lie9O1RtiBdPMFUKKLtTQ=";
-    };
   };
 
   nativeBuildInputs = [
@@ -43,11 +42,10 @@ stdenv.mkDerivation rec {
     ninja
     pkg-config
     wrapGAppsHook4
-  ] ++ (with rustPlatform; [
-    cargoSetupHook
-    rust.cargo
-    rust.rustc
-  ]);
+    rustPlatform.cargoSetupHook
+    cargo
+    rustc
+  ];
 
   buildInputs = [
     gtk4

@@ -1,28 +1,34 @@
 { lib
+, stdenv
 , buildPythonPackage
 , fetchFromGitHub
 , matplotlib
 , numpy
 , pytestCheckHook
 , pythonOlder
+, requests
 , scipy
 , seaborn
-, requests
+, setuptools
 }:
 
 buildPythonPackage rec {
   pname = "simpful";
-  version = "2.10.0";
-  format = "setuptools";
+  version = "2.11.1";
+  pyproject = true;
 
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "aresio";
-    repo = pname;
+    repo = "simpful";
     rev = "refs/tags/${version}";
-    hash = "sha256-vT7Y/6bD+txEVEw/zelMogQ0V7BIHHRitrC1COByzhY=";
+    hash = "sha256-54WkKnPB3xA2CaOpmasqxgDoga3uAqoC1nOivytXmGY=";
   };
+
+  nativeBuildInputs = [
+    setuptools
+  ];
 
   propagatedBuildInputs = [
     numpy
@@ -51,5 +57,6 @@ buildPythonPackage rec {
     changelog = "https://github.com/aresio/simpful/releases/tag/${version}";
     license = with licenses; [ lgpl3Only ];
     maintainers = with maintainers; [ fab ];
+    broken = stdenv.isDarwin;
   };
 }

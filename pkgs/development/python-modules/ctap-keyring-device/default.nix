@@ -25,6 +25,7 @@ in
 buildPythonPackage rec {
   pname = "ctap-keyring-device";
   version = "1.0.6";
+  format = "setuptools";
 
   src = fetchPypi {
     inherit version pname;
@@ -67,6 +68,6 @@ buildPythonPackage rec {
     description = "CTAP (client-to-authenticator-protocol) device backed by python's keyring library";
     homepage = "https://github.com/dany74q/ctap-keyring-device";
     license = licenses.mit;
-    maintainers = with maintainers; [ dennajort ];
+    maintainers = with maintainers; [ jbgosselin ];
   };
 }

@@ -15,24 +15,28 @@ let
   };
 in python3Packages.buildPythonApplication rec {
   pname = "truvari";
-  version = "4.0.0";
+  version = "4.1.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "ACEnglish";
     repo = "truvari";
     rev = "v${version}";
-    hash = "sha256-UJNMKEV5m2jFqnWvkVAtymkcE2TjPIXp7JqRZpMSqsE=";
+    hash = "sha256-HFVAv1TTL/nMjr62tQKhMdwh25P/y4nBGzSbxoJxMmo=";
   };
 
   postPatch = ''
-    substituteInPlace setup.py \
-      --replace "rich==" "rich>="
     substituteInPlace truvari/utils.py \
       --replace "/bin/bash" "${runtimeShell}"
     patchShebangs repo_utils/test_files
   '';
 
+  nativeBuildInputs = [
+    python3Packages.setuptools
+  ];
+
   propagatedBuildInputs = with python3Packages; [
+    pywfa
     rich
     edlib
     pysam
@@ -69,6 +73,7 @@ in python3Packages.buildPythonApplication rec {
   meta = with lib; {
     description = "Structural variant comparison tool for VCFs";
     homepage = "https://github.com/ACEnglish/truvari";
+    changelog = "https://github.com/ACEnglish/truvari/releases/tag/${src.rev}";
     license = licenses.mit;
     maintainers = with maintainers; [ natsukium scalavision ];
     longDescription = ''

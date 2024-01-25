@@ -7,6 +7,7 @@
 buildPythonPackage rec {
     pname = "pyxattr";
     version = "0.8.1";
+    format = "setuptools";
 
     src = fetchPypi {
       inherit pname version;
@@ -21,5 +22,6 @@ buildPythonPackage rec {
     meta = with lib; {
       description = "A Python extension module which gives access to the extended attributes for filesystem objects available in some operating systems";
       license = licenses.lgpl21Plus;
+      inherit (pkgs.attr.meta) platforms;
     };
 }

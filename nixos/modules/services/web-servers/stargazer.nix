@@ -152,7 +152,7 @@ in
 
         Expressed as a list of attribute sets. Each set must have a key `route`
         that becomes the section name for that route in the stargazer ini cofig.
-        The remaining keys and vaules become the parameters for that route.
+        The remaining keys and values become the parameters for that route.
 
         [Refer to upstream docs for other params](https://git.sr.ht/~zethra/stargazer/tree/main/item/doc/stargazer.ini.5.txt)
       '';
@@ -204,11 +204,9 @@ in
     };
 
     # Create default cert store
-    system.activationScripts.makeStargazerCertDir =
-      lib.optionalAttrs (cfg.store == /var/lib/gemini/certs) ''
-        mkdir -p /var/lib/gemini/certs
-        chown -R ${cfg.user}:${cfg.group} /var/lib/gemini/certs
-      '';
+    systemd.tmpfiles.rules = lib.mkIf (cfg.store == /var/lib/gemini/certs) [
+      ''d /var/lib/gemini/certs - "${cfg.user}" "${cfg.group}" -''
+    ];
 
     users.users = lib.optionalAttrs (cfg.user == "stargazer") {
       stargazer = {

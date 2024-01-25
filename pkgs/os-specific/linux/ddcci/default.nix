@@ -1,15 +1,15 @@
-{ lib, stdenv, fetchFromGitLab, kernel, fetchpatch }:
+{ lib, stdenv, fetchFromGitLab, kernel }:
 
 stdenv.mkDerivation rec {
   pname = "ddcci-driver";
-  version = "0.4.3";
+  version = "0.4.4";
   name = "${pname}-${kernel.version}-${version}";
 
   src = fetchFromGitLab {
     owner = "${pname}-linux";
     repo = "${pname}-linux";
     rev = "v${version}";
-    hash = "sha256-1Z6V/AorD4aslLKaaCZpmkD2OiQnmpu3iroOPlNPtLE=";
+    hash = "sha256-4pCfXJcteWwU6cK8OOSph4XlhKTk289QqLxsSWY7cac=";
   };
 
   hardeningDisable = [ "pic" ];

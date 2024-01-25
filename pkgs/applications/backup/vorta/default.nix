@@ -4,6 +4,7 @@
 , wrapQtAppsHook
 , borgbackup
 , qt5
+, stdenv
 }:
 
 python3Packages.buildPythonApplication rec {
@@ -19,6 +20,10 @@ python3Packages.buildPythonApplication rec {
 
   nativeBuildInputs = [ wrapQtAppsHook ];
 
+  buildInputs = lib.optionals stdenv.isLinux [
+    qt5.qtwayland
+  ];
+
   propagatedBuildInputs = with python3Packages; [
     peewee
     pyqt5
@@ -29,8 +34,6 @@ python3Packages.buildPythonApplication rec {
     appdirs
     setuptools
     platformdirs
-  ] ++ lib.optionals stdenv.isLinux [
-    qt5.qtwayland
   ];
 
   postPatch = ''
@@ -39,12 +42,12 @@ python3Packages.buildPythonApplication rec {
     --replace pytest-runner ""
 
     substituteInPlace src/vorta/assets/metadata/com.borgbase.Vorta.desktop \
-    --replace Exec=vorta "Exec=$out/bin/vorta" \
     --replace com.borgbase.Vorta "com.borgbase.Vorta-symbolic"
   '';
 
   postInstall = ''
     install -Dm644 src/vorta/assets/metadata/com.borgbase.Vorta.desktop $out/share/applications/com.borgbase.Vorta.desktop
+    install -Dm644 src/vorta/assets/icons/icon.svg $out/share/pixmaps/com.borgbase.Vorta-symbolic.svg
   '';
 
   preFixup = ''
@@ -92,5 +95,6 @@ python3Packages.buildPythonApplication rec {
     license = licenses.gpl3Only;
     maintainers = with maintainers; [ ma27 ];
     platforms = platforms.linux;
+    mainProgram = "vorta";
   };
 }

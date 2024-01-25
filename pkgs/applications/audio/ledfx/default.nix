@@ -1,37 +1,28 @@
 { lib
-, fetchpatch
+, fetchPypi
 , python3
 }:
 
 python3.pkgs.buildPythonPackage rec {
   pname = "ledfx";
-  version = "2.0.64";
-  format = "setuptools";
+  version = "2.0.86";
+  pyproject= true;
 
-  src = python3.pkgs.fetchPypi {
+  src = fetchPypi {
     inherit pname version;
-    hash = "sha256-TKRa4PcMd0Jl94XD2WubOhmsxZaUplZeWKsuKz83Rl4=";
+    hash = "sha256-miOGMsrvK3A3SYnd+i/lqB+9GOHtO4F3RW8NkxDgFqU=";
   };
-
-  patches = [
-    # replace tcp-latency which is not packaged with icmplib
-    (fetchpatch {
-      url = "https://github.com/LedFx/LedFx/commit/98cd4256846ae3bdae7094eeacb3b02a4807dc6f.patch";
-      excludes = [
-        # only used in win.spec file which is windows specific
-        "hiddenimports.py"
-      ];
-      hash = "sha256-p9fiLdjZI5fe5Qy2xbJIAtblp/7BwUxAvwjHQy5l9nQ=";
-    })
-  ];
 
   postPatch = ''
     substituteInPlace setup.py \
-      --replace '"openrgb-python~=0.2.10",' "" \
-      --replace '"pyupdater>=3.1.0",' "" \
       --replace "'rpi-ws281x>=4.3.0; platform_system == \"Linux\"'," "" \
+      --replace "sentry-sdk==1.38.0" "sentry-sdk" \
       --replace "~=" ">="
   '';
+
+  nativeBuildInputs = with python3.pkgs; [
+    setuptools
+  ];
 
   propagatedBuildInputs = with python3.pkgs; [
     aiohttp
@@ -41,30 +32,36 @@ python3.pkgs.buildPythonPackage rec {
     cython
     flux-led
     icmplib
+    mss
     multidict
     numpy
-    # openrgb-python # not packaged
+    openrgb-python
     paho-mqtt
     pillow
     psutil
+    pybase64
     pyserial
     pystray
+    python-mbedtls
+    python-osc
+    python-rtmidi
     # rpi-ws281x # not packaged
     requests
     sacn
     samplerate
     sentry-sdk
+    setuptools
     sounddevice
     uvloop
     voluptuous
     zeroconf
   ];
 
-  # has no tests
+  # Project has no tests
   doCheck = false;
 
   meta = with lib; {
-    description = "LedFx is a network based LED effect controller with support for advanced real-time audio effects";
+    description = "Network based LED effect controller with support for advanced real-time audio effects";
     homepage = "https://github.com/LedFx/LedFx";
     changelog = "https://github.com/LedFx/LedFx/blob/${version}/CHANGELOG.rst";
     license = licenses.gpl3Only;

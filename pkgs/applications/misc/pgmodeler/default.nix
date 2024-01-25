@@ -11,13 +11,13 @@
 
 stdenv.mkDerivation rec {
   pname = "pgmodeler";
-  version = "1.0.3";
+  version = "1.0.6";
 
   src = fetchFromGitHub {
     owner = "pgmodeler";
     repo = "pgmodeler";
     rev = "v${version}";
-    sha256 = "sha256-ZlIz+7YyER0/wQEkEe8XHYHcLK4vu09v1zkDrIgR/Dc=";
+    sha256 = "sha256-Km4PWvbIzgc1Kxsp26HYLCA4OkCfOsGWsdWYLmWf/NA=";
   };
 
   nativeBuildInputs = [ pkg-config qmake wrapQtAppsHook ];

@@ -14,6 +14,7 @@
 , numpy
 , scipy
 , pyyaml
+, inetutils
 }:
 
 assert lib.asserts.assertMsg (!blas.isILP64)
@@ -73,16 +74,20 @@ let
 
 in buildPythonPackage rec {
   pname = "gpaw";
-  version = "22.8.0";
+  version = "23.9.1";
+  format = "setuptools";
 
   src = fetchFromGitLab {
     owner = "gpaw";
     repo = pname;
     rev = version;
-    hash = "sha256-Kgf8yuGua7mcGP+jVVmbE8JCsbrfzewRTRt3ihq9YX4=";
+    hash = "sha256-9nnK4ksTFATO6HexnxfMiih/yoY/noyJZXZOaDG/2kc=";
   };
 
-  nativeBuildInputs = [ which ];
+  # `inetutils` is required because importing `gpaw`, as part of
+  # pythonImportsCheck, tries to execute its binary, which in turn tries to
+  # execute `rsh` as a side-effect.
+  nativeBuildInputs = [ which inetutils ];
 
   buildInputs = [ blas scalapack libxc libvdwxc ];
 
@@ -110,7 +115,7 @@ in buildPythonPackage rec {
   '';
 
   doCheck = false; # Requires MPI runtime to work in the sandbox
-  pythonImportsCheckHook = [ "gpaw" ];
+  pythonImportsCheck = [ "gpaw" ];
 
   passthru = { inherit mpi; };
 

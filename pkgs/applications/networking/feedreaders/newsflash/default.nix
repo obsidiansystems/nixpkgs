@@ -2,9 +2,12 @@
 , stdenv
 , rustPlatform
 , fetchFromGitLab
+, cargo
 , meson
 , ninja
 , pkg-config
+, rustc
+, blueprint-compiler
 , wrapGAppsHook4
 , gdk-pixbuf
 , glib
@@ -22,22 +25,22 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "newsflash";
-  version = "2.3.0";
+  version = "3.0.2";
 
   src = fetchFromGitLab {
     owner = "news-flash";
     repo = "news_flash_gtk";
     rev = "refs/tags/v.${finalAttrs.version}";
-    sha256 = "sha256-sW2yO6aZqhiyrIT4B8iBmum+36vcQMg4NsFxInJm7hM=";
+    sha256 = "sha256-tJKr2bGkdpEb+25eN0ZfHhEDl5Zdf8fdaC/rNMbH8Ws=";
   };
 
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
     outputHashes = {
-      "javascriptcore6-0.1.0" = "sha256-7w8CDY13dCRlFc77XxJ2/xZqlKSjqM0eiOvILOrJ4ic=";
-      "news-flash-2.3.0-alpha.0" = "sha256-phoZmTY1YVZIIktqLMnal9H5SMgNWwx7m+7AMtDcFJM=";
-      "newsblur_api-0.2.0" = "sha256-6vnFeJbdFeIau2rpUk9o72DD2ZCqicljmQjFVhY71NI=";
-      "article_scraper-2.0.0-alpha.0" = "sha256-HPEKZc7O7pbgcwR2l0kD/5442W1hzrfMadc0amrjxwI=";
+      "news-flash-2.3.0-alpha.0" = "sha256-H0osT7IrPbQ3RQYJZE7J+n7u4UCT86LAybUF3vvIXkA=";
+      "newsblur_api-0.2.0" = "sha256-eysCB19znQF8mRwQ64nSp6KuvJ1Trot4g4WCdQDedo8=";
+      "article_scraper-2.0.0" = "sha256-FnOmrZyYewOuU8Au7fhmSJHN7UPCx/CxBV8UtSHattU=";
+      "commafeed_api-0.1.0" = "sha256-69UAmyUm0WG3qPoWZw4PekXh1RjIP5l3dx3gjWfxJDQ=";
     };
   };
 
@@ -65,11 +68,11 @@ stdenv.mkDerivation (finalAttrs: {
 
     # Provides glib-compile-resources to compile gresources
     glib
-  ] ++ (with rustPlatform; [
-    cargoSetupHook
-    rust.cargo
-    rust.rustc
-  ]);
+    rustPlatform.cargoSetupHook
+    cargo
+    rustc
+    blueprint-compiler
+  ];
 
   buildInputs = [
     gtk4
@@ -102,6 +105,6 @@ stdenv.mkDerivation (finalAttrs: {
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ kira-bruneau stunkymonkey ];
     platforms = platforms.unix;
-    mainProgram = "com.gitlab.newsflash";
+    mainProgram = "io.gitlab.news_flash.NewsFlash";
   };
 })

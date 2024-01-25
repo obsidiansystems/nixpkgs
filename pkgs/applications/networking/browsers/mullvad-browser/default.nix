@@ -5,11 +5,10 @@
 , copyDesktopItems
 , makeWrapper
 , writeText
+, wrapGAppsHook
+, autoPatchelfHook
+, callPackage
 
-# Common run-time dependencies
-, zlib
-
-# libxul run-time dependencies
 , atk
 , cairo
 , dbus
@@ -28,19 +27,31 @@
 , mesa
 , pango
 , pciutils
+, zlib
 
 , libnotifySupport ? stdenv.isLinux
 , libnotify
 
+, waylandSupport ? stdenv.isLinux
+, libxkbcommon
+, libdrm
+, libGL
+
+, mediaSupport ? true
+, ffmpeg
+
 , audioSupport ? mediaSupport
-, pulseaudioSupport ? mediaSupport
+
+, pipewireSupport ? audioSupport
+, pipewire
+
+, pulseaudioSupport ? audioSupport
 , libpulseaudio
 , apulse
 , alsa-lib
 
-# Media support (implies audio support)
-, mediaSupport ? true
-, ffmpeg
+, libvaSupport ? mediaSupport
+, libva
 
 # Extra preferences
 , extraPrefs ? ""
@@ -72,18 +83,26 @@ let
       stdenv.cc.libc
       zlib
     ] ++ lib.optionals libnotifySupport [ libnotify ]
+      ++ lib.optionals waylandSupport [ libxkbcommon libdrm libGL ]
+      ++ lib.optionals pipewireSupport [ pipewire ]
       ++ lib.optionals pulseaudioSupport [ libpulseaudio ]
+      ++ lib.optionals libvaSupport [ libva ]
       ++ lib.optionals mediaSupport [ ffmpeg ]
   );
 
-  tag = "mullvad-browser-102.10.0esr-12.0-2-build2";
-  version = "12.0.5";
-  lang = "ALL";
+  version = "13.0.7";
 
-  srcs = {
+  sources = {
     x86_64-linux = fetchurl {
-      url = "https://github.com/mullvad/mullvad-browser/releases/download/${tag}/mullvad-browser-linux64-${version}_${lang}.tar.xz";
-      hash = "sha256-Ezs2pjJNGOinMIskBDwpj70eKSkfcV6ZCKb60I5J23w=";
+      urls = [
+        "https://cdn.mullvad.net/browser/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+        "https://github.com/mullvad/mullvad-browser/releases/download/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+        "https://archive.torproject.org/tor-package-archive/mullvadbrowser/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+        "https://dist.torproject.org/mullvadbrowser/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+        "https://tor.eff.org/dist/mullvadbrowser/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+        "https://tor.calyxinstitute.org/dist/mullvadbrowser/${version}/mullvad-browser-linux-x86_64-${version}.tar.xz"
+      ];
+      hash = "sha256-8x0Qa+NasMq1JdrVnCWlCyPb+5UpJXK1VLFoY9lx+8Q=";
     };
   };
 
@@ -104,9 +123,15 @@ stdenv.mkDerivation rec {
   pname = "mullvad-browser";
   inherit version;
 
-  src = srcs.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
+  src = sources.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
 
-  nativeBuildInputs = [ copyDesktopItems makeWrapper ];
+  nativeBuildInputs = [ copyDesktopItems makeWrapper wrapGAppsHook autoPatchelfHook ];
+  buildInputs = [
+    gtk3
+    alsa-lib
+    dbus-glib
+    libXtst
+  ];
 
   preferLocalBuild = true;
   allowSubstitutes = false;
@@ -220,12 +245,20 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
+  passthru = {
+    inherit sources;
+    updateScript = callPackage ../tor-browser/update.nix {
+      inherit pname version meta;
+      baseUrl = "https://cdn.mullvad.net/browser/";
+      name = "mullvad-browser";
+    };
+  };
+
   meta = with lib; {
     description = "Privacy-focused browser made in a collaboration between The Tor Project and Mullvad";
-    homepage = "https://www.mullvad.net/en/browser";
-    changelog = "https://github.com/mullvad/mullvad-browser/releases/tag/${tag}";
-    platforms = attrNames srcs;
-    maintainers = with maintainers; [ felschr ];
+    homepage = "https://mullvad.net/en/browser";
+    platforms = attrNames sources;
+    maintainers = with maintainers; [ felschr panicgh ];
     # MPL2.0+, GPL+, &c.  While it's not entirely clear whether
     # the compound is "libre" in a strict sense (some components place certain
     # restrictions on redistribution), it's free enough for our purposes.

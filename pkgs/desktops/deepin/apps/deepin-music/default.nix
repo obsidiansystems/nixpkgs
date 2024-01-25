@@ -3,48 +3,38 @@
 , fetchFromGitHub
 , cmake
 , pkg-config
+, qttools
 , wrapQtAppsHook
 , dtkwidget
+, dtkdeclarative
 , qt5integration
 , qt5platform-plugins
-, dde-qt-dbus-factory
 , udisks2-qt5
 , qtmpris
-, qtdbusextended
 , qtmultimedia
-, qttools
 , kcodecs
 , ffmpeg
 , libvlc
-, libcue
 , taglib
-, gsettings-qt
 , SDL2
-, gtest
 , qtbase
 , gst_all_1
 }:
 
 stdenv.mkDerivation rec {
   pname = "deepin-music";
-  version = "6.2.21";
+  version = "7.0.3";
 
   src = fetchFromGitHub {
     owner = "linuxdeepin";
     repo = pname;
     rev = version;
-    sha256 = "sha256-sN611COCWy1gF/BZZqZ154uYuRo9HsbJw2wXe9OJ+iQ=";
+    hash = "sha256-MLfkSO8ru8MKiwgiQ0mPO3zGlnIeSHPc0Op5jjzJ6PE=";
   };
 
-  postPatch = ''
-    substituteInPlace src/music-player/CMakeLists.txt \
-      --replace "/usr/include/vlc" "${libvlc}/include/vlc" \
-      --replace "/usr/share" "$out/share"
-    substituteInPlace src/libmusic-plugin/CMakeLists.txt \
-      --replace "/usr/lib/deepin-aiassistant" "$out/lib/deepin-aiassistant"
-    substituteInPlace src/music-player/data/deepin-music.desktop \
-      --replace "/usr/bin/deepin-music" "$out/bin/deepin-music"
-  '';
+  patches = [
+    "${src}/patches/fix-library-path.patch"
+  ];
 
   nativeBuildInputs = [
     cmake
@@ -55,21 +45,17 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     dtkwidget
+    dtkdeclarative
     qt5integration
     qt5platform-plugins
-    dde-qt-dbus-factory
     udisks2-qt5
     qtmpris
-    qtdbusextended
     qtmultimedia
     kcodecs
     ffmpeg
     libvlc
-    libcue
     taglib
-    gsettings-qt
     SDL2
-    gtest
   ] ++ (with gst_all_1; [
     gstreamer
     gst-plugins-base
@@ -78,6 +64,11 @@ stdenv.mkDerivation rec {
 
   cmakeFlags = [
     "-DVERSION=${version}"
+  ];
+
+  env.NIX_CFLAGS_COMPILE = toString [
+    "-I${libvlc}/include/vlc/plugins"
+    "-I${libvlc}/include/vlc"
   ];
 
   strictDeps = true;

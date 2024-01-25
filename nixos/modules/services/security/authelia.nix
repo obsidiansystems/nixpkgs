@@ -24,12 +24,7 @@ let
         '';
       };
 
-      package = mkOption {
-        default = pkgs.authelia;
-        type = types.package;
-        defaultText = literalExpression "pkgs.authelia";
-        description = mdDoc "Authelia derivation to use.";
-      };
+      package = mkPackageOption pkgs "authelia" { };
 
       user = mkOption {
         default = "authelia-${name}";
@@ -72,7 +67,7 @@ let
               type = types.nullOr types.path;
               default = null;
               description = mdDoc ''
-                Path to your JWT secret used during identity verificaiton.
+                Path to your JWT secret used during identity verificaton.
               '';
             };
 

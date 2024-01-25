@@ -18,13 +18,13 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "gscreenshot";
-  version = "3.4.0";
+  version = "3.4.2";
 
   src = fetchFromGitHub {
     owner = "thenaterhood";
     repo = "${pname}";
     rev = "v${version}";
-    sha256 = "YuISiTUReX9IQpckIgbt03CY7klnog/IeOtfBoQ1DZM=";
+    sha256 = "sha256-Ha9PTvr6XNGhe4I0ZUwrdbsNHWhz+Ubw2gp+ctLTO64=";
   };
 
   # needed for wrapGAppsHook to function
@@ -62,7 +62,7 @@ python3Packages.buildPythonApplication rec {
 
     longDescription = ''
       gscreenshot provides a common frontend and expanded functionality to a
-      number of X11 and Wayland screenshot and region selection utilties.
+      number of X11 and Wayland screenshot and region selection utilities.
 
       In a nutshell, gscreenshot supports the following:
 

@@ -45,10 +45,15 @@ in {
       enable = mkEnableOption (mdDoc "the Budgie desktop");
 
       sessionPath = mkOption {
-        description = mdDoc "Additional list of packages to be added to the session search path. Useful for GSettings-conditional autostart.";
-        type = with types; listOf package;
-        example = literalExpression "[ pkgs.budgie.budgie-desktop-view ]";
+        description = lib.mdDoc ''
+          Additional list of packages to be added to the session search path.
+          Useful for GSettings-conditional autostart.
+
+          Note that this should be a last resort; patching the package is preferred (see GPaste).
+        '';
+        type = types.listOf types.package;
         default = [];
+        example = literalExpression "[ pkgs.gnome.gpaste ]";
       };
 
       extraGSettingsOverrides = mkOption {
@@ -59,20 +64,21 @@ in {
 
       extraGSettingsOverridePackages = mkOption {
         description = mdDoc "List of packages for which GSettings are overridden.";
-        type = with types; listOf path;
+        type = types.listOf types.path;
         default = [];
       };
 
       extraPlugins = mkOption {
         description = mdDoc "Extra plugins for the Budgie desktop";
-        type = with types; listOf package;
+        type = types.listOf types.package;
         default = [];
+        example = literalExpression "[ pkgs.budgiePlugins.budgie-analogue-clock-applet ]";
       };
     };
 
     environment.budgie.excludePackages = mkOption {
       description = mdDoc "Which packages Budgie should exclude from the default environment.";
-      type = with types; listOf package;
+      type = types.listOf types.package;
       default = [];
       example = literalExpression "[ pkgs.mate-terminal ]";
     };
@@ -128,6 +134,7 @@ in {
         # Update user directories.
         xdg-user-dirs
       ]
+      ++ lib.optional config.networking.networkmanager.enable pkgs.networkmanagerapplet
       ++ (utils.removePackagesByName [
           cinnamon.nemo
           mate.eom
@@ -150,7 +157,7 @@ in {
       ++ cfg.sessionPath;
 
     # Fonts.
-    fonts.fonts = mkDefault [
+    fonts.packages = mkDefault [
       pkgs.noto-fonts
       pkgs.hack-font
     ];
@@ -186,7 +193,7 @@ in {
     # Required by Budgie Panel plugins and/or Budgie Control Center panels.
     networking.networkmanager.enable = mkDefault true; # for BCC's Network panel.
     programs.nm-applet.enable = config.networking.networkmanager.enable; # Budgie has no Network applet.
-    programs.nm-applet.indicator = false; # Budgie doesn't support AppIndicators.
+    programs.nm-applet.indicator = true; # Budgie uses AppIndicators.
 
     hardware.bluetooth.enable = mkDefault true; # for Budgie's Status Indicator and BCC's Bluetooth panel.
     hardware.pulseaudio.enable = mkDefault true; # for Budgie's Status Indicator and BCC's Sound panel.
@@ -195,6 +202,7 @@ in {
     xdg.portal.extraPortals = with pkgs; [
       xdg-desktop-portal-gtk # provides a XDG Portals implementation.
     ];
+    xdg.portal.configPackages = mkDefault [ pkgs.budgie.budgie-desktop ];
 
     services.geoclue2.enable = mkDefault true; # for BCC's Privacy > Location Services panel.
     services.upower.enable = config.powerManagement.enable; # for Budgie's Status Indicator and BCC's Power panel.
@@ -229,6 +237,11 @@ in {
     # Register packages for DBus.
     services.dbus.packages = with pkgs; [
       budgie.budgie-control-center
+    ];
+
+    # Register packages for udev.
+    services.udev.packages = with pkgs; [
+      budgie.magpie
     ];
 
     # Shell integration for MATE Terminal.

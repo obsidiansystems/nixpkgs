@@ -1,6 +1,7 @@
 { stdenv
 , boost
 , cmake
+, config
 , cudaPackages
 , eigen
 , fetchFromGitHub
@@ -14,7 +15,7 @@
 , openssl
 , writeShellScriptBin
 , enableAVX2 ? stdenv.hostPlatform.avx2Support
-, backend ? "opencl"
+, backend ? if config.cudaSupport then "cuda" else "opencl"
 , enableBigBoards ? false
 , enableContrib ? false
 , enableTcmalloc ? true
@@ -26,14 +27,14 @@ assert lib.assertOneOf "backend" backend [ "opencl" "cuda" "tensorrt" "eigen" ];
 # of gcc.  If you need to use cuda10, please override stdenv with gcc8Stdenv
 stdenv.mkDerivation rec {
   pname = "katago";
-  version = "1.12.4";
-  githash = "75280bf26582090dd4985dca62bc7124116c856d";
+  version = "1.14.0";
+  githash = "c6de1bbda837a0717eaeca46102f7326ed0da0d4";
 
   src = fetchFromGitHub {
     owner = "lightvector";
     repo = "katago";
     rev = "v${version}";
-    sha256 = "sha256-1rznAxEFJ/Ah5/WiSwc+rtITOUOPYOua5BLKeqHOBr0=";
+    sha256 = "sha256-0WB/weQIJkLXedcOJO7D/N85oXTufvbmyfIp8XdrACg=";
   };
 
   fakegit = writeShellScriptBin "git" "echo ${githash}";

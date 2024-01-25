@@ -1,12 +1,13 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, aenum
 , dacite
 }:
 
 buildPythonPackage rec {
   pname = "home-assistant-chip-clusters";
-  version = "2023.2.2";
+  version = "2023.12.0";
   format = "wheel";
 
   src = fetchPypi {
@@ -14,15 +15,18 @@ buildPythonPackage rec {
     pname = "home_assistant_chip_clusters";
     dist = "py3";
     python = "py3";
-    hash = "sha256-FsIE4dcZOP24/DX6TLnmoCHMYe4f9gWqmv2L25ujqu4=";
+    hash = "sha256-4yAfbQBqHMEXWMwJ0kSDs0We/AsHweJ+Tc8aZiWi90w=";
   };
 
   propagatedBuildInputs = [
+    aenum
     dacite
   ];
 
   pythonImportsCheck = [
     "chip.clusters"
+    "chip.clusters.ClusterObjects"
+    "chip.tlv"
   ];
 
   doCheck = false; # no tests

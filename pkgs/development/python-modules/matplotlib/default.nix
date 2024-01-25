@@ -3,20 +3,22 @@
 , fetchPypi
 , writeText
 , buildPythonPackage
+, isPyPy
 , pythonOlder
 
 # https://github.com/matplotlib/matplotlib/blob/main/doc/devel/dependencies.rst
 # build-system
+, certifi
+, oldest-supported-numpy
 , pkg-config
 , pybind11
 , setuptools
 , setuptools-scm
+, wheel
 
 # native libraries
 , ffmpeg-headless
-, fontconfig
 , freetype
-, imagemagick
 , qhull
 
 # propagates
@@ -42,7 +44,8 @@
 , pygobject3
 
 # Tk
-, enableTk ? !stdenv.isDarwin # darwin has its own "MacOSX" backend
+# Darwin has its own "MacOSX" backend, PyPy has tkagg backend and does not support tkinter
+, enableTk ? (!stdenv.isDarwin && !isPyPy)
 , tcl
 , tk
 , tkinter
@@ -76,15 +79,15 @@ let
 in
 
 buildPythonPackage rec {
-  version = "3.7.0";
+  version = "3.8.2";
   pname = "matplotlib";
   format = "pyproject";
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-j279MTQw1+9wo4oydigcsuhkazois7IesifaIOFeaBM=";
+    hash = "sha256-Aal4uHG4ge52AXFS8fGgy/a9X3uP+Mlt8N8b1X2HVaE=";
   };
 
   env.XDG_RUNTIME_DIR = "/tmp";
@@ -116,9 +119,16 @@ buildPythonPackage rec {
     '';
 
   nativeBuildInputs = [
+    certifi
+    numpy
+    oldest-supported-numpy # TODO remove after updating to 3.8.0
     pkg-config
     pybind11
+    setuptools
     setuptools-scm
+    wheel
+  ] ++ lib.optionals enableGtk3 [
+    gobject-introspection
   ];
 
   buildInputs = [
@@ -129,7 +139,6 @@ buildPythonPackage rec {
     ghostscript
   ] ++ lib.optionals enableGtk3 [
     cairo
-    gobject-introspection
     gtk3
   ] ++ lib.optionals enableTk [
     libX11

@@ -13,16 +13,16 @@
 
 buildPythonPackage rec {
   pname = "easyenergy";
-  version = "0.3.0";
-  format = "pyproject";
+  version = "2.1.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.11";
 
   src = fetchFromGitHub {
     owner = "klaasnicolaas";
     repo = "python-easyenergy";
     rev = "refs/tags/v${version}";
-    hash = "sha256-J+iWmbuaEErrMxF62rf/L8Rkqo7/7RDXv0CmIuywbjI=";
+    hash = "sha256-WnDyGkF1JI0Yu4p+znBdtCRvzrmGl9DH7QygKDuhEZo=";
   };
 
   postPatch = ''

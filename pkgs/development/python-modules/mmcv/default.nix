@@ -12,12 +12,14 @@
 , addict
 , ninja
 , which
+, pybind11
 , onnx
 , onnxruntime
 , scipy
 , pyturbojpeg
 , tifffile
 , lmdb
+, mmengine
 , symlinkJoin
 }:
 
@@ -48,16 +50,16 @@ let
 in
 buildPythonPackage rec {
   pname = "mmcv";
-  version = "1.7.1";
+  version = "2.1.0";
   format = "setuptools";
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "open-mmlab";
-    repo = pname;
+    repo = "mmcv";
     rev = "refs/tags/v${version}";
-    hash = "sha256-b4MLBPNRCcPq1osUvqo71PCWVX7lOjAH+dXttd4ZapU";
+    hash = "sha256-an78tRvx18zQ5Q0ca74r4Oe2gJ9F9OfWXLbuP2+rL68=";
   };
 
   preConfigure = ''
@@ -95,11 +97,12 @@ buildPythonPackage rec {
   nativeBuildInputs = [ ninja which ]
     ++ lib.optionals cudaSupport [ cuda-native-redist ];
 
-  buildInputs = [ torch ] ++ lib.optionals cudaSupport [ cuda-redist ];
+  buildInputs = [ pybind11 torch ] ++ lib.optionals cudaSupport [ cuda-redist ];
 
   nativeCheckInputs = [ pytestCheckHook torchvision lmdb onnx onnxruntime scipy pyturbojpeg tifffile ];
 
   propagatedBuildInputs = [
+    mmengine
     torch
     opencv4
     yapf
