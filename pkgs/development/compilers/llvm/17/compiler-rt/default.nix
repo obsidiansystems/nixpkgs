@@ -28,8 +28,9 @@ stdenv.mkDerivation {
   inherit src;
   sourceRoot = "${src.name}/${baseName}";
 
-  nativeBuildInputs = [ cmake ninja python3 libllvm.dev ]
-    ++ lib.optional stdenv.isDarwin xcbuild.xcrun;
+  nativeBuildInputs = [ cmake python3 libllvm.dev ]
+    ++ lib.optional stdenv.isDarwin xcbuild.xcrun
+    ++ lib.optional (!stdenv.targetPlatform.isAarch32) ninja;
   buildInputs =
     lib.optional (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isRiscV) linuxHeaders
     ++ lib.optional stdenv.hostPlatform.isDarwin libcxxabi;
