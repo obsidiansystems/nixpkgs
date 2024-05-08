@@ -1,0 +1,25 @@
+diff --git a/include/Makefile b/include/Makefile
+index a2d539f1c3b..eae5daa7292 100644
+--- a/include/Makefile
++++ b/include/Makefile
+@@ -39,18 +39,10 @@ LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
+ 	netmpls net80211 nfs ntfs scsi sys ufs uvm
+ 
+ # Places that need a prerequisite target met before includes
+-PRDIRS=	../lib/libcrypto ../lib/librpcsvc
++PRDIRS=	
+ 
+ # Directories with an includes target
+-RDIRS=	../lib/libagentx ../lib/libcbor ../lib/libcurses ../lib/libedit \
+-	../lib/libelf ../lib/libevent ../lib/libexpat ../lib/libfido2 \
+-	../lib/libform ../lib/libfuse ../lib/libkeynote ../lib/libmenu \
+-	../lib/libossaudio ../lib/libpanel ../lib/libpcap \
+-	../lib/libradius \
+-	../lib/libskey ../lib/libssl  ../lib/libtls \
+-	../lib/libusbhid ../lib/libutil ../lib/libz \
+-	../usr.bin/lex ../gnu/lib/libexecinfo ../gnu/lib/libreadline \
+-	../sys/arch/${MACHINE}
++RDIRS=	../sys/arch/${MACHINE}
+ 
+ .if ${BUILD_GCC3:L} == "yes"
+ RDIRS+= ../gnu/usr.bin/gcc
