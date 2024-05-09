@@ -1,4 +1,6 @@
-{ lib, mkDerivation
+{ lib
+, mkDerivation
+, makeMinimal
 , bsdSetupHook
 , buildPackages
 , pax
@@ -8,36 +10,27 @@ mkDerivation {
   path = "include";
 
   extraPaths = [
-    # "contrib/libc-vis"
-    # "etc/mtree/BSD.include.dist"
     "lib"
     "sys"
   ];
 
   nativeBuildInputs =  [
     bsdSetupHook
-    # makeMinimal
-    buildPackages.netbsd.install
-    buildPackages.netbsd.rpcgen
-    # mandoc groff rsync rpcgen
-
-    # HACK use NetBSD's for now
-    buildPackages.netbsd.mtree
-    buildPackages.netbsd.makeMinimal
+    makeMinimal
     pax
     perl
+
+    # HACK use NetBSD's for now
+    buildPackages.netbsd.install
+    buildPackages.netbsd.rpcgen
+    buildPackages.netbsd.mtree
   ];
 
   patches = [
-    ./rdirs.patch
+    ./skip-rdirs.patch
+    ./no-perms.patch
   ];
 
-  # preIncludes = ''
-  #   echo starting pax
-  #   mkdir $out
-  #   pax -rw -pa -s "|\.\./sys/arch/amd64/include||"  ../sys/arch/amd64/include/*.h $out/
-  #   echo pax succeeded
-  # '';
   postPatch = ''
     substituteInPlace $BSDSRCDIR/include/Makefile \
      --replace '-o ''${BINOWN}' "" \
@@ -54,11 +47,6 @@ mkDerivation {
     "RPCGEN_CPP=${buildPackages.stdenv.cc.cc}/bin/cpp"
     "-B"
   ];
-
-  # multiple header dirs, see above
-  # postConfigure = ''
-  #   makeFlags=''${makeFlags/INCSDIR/INCSDIR0}
-  # '';
 
   headersOnly = true;
 

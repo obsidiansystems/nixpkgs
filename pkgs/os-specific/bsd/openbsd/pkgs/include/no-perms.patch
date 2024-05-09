@@ -1,0 +1,12 @@
+diff --git a/include/Makefile b/include/Makefile
+index a2d539f1c3b..c256c2e2b43 100644
+--- a/include/Makefile
++++ b/include/Makefile
+@@ -109,7 +109,6 @@ includes:
+ 		echo installing in ${.CURDIR}/$$i; \
+ 		cd ${.CURDIR}/$$i && ${RUN_MAKE}; \
+ 	done
+-	chown -RP ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
+ 	find ${DESTDIR}/usr/include \
+ 		-type f -exec chmod a=r {} + -o \
+ 		\( -type d -o -type l \) -exec chmod -h u=rwx,go=rx {} +

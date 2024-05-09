@@ -10,13 +10,10 @@ makeScopeWithSplicing' {
     directory = ./pkgs;
   } // {
     libc = self.callPackage ./pkgs/libc/package.nix {
-      inherit (buildPackages.netbsd) makeMinimal;
     };
+    makeMinimal = buildPackages.netbsd.makeMinimal.override { inherit (self) make-rules; };
     mkDerivation = self.callPackage ./pkgs/mkDerivation.nix {
       inherit stdenv;
-      inherit (buildPackages.netbsd) makeMinimal;
-      # inherit (buildPackages.openbsd) makeMinimal install tsort;
     };
-
   });
 }
