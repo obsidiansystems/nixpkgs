@@ -1,10 +1,10 @@
 {
-  lib,
+  # lib,
   mkDerivation,
   # fetchNetBSD,
   stdenv,
-  bsdSetupHook,
-  # netbsdSetupHook,
+  # bsdSetupHook,
+  # openbsdSetupHook,
   # rsync,
 }:
 
@@ -15,17 +15,18 @@ mkDerivation {
   noCC = true;
 
   buildInputs = [ ];
-  nativeBuildInputs = [
-    bsdSetupHook
-    # netbsdSetupHook
-    # rsync
-  ];
+  nativeBuildInputs = [];
+  # nativeBuildInputs = [
+  #   bsdSetupHook
+  #   openbsdSetupHook
+  #   # rsync
+  # ];
 
   dontBuild = true;
 
   postPatch =
     ''
-      substituteInPlace $BSDSRCDIR/share/mk/bsd.dep.mk \
+      substituteInPlace share/mk/bsd.dep.mk \
         --replace "if defined(DEPS)" "if false && defined(DEPS)"
     '';
   #     substituteInPlace $BSDSRCDIR/share/mk/bsd.doc.mk \
@@ -73,6 +74,6 @@ mkDerivation {
   #   '';
 
   installPhase = ''
-    cp -r . $out
+    cp -r share/mk $out
   '';
 }

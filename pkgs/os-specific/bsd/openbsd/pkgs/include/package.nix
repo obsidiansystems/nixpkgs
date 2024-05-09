@@ -2,9 +2,12 @@
 , mkDerivation
 , makeMinimal
 , bsdSetupHook
-, buildPackages
+, openbsdSetupHook
+, install
+, rpcgen
+, mtree
 , pax
-, perl
+, buildPackages
 }:
 mkDerivation {
   path = "include";
@@ -16,32 +19,18 @@ mkDerivation {
 
   nativeBuildInputs =  [
     bsdSetupHook
+    install
     makeMinimal
+    mtree
+    openbsdSetupHook
     pax
-    perl
-
-    # HACK use NetBSD's for now
-    buildPackages.netbsd.install
-    buildPackages.netbsd.rpcgen
-    buildPackages.netbsd.mtree
+    rpcgen
   ];
 
   patches = [
     ./skip-rdirs.patch
     ./no-perms.patch
   ];
-
-  postPatch = ''
-    substituteInPlace $BSDSRCDIR/include/Makefile \
-     --replace '-o ''${BINOWN}' "" \
-     --replace '-g ''${BINGRP}' "" \
-     --replace ' ''${INSTALL_COPY}' "" \
-     --replace "pax" "pwd; pax"
-    find "$BSDSRCDIR" -name Makefile -exec \
-      sed -i -E \
-        -e "s|/usr/include|$out/include|" \
-        {} \;
-  '';
 
   makeFlags = [
     "RPCGEN_CPP=${buildPackages.stdenv.cc.cc}/bin/cpp"

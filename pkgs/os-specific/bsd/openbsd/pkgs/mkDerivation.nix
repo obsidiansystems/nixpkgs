@@ -1,11 +1,10 @@
 { lib, stdenv, stdenvNoCC
-# , compatIfNeeded
 , runCommand, rsync
-# , freebsd-lib
 , source
-, bsdSetupHook # , freebsdSetupHook
+, bsdSetupHook
+, openbsdSetupHook
 , makeMinimal
-# , install
+, install
 # , tsort, lorder, mandoc, groff
 }:
 
@@ -13,7 +12,6 @@ lib.makeOverridable (attrs: let
   stdenv' = if attrs.noCC or false then stdenvNoCC else stdenv;
 in stdenv'.mkDerivation (rec {
   pname = "${attrs.pname or (baseNameOf attrs.path)}-openbsd";
-  # inherit (freebsd-lib) version;
   version = "0";
   src = runCommand "${pname}-filtered-src" {
     nativeBuildInputs = [ rsync ];
@@ -32,9 +30,9 @@ in stdenv'.mkDerivation (rec {
   extraPaths = [ ];
 
   nativeBuildInputs = [
-    bsdSetupHook # freebsdSetupHook
+    bsdSetupHook openbsdSetupHook
     makeMinimal
-    # install
+    install
     # tsort lorder mandoc groff #statHook
   ];
   # buildInputs = compatIfNeeded;

@@ -1,51 +1,52 @@
 { lib, stdenv, mkDerivation
 
-, bsdSetupHook # , freebsdSetupHook
+, bsdSetupHook, openbsdSetupHook
 , makeMinimal
-# , install
+, install
 , flex, byacc # , gencat, rpcgen
 
-# , csu
-# , include
+, csu
+, include
+, ctags
 }:
 
 mkDerivation rec {
   pname = "libc";
   path = "lib/libc";
-  # extraPaths = [
-  #   "etc/group"
-  #   "etc/master.passwd"
-  #   "etc/shells"
-  #   "lib/libmd"
-  #   "lib/libutil"
-  #   "lib/msun"
-  #   "sys/kern"
-  #   "sys/libkern"
-  #   "sys/sys"
-  #   "sys/crypto/chacha20"
-  #   "include/rpcsvc"
-  #   "contrib/jemalloc"
-  #   "contrib/gdtoa"
-  #   "contrib/libc-pwcache"
-  #   "contrib/libc-vis"
-  #   "contrib/tzcode/stdtime"
+  extraPaths = [
+    "sys/arch"
+    # "etc/group"
+    # "etc/master.passwd"
+    # "etc/shells"
+    # "lib/libutil"
+    # "lib/msun"
+    # "sys/kern"
+    # "sys/libkern"
+    # "sys/sys"
+    # "sys/crypto/chacha20"
+    # "include/rpcsvc"
+    # "contrib/jemalloc"
+    # "contrib/gdtoa"
+    # "contrib/libc-pwcache"
+    # "contrib/libc-vis"
+    # "contrib/tzcode/stdtime"
 
-  #   # libthr
-  #   "lib/libthr"
-  #   "lib/libthread_db"
-  #   "libexec/rtld-elf"
+    # # libthr
+    # "lib/libthr"
+    # "lib/libthread_db"
+    # "libexec/rtld-elf"
 
-  #   # librpcsvc
-  #   "lib/librpcsvc"
+    # # librpcsvc
+    # "lib/librpcsvc"
 
-  #   # librt
-  #   "lib/librt"
+    # # librt
+    # "lib/librt"
 
-  #   # libcrypt
-  #   "lib/libcrypt"
-  #   "lib/libmd"
-  #   "sys/crypto/sha2"
-  # ];
+    # # libcrypt
+    # "lib/libcrypt"
+    # "lib/libmd"
+    # "sys/crypto/sha2"
+  ];
 
   patches = [
     # Hack around broken propogating MAKEFLAGS to submake, just inline logic
@@ -63,13 +64,13 @@ mkDerivation rec {
   # '';
 
   nativeBuildInputs = [
-    bsdSetupHook # freebsdSetupHook
+    bsdSetupHook openbsdSetupHook
     makeMinimal
-    # install
-
+    install
     flex byacc # gencat rpcgen
+    ctags
   ];
-  # buildInputs = [ include csu ];
+  buildInputs = [ include csu ];
   # env.NIX_CFLAGS_COMPILE = "-B${csu}/lib";
 
   # Suppress lld >= 16 undefined version errors
