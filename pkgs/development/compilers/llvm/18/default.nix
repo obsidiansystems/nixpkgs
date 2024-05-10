@@ -147,7 +147,7 @@ in let
         ./clang/gnu-install-dirs.patch
         ../common/clang/add-nostdlibinc-flag.patch
         (fetchpatch {
-          url = "https://github.com/llvm/llvm-project/pull/92293.patch";
+          url = "https://github.com/llvm/llvm-project/commit/5b09e6bf5aaeb21256e86455f8d6c42d01f71b95.patch";
           sha256 = "sha256-beSydky0P/06YDLk0GJDtcREpMcU2FspxuYU6EnQGfA=";
           stripLen = 1;
         })
@@ -396,7 +396,12 @@ in let
     # so: we use the clang from this LLVM package set instead of the regular
     # stdenv's compiler.
     libcxx = callPackage ../common/libcxx {
-      patches = lib.optionals (stdenv.isDarwin && lib.versionOlder stdenv.hostPlatform.darwinMinVersion "10.13") [
+      patches = [
+        (fetchpatch {
+          url = "https://github.com/llvm/llvm-project/commit/24ef89b6a3c2513221dc2e154642ce379cd701f6.patch";
+          sha256 = "sha256-2lDO9UsglvYAxDG3/iTXqGVHn1Hq3O7wtkCUb9I/Buc=";
+        })
+      ] ++ lib.optionals (stdenv.isDarwin && lib.versionOlder stdenv.hostPlatform.darwinMinVersion "10.13") [
         # https://github.com/llvm/llvm-project/issues/64226
         ./libcxx/0001-darwin-10.12-mbstate_t-fix.patch
       ];
