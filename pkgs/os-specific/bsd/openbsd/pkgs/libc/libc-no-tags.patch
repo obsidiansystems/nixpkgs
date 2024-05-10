@@ -1,0 +1,24 @@
+diff --git a/lib/libc/Makefile b/lib/libc/Makefile
+index 4bb4b67fcbb..daa9275d318 100644
+--- a/lib/libc/Makefile
++++ b/lib/libc/Makefile
+@@ -26,6 +26,10 @@ SYMBOL_LISTS=	${LIBCSRCDIR}/Symbols.list \
+ LIBCSRCDIR=${.CURDIR}
+ .include "${LIBCSRCDIR}/Makefile.inc"
+ 
++all: ${SRCS}
++
++LIBC_TAGS ?= yes
++.if ${LIBC_TAGS} == "yes"
+ all: tags
+ tags: ${SRCS}
+ 	ctags -w ${.ALLSRC:M*.c}
+@@ -37,6 +41,7 @@ tags: ${SRCS}
+ beforeinstall:
+ 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 tags \
+ 		${DESTDIR}/var/db/lib${LIB}.tags
++.endif
+ 
+ ${VERSION_SCRIPT}: ${SYMBOL_LISTS}
+ 	{ printf '{\n\tglobal:\n'; \
+

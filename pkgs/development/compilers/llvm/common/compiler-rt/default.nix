@@ -15,6 +15,7 @@
 , linuxHeaders
 , libxcrypt
 , doFakeLibgcc ? stdenv.hostPlatform.isFreeBSD
+, forceLinkCompilerRt ? stdenv.hostPlatform.isOpenBSD
 }:
 
 let
@@ -149,7 +150,9 @@ stdenv.mkDerivation ({
     ln -s $out/lib/*/clang_rt.crtbegin_shared-*.o $out/lib/crtbeginS.o
     ln -s $out/lib/*/clang_rt.crtend_shared-*.o $out/lib/crtendS.o
   '' + lib.optionalString doFakeLibgcc ''
-     ln -s $out/lib/freebsd/libclang_rt.builtins-*.a $out/lib/libgcc.a
+     ln -s $out/lib/*/libclang_rt.builtins-*.a $out/lib/libgcc.a
+  '' + lib.optionalString forceLinkCompilerRt ''
+     ln -s $out/lib/*/libclang_rt.builtins-*.a $out/lib/libcompiler_rt.a
   '';
 
   meta = llvm_meta // {

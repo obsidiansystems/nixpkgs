@@ -1,0 +1,16 @@
+diff --git a/lib/libc/Makefile b/lib/libc/Makefile
+index 4bb4b67fcbb..ffb35c196ea 100644
+--- a/lib/libc/Makefile
++++ b/lib/libc/Makefile
+@@ -11,11 +11,7 @@ CLEANFILES+=tags Symbols.map
+ CFLAGS+=-Wimplicit
+ #CFLAGS+=-Werror
+ LDADD=-nostdlib
+-.if ${COMPILER_VERSION:L} == "clang"
+ LDADD+=-lcompiler_rt
+-.else
+-LDADD+=-lgcc
+-.endif
+ LDADD+=-Wl,-zinitfirst,-znow
+ 
+ VERSION_SCRIPT=	Symbols.map

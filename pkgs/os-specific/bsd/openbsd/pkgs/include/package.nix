@@ -28,7 +28,7 @@ mkDerivation {
   ];
 
   patches = [
-    ./skip-rdirs.patch
+    # ./skip-rdirs.patch
     ./no-perms.patch
   ];
 

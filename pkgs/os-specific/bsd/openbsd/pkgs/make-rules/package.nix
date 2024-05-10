@@ -24,10 +24,19 @@ mkDerivation {
 
   dontBuild = true;
 
+  patches = [
+    ./ar.patch
+  ];
   postPatch =
     ''
+      # Need to replace spaces with tabs for some reason
       substituteInPlace share/mk/bsd.dep.mk \
-        --replace "if defined(DEPS)" "if false && defined(DEPS)"
+				--replace "       sinclude" "			sinclude"
+
+      sed -i -E \
+        -e 's|/usr/lib|\$\{LIBDIR\}|' \
+        share/mk/bsd.prog.mk
+
     '';
   #     substituteInPlace $BSDSRCDIR/share/mk/bsd.doc.mk \
   #       --replace '-o ''${DOCOWN}' "" \

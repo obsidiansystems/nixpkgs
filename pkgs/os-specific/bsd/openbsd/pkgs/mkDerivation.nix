@@ -45,7 +45,7 @@ in stdenv'.mkDerivation (rec {
   makeFlags = [
     "STRIP=-s" # flag to install, not command
     "-B"
-  ] ++ lib.optional (!stdenv.hostPlatform.isOpenBSD) "MK_WERROR=no";
+  ];
 
   # amd64 not x86_64 for this on unlike NetBSD
   MACHINE_ARCH = "amd64";

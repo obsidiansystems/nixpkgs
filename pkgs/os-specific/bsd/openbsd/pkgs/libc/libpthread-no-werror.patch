@@ -1,0 +1,13 @@
+diff --git a/lib/librthread/Makefile b/lib/librthread/Makefile
+index 67a2678574d..6bc8d407d76 100644
+--- a/lib/librthread/Makefile
++++ b/lib/librthread/Makefile
+@@ -3,7 +3,7 @@
+ LIB=pthread
+ LIBCSRCDIR=    ${.CURDIR}/../libc
+
+-CFLAGS+=-Wall -g -Werror -Wshadow
++CFLAGS+=-Wall -g -Wshadow
+ CFLAGS+=-Werror-implicit-function-declaration
+ CFLAGS+=-Wsign-compare
+ CFLAGS+=-I${.CURDIR} -include namespace.h \

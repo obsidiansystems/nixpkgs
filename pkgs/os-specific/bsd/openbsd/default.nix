@@ -10,9 +10,9 @@ makeScopeWithSplicing' {
     directory = ./pkgs;
   } // {
     libc = self.callPackage ./pkgs/libc/package.nix {
-      inherit (self) csu include;
+      inherit (self) csu include lorder;
       inherit (buildPackages.openbsd) makeMinimal;
-      inherit (buildPackages.netbsd) install;
+      inherit (buildPackages.netbsd) install gencat rpcgen tsort;
     };
     makeMinimal = buildPackages.netbsd.makeMinimal.override {
       inherit (self) make-rules;
@@ -30,7 +30,10 @@ makeScopeWithSplicing' {
       inherit (buildPackages.openbsd) makeMinimal;
       inherit (buildPackages.netbsd) install;
     };
-    make-rules = self.callPackage ./pkgs/make-rules.nix {
+    make-rules = self.callPackage ./pkgs/make-rules/package.nix {
+    };
+    lorder = self.callPackage ./pkgs/lorder.nix {
+      inherit (buildPackages.netbsd) install;
     };
   });
 }

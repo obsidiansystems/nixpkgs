@@ -4,14 +4,15 @@ index 9cf9ffdf8e6..91b8650eef6 100644
 +++ b/share/mk/bsd.lib.mk
 @@ -226,10 +226,10 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
  .endif
-
+ 
  ${FULLSHLIBNAME}.a: ${SOBJS}
--       @echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
-+       @echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ${AR}
-        @rm -f ${.TARGET}
-        @echo -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} ${LDADD} > .ldadd
--       ar cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
-+       ${AR} cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
-
+-	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
++	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ${AR}
+ 	@rm -f ${.TARGET}
+ 	@echo -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} ${LDADD} > .ldadd
+-	ar cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
++	${AR} cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
+ 
  # all .do files...
- DOBJS+=        ${OBJS:.o=.do}
+ DOBJS+=	${OBJS:.o=.do}
+
