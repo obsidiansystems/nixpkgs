@@ -69,6 +69,8 @@ mkDerivation rec {
   ];
 
   postInstall = ''
+    ln -s libc.so.* $out/lib/libc.so
+
     pushd ${include}
     find . -type d -exec mkdir -p $out/\{} \;
     find . \( -type f -o -type l \) -exec cp -pr \{} $out/\{} \;
@@ -84,20 +86,21 @@ mkDerivation rec {
     NIX_CFLAGS_COMPILE+=" -I$out/include"
     NIX_LDFLAGS+=" -L$out/lib"
 
-    ln -s libc.so.100.0 $out/lib/libc.so
-
     make -C $BSDSRCDIR/lib/libm $makeFlags
     make -C $BSDSRCDIR/lib/libm $makeFlags install
+    ln -s libm.so.* $out/lib/libm.so
 
     make -C $BSDSRCDIR/lib/librthread $makeFlags
     make -C $BSDSRCDIR/lib/librthread $makeFlags install
+    ln -s libpthread.so.* $out/lib/libpthread.so
 
     make -C $BSDSRCDIR/lib/librpcsvc $makeFlags
     make -C $BSDSRCDIR/lib/librpcsvc $makeFlags install
+    ln -s librpcsvc.so.* $out/lib/librpcsvc.so
 
     make -C $BSDSRCDIR/lib/libutil $makeFlags
     make -C $BSDSRCDIR/lib/libutil $makeFlags install
-
+    ln -s libutil.so.* $out/lib/libutil.so
   '';
 
   # ln -s ${llvmPackages.compiler-rt-no-libc}/lib/freebsd/libclang_rt.builtins-*.a $out/lib/libcompiler_rt.a
