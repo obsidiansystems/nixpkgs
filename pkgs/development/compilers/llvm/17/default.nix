@@ -405,6 +405,11 @@ in let
           url = "https://github.com/macports/macports-ports/raw/acd8acb171f1658596ed1cf25da48d5b932e2d19/lang/llvm-17/files/0042-mbstate_t-not-defined.patch";
           hash = "sha256-jo+DYA6zuSv9OH3A0bYwY5TlkWprup4OKQ7rfK1WHBI=";
         })
+      ] ++ lib.optionals stdenv.hostPlatform.isOpenBSD [
+        # See https://lists.boost.org/boost-bugs/2015/07/41690.php and
+        # https://github.com/boostorg/log/commit/c98b1f459add14d5ce3e9e63e2469064601d7f71
+        # for a description of an analogou problem an fix for Boost.
+        ../common/libcxx/openbsd.patch
       ];
       inherit llvm_meta;
       stdenv = overrideCC stdenv buildLlvmTools.clangNoLibcxx;

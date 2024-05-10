@@ -1,0 +1,127 @@
+commit ca923e69ae630b33393da2b0eaceee76f27609e4
+Author: John Ericson <John.Ericson@Obsidian.Systems>
+Date:   Fri May 10 13:16:40 2024 -0400
+
+    [libc++] Fix build on OpenBSD
+    
+    - No indirect syscalls on OpenBSD
+    
+    - Clock:
+    
+      See https://lists.boost.org/boost-bugs/2015/07/41690.php and
+      https://github.com/boostorg/log/commit/c98b1f459add14d5ce3e9e63e2469064601d7f71
+      for a description of an analogou problem an fix for Boost.
+
+diff --git a/libcxx/src/atomic.cpp b/libcxx/src/atomic.cpp
+index a55249a15c21..10cf6dc0ffcf 100644
+--- a/libcxx/src/atomic.cpp
++++ b/libcxx/src/atomic.cpp
+@@ -19,25 +19,35 @@
+ 
+ #ifdef __linux__
+ 
+-#include <unistd.h>
+-#include <linux/futex.h>
+-#include <sys/syscall.h>
++# include <unistd.h>
++# include <linux/futex.h>
++# include <sys/syscall.h>
+ 
+ // libc++ uses SYS_futex as a universal syscall name. However, on 32 bit architectures
+ // with a 64 bit time_t, we need to specify SYS_futex_time64.
+-#if !defined(SYS_futex) && defined(SYS_futex_time64)
+-# define SYS_futex SYS_futex_time64
+-#endif
++# if !defined(SYS_futex) && defined(SYS_futex_time64)
++#  define SYS_futex SYS_futex_time64
++# endif
++# define _LIBCPP_FUTEX(...) syscall(SYS_futex, __VA_ARGS__)
+ 
+ #elif defined(__FreeBSD__)
+ 
+-#include <sys/types.h>
+-#include <sys/umtx.h>
++# include <sys/types.h>
++# include <sys/umtx.h>
++
++# define _LIBCPP_FUTEX(...) syscall(SYS_futex, __VA_ARGS__)
++
++#elif defined(__OpenBSD__)
++
++// OpenBSD has no indirect syscalls
++# define _LIBCPP_FUTEX(...) futex(__VA_ARGS__)
+ 
+ #else // <- Add other operating systems here
+ 
+ // Baseline needs no new headers
+ 
++# define _LIBCPP_FUTEX(...) syscall(SYS_futex, __VA_ARGS__)
++
+ #endif
+ 
+ _LIBCPP_BEGIN_NAMESPACE_STD
+@@ -48,13 +58,13 @@ static void __libcpp_platform_wait_on_address(__cxx_atomic_contention_t const vo
+                                               __cxx_contention_t __val)
+ {
+     static constexpr timespec __timeout = { 2, 0 };
+-    syscall(SYS_futex, __ptr, FUTEX_WAIT_PRIVATE, __val, &__timeout, 0, 0);
++    _LIBCPP_FUTEX(__ptr, FUTEX_WAIT_PRIVATE, __val, &__timeout, 0, 0);
+ }
+ 
+ static void __libcpp_platform_wake_by_address(__cxx_atomic_contention_t const volatile* __ptr,
+                                               bool __notify_one)
+ {
+-    syscall(SYS_futex, __ptr, FUTEX_WAKE_PRIVATE, __notify_one ? 1 : INT_MAX, 0, 0, 0);
++    _LIBCPP_FUTEX(__ptr, FUTEX_WAKE_PRIVATE, __notify_one ? 1 : INT_MAX, 0, 0, 0);
+ }
+ 
+ #elif defined(__APPLE__) && defined(_LIBCPP_USE_ULOCK)
+diff --git a/libcxx/src/chrono.cpp b/libcxx/src/chrono.cpp
+index f1596132024c..ba3fca0ab9b1 100644
+--- a/libcxx/src/chrono.cpp
++++ b/libcxx/src/chrono.cpp
+@@ -31,7 +31,9 @@
+ # include <sys/time.h> // for gettimeofday and timeval
+ #endif
+ 
+-#if defined(__APPLE__) || defined (__gnu_hurd__) || (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
++// OpenBSD does not have a fully conforment suite of POSIX timers, but
++// it does have clock_gettime and CLOCK_MONOTONIC which is all we need.
++#if defined(__APPLE__) || defined (__gnu_hurd__) || defined (__OpenBSD__) || (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
+ # define _LIBCPP_HAS_CLOCK_GETTIME
+ #endif
+ 
+diff --git a/libcxxabi/src/cxa_guard_impl.h b/libcxxabi/src/cxa_guard_impl.h
+index e00d54b3a731..90d589be4d77 100644
+--- a/libcxxabi/src/cxa_guard_impl.h
++++ b/libcxxabi/src/cxa_guard_impl.h
+@@ -47,6 +47,9 @@
+ #include "__cxxabi_config.h"
+ #include "include/atomic_support.h" // from libc++
+ #if defined(__has_include)
++#  if __has_include(<sys/futex.h>)
++#    include <sys/futex.h>
++#  endif
+ #  if __has_include(<sys/syscall.h>)
+ #    include <sys/syscall.h>
+ #  endif
+@@ -411,7 +414,18 @@ private:
+ //                         Futex Implementation
+ //===----------------------------------------------------------------------===//
+ 
+-#if defined(SYS_futex)
++#if defined(__OpenBSD__)
++void PlatformFutexWait(int* addr, int expect) {
++  constexpr int WAIT = 0;
++  futex(reinterpret_cast<volatile uint32_t*>(addr), WAIT, expect, NULL, NULL);
++  __tsan_acquire(addr);
++}
++void PlatformFutexWake(int* addr) {
++  constexpr int WAKE = 1;
++  __tsan_release(addr);
++  futex(reinterpret_cast<volatile uint32_t*>(addr), WAKE, INT_MAX, NULL, NULL);
++}
++#elif defined(SYS_futex)
+ void PlatformFutexWait(int* addr, int expect) {
+   constexpr int WAIT = 0;
+   syscall(SYS_futex, addr, WAIT, expect, 0);
