@@ -69,7 +69,13 @@ mkDerivation rec {
   ];
 
   postInstall = ''
-    ln -s libc.so.* $out/lib/libc.so
+    symlink_so () {
+      pushd $out/lib
+      ln -s "lib$1".so.* "lib$1.so"
+      popd
+    }
+
+    symlink_so c
 
     pushd ${include}
     find . -type d -exec mkdir -p $out/\{} \;
@@ -88,19 +94,19 @@ mkDerivation rec {
 
     make -C $BSDSRCDIR/lib/libm $makeFlags
     make -C $BSDSRCDIR/lib/libm $makeFlags install
-    ln -s libm.so.* $out/lib/libm.so
+    symlink_so m
 
     make -C $BSDSRCDIR/lib/librthread $makeFlags
     make -C $BSDSRCDIR/lib/librthread $makeFlags install
-    ln -s libpthread.so.* $out/lib/libpthread.so
+    symlink_so pthread
 
     make -C $BSDSRCDIR/lib/librpcsvc $makeFlags
     make -C $BSDSRCDIR/lib/librpcsvc $makeFlags install
-    ln -s librpcsvc.so.* $out/lib/librpcsvc.so
+    symlink_so rpcsv
 
     make -C $BSDSRCDIR/lib/libutil $makeFlags
     make -C $BSDSRCDIR/lib/libutil $makeFlags install
-    ln -s libutil.so.* $out/lib/libutil.so
+    symlink_so util
   '';
 
   # ln -s ${llvmPackages.compiler-rt-no-libc}/lib/freebsd/libclang_rt.builtins-*.a $out/lib/libcompiler_rt.a
