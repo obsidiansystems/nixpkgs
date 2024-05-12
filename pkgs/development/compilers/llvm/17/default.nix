@@ -150,6 +150,9 @@ in let
           src = ../common/clang/clang-at-least-16-LLVMgold-path.patch;
           libllvmLibdir = "${tools.libllvm.lib}/lib";
         })
+      ] ++ lib.optionals stdenv.targetPlatform.isOpenBSD [
+        # TODO make unconditional
+        ../common/clang/openbsd-no-assume-path-exists.patch
       ];
       inherit llvm_meta;
     };

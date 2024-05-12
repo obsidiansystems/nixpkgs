@@ -1,0 +1,26 @@
+commit 5555622f1dc894665fb4d6a22d4886d0b9386936
+Author: John Ericson <John.Ericson@Obsidian.Systems>
+Date:   Sun May 12 01:03:56 2024 -0400
+
+    [clang] Don't assume location of compiler-rt
+    
+    If the `/usr/lib/...` path one expects is not that, fall back to the
+    regular logic.
+    
+    This is a minimal change to allow OpenBSD cross compilation from a
+    toolchain that doesn't adopt all of OpenBSD's monorepo's conventions.
+
+diff --git a/lib/Driver/ToolChains/OpenBSD.cpp b/lib/Driver/ToolChains/OpenBSD.cpp
+index 061f1c53f6b5..83b430d06016 100644
+--- a/lib/Driver/ToolChains/OpenBSD.cpp
++++ b/lib/Driver/ToolChains/OpenBSD.cpp
+@@ -346,7 +346,8 @@ std::string OpenBSD::getCompilerRT(const ArgList &Args, StringRef Component,
+   if (Component == "builtins") {
+     SmallString<128> Path(getDriver().SysRoot);
+     llvm::sys::path::append(Path, "/usr/lib/libcompiler_rt.a");
+-    return std::string(Path.str());
++    if (getVFS().exists(Path))
++      return std::string(Path.str());
+   }
+   SmallString<128> P(getDriver().ResourceDir);
+   std::string CRTBasename =
