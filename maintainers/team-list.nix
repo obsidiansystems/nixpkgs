@@ -263,6 +263,9 @@ with lib.maintainers; {
 
   docs = {
     members = [ ];
+    githubTeams = [
+      "documentation-team"
+    ];
     scope = "Maintain nixpkgs/NixOS documentation and tools for building it.";
     shortName = "Docs";
     enableFeatureFreezePing = true;
@@ -723,6 +726,16 @@ with lib.maintainers; {
     enableFeatureFreezePing = true;
   };
 
+  lix = {
+    members = [
+      raitobezarius
+      qyriad
+    ];
+    scope = "Maintain the Lix package manager inside of Nixpkgs.";
+    shortName = "Lix ecosystem";
+    enableFeatureFreezePing = true;
+  };
+
   module-system = {
     members = [
       infinisil
@@ -801,6 +814,7 @@ with lib.maintainers; {
       aanderse
       drupol
       ma27
+      patka
       talyz
     ];
     githubTeams = [

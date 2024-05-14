@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  fetchpatch,
   pkg-config,
   libuuid,
   libsodium,
@@ -19,7 +20,7 @@
   rustc,
   rustPlatform,
   makeWrapper,
-  writeScript,
+  nix-update-script,
   python3,
   fuseSupport ? false,
 }:
@@ -72,6 +73,15 @@ stdenv.mkDerivation (finalAttrs: {
   # FIXME: Try enabling this once the default linux kernel is at least 6.7
   doCheck = false; # needs bcachefs module loaded on builder
 
+  patches = [
+    # code refactoring of bcachefs-tools broke reading passphrases from stdin (vs. terminal)
+    # upstream issue https://github.com/koverstreet/bcachefs-tools/issues/261
+    (fetchpatch {
+    url = "https://github.com/koverstreet/bcachefs-tools/commit/38b0cb721d2a35f5a4af429bc7bd367461f2fa26.patch";
+    hash = "sha256-/9reye+Qoa+EMkS+wfdX+KwDeLHHJ/S+Qm7sWl0MtqM=";
+  })
+];
+
   preCheck = lib.optionalString (!fuseSupport) ''
     rm tests/test_fuse.py
   '';
@@ -94,15 +104,7 @@ stdenv.mkDerivation (finalAttrs: {
       inherit (nixosTests.installer) bcachefsSimple bcachefsEncrypted bcachefsMulti;
     };
 
-    updateScript = writeScript "update-bcachefs-tools-and-cargo-lock.sh" ''
-      #!/usr/bin/env nix-shell
-      #!nix-shell -i bash -p curl jq common-updater-scripts
-      res="$(curl ''${GITHUB_TOKEN:+-u ":$GITHUB_TOKEN"} \
-        -sL "https://api.github.com/repos/${finalAttrs.src.owner}/${finalAttrs.src.repo}/tags?per_page=1")"
-
-      version="$(echo $res | jq '.[0].name | split("v") | .[1]' --raw-output)"
-      update-source-version ${finalAttrs.pname} "$version" --ignore-same-hash
-    '';
+    updateScript = nix-update-script {};
   };
 
   enableParallelBuilding = true;

@@ -1024,6 +1024,8 @@ self: super: with self; {
 
   avro-python3 = callPackage ../development/python-modules/avro-python3 { };
 
+  avwx-engine = callPackage ../development/python-modules/avwx-engine { };
+
   aw-client = callPackage ../development/python-modules/aw-client { };
 
   aw-core = callPackage ../development/python-modules/aw-core { };
@@ -1338,6 +1340,8 @@ self: super: with self; {
 
   paddlepaddle = callPackage ../development/python-modules/paddlepaddle { };
 
+  pcffont = callPackage ../development/python-modules/pcffont { };
+
   pueblo = callPackage ../development/python-modules/pueblo { };
 
   pulumi = callPackage ../development/python-modules/pulumi { inherit (pkgs) pulumi; };
@@ -1514,6 +1518,8 @@ self: super: with self; {
   billiard = callPackage ../development/python-modules/billiard { };
 
   bimmer-connected = callPackage ../development/python-modules/bimmer-connected { };
+
+  binance-connector = callPackage ../development/python-modules/binance-connector { };
 
   binary = callPackage ../development/python-modules/binary { };
 
@@ -1854,10 +1860,6 @@ self: super: with self; {
 
   cachy = callPackage ../development/python-modules/cachy { };
 
-  cadquery = callPackage ../development/python-modules/cadquery {
-    inherit (pkgs.darwin.apple_sdk.frameworks) Cocoa;
-  };
-
   caffe = toPythonModule (pkgs.caffe.override {
     pythonSupport = true;
     inherit (self) python numpy boost;
@@ -2001,8 +2003,6 @@ self: super: with self; {
   correctionlib = callPackage ../development/python-modules/correctionlib { };
 
   coqpit = callPackage ../development/python-modules/coqpit { };
-
-  cepa = callPackage ../development/python-modules/cepa { };
 
   cerberus = callPackage ../development/python-modules/cerberus { };
 
@@ -2569,14 +2569,11 @@ self: super: with self; {
 
   crownstone-uart = callPackage ../development/python-modules/crownstone-uart { };
 
-  cryptacular = callPackage ../development/python-modules/cryptacular { };
-
   cryptg = callPackage ../development/python-modules/cryptg { };
 
   cryptodatahub = callPackage ../development/python-modules/cryptodatahub { };
 
   cryptography = callPackage ../development/python-modules/cryptography {
-    inherit (pkgs.darwin) libiconv;
     inherit (pkgs.darwin.apple_sdk.frameworks) Security;
   };
 
@@ -2601,7 +2598,6 @@ self: super: with self; {
   css-html-js-minify = callPackage ../development/python-modules/css-html-js-minify { };
 
   css-inline = callPackage ../development/python-modules/css-inline {
-    inherit (pkgs.darwin) libiconv;
     inherit (pkgs.darwin.apple_sdk.frameworks) Security SystemConfiguration;
   };
 
@@ -2625,6 +2621,8 @@ self: super: with self; {
 
   cu2qu = callPackage ../development/python-modules/cu2qu { };
 
+  customtkinter = callPackage ../development/python-modules/customtkinter { };
+
   cucumber-tag-expressions = callPackage ../development/python-modules/cucumber-tag-expressions { };
 
   cufflinks = callPackage ../development/python-modules/cufflinks { };
@@ -2635,6 +2633,8 @@ self: super: with self; {
   curio = callPackage ../development/python-modules/curio { };
 
   curlify = callPackage ../development/python-modules/curlify { };
+
+  curl-cffi = callPackage ../development/python-modules/curl-cffi { };
 
   curtsies = callPackage ../development/python-modules/curtsies { };
 
@@ -4769,6 +4769,8 @@ self: super: with self; {
 
   gfsubsets = callPackage ../development/python-modules/gfsubsets { };
 
+  gguf = callPackage ../development/python-modules/gguf { };
+
   ghapi = callPackage ../development/python-modules/ghapi { };
 
   ghdiff = callPackage ../development/python-modules/ghdiff { };
@@ -4835,8 +4837,6 @@ self: super: with self; {
   glfw = callPackage ../development/python-modules/glfw { };
 
   glob2 = callPackage ../development/python-modules/glob2 { };
-
-  globre = callPackage ../development/python-modules/globre { };
 
   globus-sdk = callPackage ../development/python-modules/globus-sdk { };
 
@@ -5373,6 +5373,8 @@ self: super: with self; {
   hijri-converter = callPackage ../development/python-modules/hijri-converter { };
 
   hikari = callPackage ../development/python-modules/hikari { };
+
+  hikari-lightbulb = callPackage ../development/python-modules/hikari-lightbulb { };
 
   hikvision = callPackage ../development/python-modules/hikvision { };
 
@@ -6960,6 +6962,8 @@ self: super: with self; {
 
   lnkparse3 = callPackage ../development/python-modules/lnkparse3 { };
 
+  loadcredential = callPackage ../development/python-modules/loadcredential { };
+
   loca = callPackage ../development/python-modules/loca { };
 
   localimport = callPackage ../development/python-modules/localimport { };
@@ -7198,8 +7202,6 @@ self: super: with self; {
 
   marshmallow-dataclass = callPackage ../development/python-modules/marshmallow-dataclass { };
 
-  marshmallow-enum = callPackage ../development/python-modules/marshmallow-enum { };
-
   marshmallow-oneofschema = callPackage ../development/python-modules/marshmallow-oneofschema { };
 
   marshmallow-polyfield = callPackage ../development/python-modules/marshmallow-polyfield { };
@@ -7399,6 +7401,8 @@ self: super: with self; {
   mhcflurry = callPackage ../development/python-modules/mhcflurry { };
 
   mhcgnomes = callPackage ../development/python-modules/mhcgnomes { };
+
+  miasm = callPackage ../development/python-modules/miasm { };
 
   miauth = callPackage ../development/python-modules/miauth { };
 
@@ -7688,6 +7692,8 @@ self: super: with self; {
   mox3 = callPackage ../development/python-modules/mox3 { };
 
   mpd2 = callPackage ../development/python-modules/mpd2 { };
+
+  mpegdash = callPackage ../development/python-modules/mpegdash { };
 
   mpi4py = callPackage ../development/python-modules/mpi4py { };
 
@@ -9273,6 +9279,8 @@ self: super: with self; {
 
   optimum = callPackage ../development/python-modules/optimum { };
 
+  optree = callPackage ../development/python-modules/optree { };
+
   optuna = callPackage ../development/python-modules/optuna { };
 
   opuslib = callPackage ../development/python-modules/opuslib { };
@@ -9508,8 +9516,6 @@ self: super: with self; {
   pathable = callPackage ../development/python-modules/pathable { };
 
   pathlib2 = callPackage ../development/python-modules/pathlib2 { };
-
-  pathlib = callPackage ../development/python-modules/pathlib { };
 
   pathlib-abc = callPackage ../development/python-modules/pathlib-abc { };
 
@@ -9883,6 +9889,8 @@ self: super: with self; {
 
   ppdeep = callPackage ../development/python-modules/ppdeep { };
 
+  private-gpt = callPackage ../development/python-modules/private-gpt { };
+
   prodict = callPackage ../development/python-modules/prodict { };
 
   prometheus-pandas = callPackage ../development/python-modules/prometheus-pandas { };
@@ -9908,6 +9916,8 @@ self: super: with self; {
   pyatome = callPackage ../development/python-modules/pyatome { };
 
   pycketcasts = callPackage ../development/python-modules/pycketcasts { };
+
+  pycomm3 = callPackage ../development/python-modules/pycomm3 { };
 
   pycomposefile = callPackage ../development/python-modules/pycomposefile { };
   pycontrol4 = callPackage ../development/python-modules/pycontrol4 { };
@@ -10522,8 +10532,6 @@ self: super: with self; {
   pwntools = callPackage ../development/python-modules/pwntools {
     debugger = pkgs.gdb;
   };
-
-  pxml = callPackage ../development/python-modules/pxml { };
 
   py-air-control = callPackage ../development/python-modules/py-air-control { };
 
@@ -11153,8 +11161,6 @@ self: super: with self; {
 
   pyisbn = callPackage ../development/python-modules/pyisbn { };
 
-  pyjet = callPackage ../development/python-modules/pyjet { };
-
   pyjks = callPackage ../development/python-modules/pyjks { };
 
   pyjnius = callPackage ../development/python-modules/pyjnius { };
@@ -11686,9 +11692,7 @@ self: super: with self; {
 
   pyreaderwriterlock = callPackage ../development/python-modules/pyreaderwriterlock { };
 
-  pyreadstat = callPackage ../development/python-modules/pyreadstat {
-    inherit (pkgs.darwin) libiconv;
-  };
+  pyreadstat = callPackage ../development/python-modules/pyreadstat { };
 
   pyrealsense2 = toPythonModule (pkgs.librealsense.override {
     enablePython = true;
@@ -12820,8 +12824,6 @@ self: super: with self; {
 
   pyzmq = callPackage ../development/python-modules/pyzmq { };
 
-  pyzufall = callPackage ../development/python-modules/pyzufall { };
-
   qbittorrent-api = callPackage ../development/python-modules/qbittorrent-api { };
 
   qasync = callPackage ../development/python-modules/qasync { };
@@ -13557,6 +13559,8 @@ self: super: with self; {
   sansio-multipart = callPackage ../development/python-modules/sansio-multipart { };
 
   sarif-om = callPackage ../development/python-modules/sarif-om { };
+
+  sarif-tools = callPackage ../development/python-modules/sarif-tools { };
 
   sarge = callPackage ../development/python-modules/sarge { };
 
@@ -14462,8 +14466,6 @@ self: super: with self; {
 
   sqlparse = callPackage ../development/python-modules/sqlparse { };
 
-  sqlsoup = callPackage ../development/python-modules/sqlsoup { };
-
   sqltrie = callPackage ../development/python-modules/sqltrie { };
 
   squarify = callPackage ../development/python-modules/squarify { };
@@ -14871,6 +14873,8 @@ self: super: with self; {
 
   tensorflow-bin = callPackage ../development/python-modules/tensorflow/bin.nix {
     inherit (pkgs.config) cudaSupport;
+    # https://www.tensorflow.org/install/source#gpu
+    cudaPackages = pkgs.cudaPackages_11;
   };
 
   tensorflow-build = let
@@ -14878,6 +14882,8 @@ self: super: with self; {
       protobufTF = pkgs.protobuf_21.override {
         abseil-cpp = pkgs.abseil-cpp_202301;
       };
+      # https://www.tensorflow.org/install/source#gpu
+      cudaPackagesTF = pkgs.cudaPackages_11;
       grpcTF = (pkgs.grpc.overrideAttrs (
         oldAttrs: rec {
           # nvcc fails on recent grpc versions, so we use the latest patch level
@@ -14923,6 +14929,7 @@ self: super: with self; {
     inherit (pkgs.darwin.apple_sdk.frameworks) Foundation Security;
     flatbuffers-core = pkgs.flatbuffers;
     flatbuffers-python = self.flatbuffers;
+    cudaPackages = compat.cudaPackagesTF;
     protobuf-core = compat.protobufTF;
     protobuf-python = compat.protobuf-pythonTF;
     grpc = compat.grpcTF;
@@ -15179,6 +15186,8 @@ self: super: with self; {
 
   tinysegmenter = callPackage ../development/python-modules/tinysegmenter { };
 
+  tinytuya = callPackage ../development/python-modules/tinytuya { };
+
   tissue = callPackage ../development/python-modules/tissue { };
 
   titlecase = callPackage ../development/python-modules/titlecase { };
@@ -15415,6 +15424,8 @@ self: super: with self; {
   trove-classifiers = callPackage ../development/python-modules/trove-classifiers { };
 
   trueskill = callPackage ../development/python-modules/trueskill { };
+
+  truncnorm = callPackage ../development/python-modules/truncnorm { };
 
   trustme = callPackage ../development/python-modules/trustme { };
 
@@ -16569,6 +16580,8 @@ self: super: with self; {
   uvloop = callPackage ../development/python-modules/uvloop {
     inherit (pkgs.darwin.apple_sdk.frameworks) ApplicationServices CoreServices;
   };
+
+  uxsim = callPackage ../development/python-modules/uxsim { };
 
   vaa = callPackage ../development/python-modules/vaa { };
 
