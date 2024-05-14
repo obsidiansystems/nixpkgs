@@ -4,9 +4,9 @@
   openbsdSetupHook,
   makeMinimal,
   install,
-  # mandoc,
-  # groff,
-  # rsync,
+# mandoc,
+# groff,
+# rsync,
 }:
 
 mkDerivation {

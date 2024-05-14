@@ -5,7 +5,7 @@
   openbsdSetupHook,
   makeMinimal,
   install,
-  include
+  include,
 }:
 
 mkDerivation {

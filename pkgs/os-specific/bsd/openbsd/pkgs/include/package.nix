@@ -1,13 +1,14 @@
-{ lib
-, mkDerivation
-, makeMinimal
-, bsdSetupHook
-, openbsdSetupHook
-, install
-, rpcgen
-, mtree
-, pax
-, buildPackages
+{
+  lib,
+  mkDerivation,
+  makeMinimal,
+  bsdSetupHook,
+  openbsdSetupHook,
+  install,
+  rpcgen,
+  mtree,
+  pax,
+  buildPackages,
 }:
 mkDerivation {
   path = "include";
@@ -17,7 +18,7 @@ mkDerivation {
     "sys"
   ];
 
-  nativeBuildInputs =  [
+  nativeBuildInputs = [
     bsdSetupHook
     install
     makeMinimal

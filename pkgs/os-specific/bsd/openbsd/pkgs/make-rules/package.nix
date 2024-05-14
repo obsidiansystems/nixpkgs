@@ -3,9 +3,9 @@
   mkDerivation,
   # fetchNetBSD,
   stdenv,
-  # bsdSetupHook,
-  # openbsdSetupHook,
-  # rsync,
+# bsdSetupHook,
+# openbsdSetupHook,
+# rsync,
 }:
 
 mkDerivation {
@@ -15,7 +15,7 @@ mkDerivation {
   noCC = true;
 
   buildInputs = [ ];
-  nativeBuildInputs = [];
+  nativeBuildInputs = [ ];
   # nativeBuildInputs = [
   #   bsdSetupHook
   #   openbsdSetupHook
@@ -24,20 +24,17 @@ mkDerivation {
 
   dontBuild = true;
 
-  patches = [
-    ./ar.patch
-  ];
-  postPatch =
-    ''
-      # Need to replace spaces with tabs for some reason
-      substituteInPlace share/mk/bsd.dep.mk \
-				--replace "       sinclude" "			sinclude"
+  patches = [ ./ar.patch ];
+  postPatch = ''
+          # Need to replace spaces with tabs for some reason
+          substituteInPlace share/mk/bsd.dep.mk \
+    				--replace "       sinclude" "			sinclude"
 
-      sed -i -E \
-        -e 's|/usr/lib|\$\{LIBDIR\}|' \
-        share/mk/bsd.prog.mk
+          sed -i -E \
+            -e 's|/usr/lib|\$\{LIBDIR\}|' \
+            share/mk/bsd.prog.mk
 
-    '';
+  '';
   #     substituteInPlace $BSDSRCDIR/share/mk/bsd.doc.mk \
   #       --replace '-o ''${DOCOWN}' "" \
   #       --replace '-g ''${DOCGRP}' ""

@@ -17,9 +17,12 @@
 # HACK: to ensure parent directories exist. This emulates GNU
 # install’s -D option. No alternative seems to exist in BSD install.
 let
-  binstall = writeShellScript "binstall" (builtins.readFile ../../../lib/install-wrapper.sh + ''
-    @out@/bin/xinstall "''${args[@]}"
-  '');
+  binstall = writeShellScript "binstall" (
+    builtins.readFile ../../../lib/install-wrapper.sh
+    + ''
+      @out@/bin/xinstall "''${args[@]}"
+    ''
+  );
 in
 mkDerivation {
   path = "usr.bin/xinstall";

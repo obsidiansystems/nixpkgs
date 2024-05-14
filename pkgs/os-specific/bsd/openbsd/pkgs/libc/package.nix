@@ -1,14 +1,21 @@
-{ lib, stdenv, mkDerivation
-, bsdSetupHook, openbsdSetupHook
-, makeMinimal
-, install
-, flex, byacc, gencat, rpcgen
-, lorder
-, csu
-, include
-, ctags
-, tsort
-, llvmPackages
+{
+  lib,
+  stdenv,
+  mkDerivation,
+  bsdSetupHook,
+  openbsdSetupHook,
+  makeMinimal,
+  install,
+  flex,
+  byacc,
+  gencat,
+  rpcgen,
+  lorder,
+  csu,
+  include,
+  ctags,
+  tsort,
+  llvmPackages,
 }:
 
 mkDerivation rec {
@@ -42,15 +49,22 @@ mkDerivation rec {
   ];
 
   nativeBuildInputs = [
-    bsdSetupHook openbsdSetupHook
+    bsdSetupHook
+    openbsdSetupHook
     makeMinimal
     install
-    flex byacc gencat rpcgen
+    flex
+    byacc
+    gencat
+    rpcgen
     ctags
     lorder
     tsort
   ];
-  buildInputs = [ include csu ];
+  buildInputs = [
+    include
+    csu
+  ];
   env.NIX_CFLAGS_COMPILE = builtins.toString [
     "-B${csu}/lib"
     # "-Wno-unused-command-line-argument"
@@ -114,7 +128,6 @@ mkDerivation rec {
   #   sed -i -e 's| [^ ]*/libc_nonshared.a||' $out/lib/libc.so
 
   #   $CC -nodefaultlibs -lgcc -shared -o $out/lib/libgcc_s.so
-
 
   # '';
 
