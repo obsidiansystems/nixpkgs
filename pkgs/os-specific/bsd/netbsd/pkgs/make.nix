@@ -15,7 +15,7 @@ mkDerivation {
     make-rules.postPatch
     + ''
       # make needs this to pick up our sys make files
-      export NIX_CFLAGS_COMPILE+=" -D_PATH_DEFSYSPATH=\"$out/share/mk\""
+      appendToVar NIX_CFLAGS_COMPILE -D_PATH_DEFSYSPATH="$out/share/mk"
     '';
 
   postInstall = ''
