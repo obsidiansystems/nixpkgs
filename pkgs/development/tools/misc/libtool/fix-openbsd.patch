@@ -1,0 +1,115 @@
+Date: Sat, 13 Aug 2022 18:05:54 -0400
+From: Brad Smith <brad@comstyle.com>
+To: libtool-patches@gnu.org
+Subject: [PATCH] Further update/simplify OpenBSD support
+
+Further update/simplify OpenBSD support
+
+* m4/libtool.m4: Remove long obsolete support for a.out and support
+for archs not supporting shared libaries
+---
+ m4/libtool.m4 | 61 ++++++++++++++++-----------------------------------
+ 1 file changed, 19 insertions(+), 42 deletions(-)
+
+diff --git a/m4/libtool.m4 b/m4/libtool.m4
+index 79a2451e..fa424ec6 100644
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -1557,7 +1557,7 @@ old_postuninstall_cmds=
+
+ if test -n "$RANLIB"; then
+   case $host_os in
+-  bitrig* | openbsd*)
++  bitrig*)
+     old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB -t \$tool_oldlib"
+     ;;
+   *)
+@@ -2948,11 +2948,7 @@ openbsd* | bitrig*)
+   version_type=sunos
+   sys_lib_dlsearch_path_spec=/usr/lib
+   need_lib_prefix=no
+-  if test -z "`echo __ELF__ | $CC -E - | $GREP __ELF__`"; then
+-    need_version=no
+-  else
+-    need_version=yes
+-  fi
++  need_version=no
+   library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
+   finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
+   shlibpath_var=LD_LIBRARY_PATH
+@@ -3585,11 +3581,7 @@ newos6*)
+   ;;
+
+ openbsd* | bitrig*)
+-  if test -z "`echo __ELF__ | $CC -E - | $GREP __ELF__`"; then
+-    lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|\.so|_pic\.a)$'
+-  else
+-    lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'
+-  fi
++  lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|\.so|_pic\.a)$'
+   ;;
+
+ osf3* | osf4* | osf5*)
+@@ -5838,22 +5830,13 @@ _LT_EOF
+       ;;
+
+     openbsd* | bitrig*)
+-      if test -f /usr/libexec/ld.so; then
+-	_LT_TAGVAR(hardcode_direct, $1)=yes
+-	_LT_TAGVAR(hardcode_shlibpath_var, $1)=no
+-	_LT_TAGVAR(hardcode_direct_absolute, $1)=yes
+-	if test -z "`echo __ELF__ | $CC -E - | $GREP __ELF__`"; then
+-	  _LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
+-	  _LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags $wl-retain-symbols-file,$export_symbols'
+-	  _LT_TAGVAR(hardcode_libdir_flag_spec, $1)='$wl-rpath,$libdir'
+-	  _LT_TAGVAR(export_dynamic_flag_spec, $1)='$wl-E'
+-	else
+-	  _LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
+-	  _LT_TAGVAR(hardcode_libdir_flag_spec, $1)='$wl-rpath,$libdir'
+-	fi
+-      else
+-	_LT_TAGVAR(ld_shlibs, $1)=no
+-      fi
++      _LT_TAGVAR(hardcode_direct, $1)=yes
++      _LT_TAGVAR(hardcode_shlibpath_var, $1)=no
++      _LT_TAGVAR(hardcode_direct_absolute, $1)=yes
++      _LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++      _LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags $wl-retain-symbols-file,$export_symbols'
++      _LT_TAGVAR(hardcode_libdir_flag_spec, $1)='$wl-rpath,$libdir'
++      _LT_TAGVAR(export_dynamic_flag_spec, $1)='$wl--export-dynamic'
+       ;;
+
+     os2*)
+@@ -7132,21 +7115,15 @@ if test yes != "$_lt_caught_CXX_error"; then
+ 	;;
+
+       openbsd* | bitrig*)
+-	if test -f /usr/libexec/ld.so; then
+-	  _LT_TAGVAR(hardcode_direct, $1)=yes
+-	  _LT_TAGVAR(hardcode_shlibpath_var, $1)=no
+-	  _LT_TAGVAR(hardcode_direct_absolute, $1)=yes
+-	  _LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
+-	  _LT_TAGVAR(hardcode_libdir_flag_spec, $1)='$wl-rpath,$libdir'
+-	  if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`"; then
+-	    _LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared $pic_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags $wl-retain-symbols-file,$export_symbols -o $lib'
+-	    _LT_TAGVAR(export_dynamic_flag_spec, $1)='$wl-E'
+-	    _LT_TAGVAR(whole_archive_flag_spec, $1)=$wlarc'--whole-archive$convenience '$wlarc'--no-whole-archive'
+-	  fi
+-	  output_verbose_link_cmd=func_echo_all
+-	else
+-	  _LT_TAGVAR(ld_shlibs, $1)=no
+-	fi
++	_LT_TAGVAR(hardcode_direct, $1)=yes
++	_LT_TAGVAR(hardcode_shlibpath_var, $1)=no
++	_LT_TAGVAR(hardcode_direct_absolute, $1)=yes
++	_LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
++	_LT_TAGVAR(hardcode_libdir_flag_spec, $1)='$wl-rpath,$libdir'
++	_LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared $pic_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags $wl-retain-symbols-file,$export_symbols -o $lib'
++	_LT_TAGVAR(export_dynamic_flag_spec, $1)='$wl--export-dynamic'
++	_LT_TAGVAR(whole_archive_flag_spec, $1)=$wlarc'--whole-archive$convenience '$wlarc'--no-whole-archive'
++	output_verbose_link_cmd=func_echo_all
+ 	;;
+
+       osf3* | osf4* | osf5*)
+--
+2.37.1
