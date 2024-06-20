@@ -24,10 +24,6 @@ stdenv.mkDerivation rec {
   #   https://lists.gnu.org/archive/html/autotools-announce/2022-03/msg00000.html
   FILECMD = "${file}/bin/file";
 
-  # https://lists.gnu.org/archive/html/libtool-patches/2022-08/msg00000
-  # `llvm-ranlab` does not have a `-t` flag.
-  patches = lib.optional stdenv.targetPlatform.isOpenBSD ./fix-openbsd.patch;
-
   postPatch =
   # libtool commit da2e352735722917bf0786284411262195a6a3f6 changed
   # the shebang from `/bin/sh` (which is a special sandbox exception)
