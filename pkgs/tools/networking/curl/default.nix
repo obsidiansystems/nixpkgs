@@ -11,7 +11,10 @@
     # the "mig" tool does not configure its compiler correctly. This could be
     # fixed in mig, but losing gss support on cross compilation to darwin is
     # not worth the effort.
-    !(isDarwin && (stdenv.buildPlatform != stdenv.hostPlatform))
+    !(isDarwin && (stdenv.buildPlatform != stdenv.hostPlatform)) &&
+
+    # `undefined hidden symbol: __guard_local` Do not wish to debug this right now.
+    !isOpenBSD
   ), libkrb5
 , http2Support ? true, nghttp2
 , http3Support ? false, nghttp3, ngtcp2
