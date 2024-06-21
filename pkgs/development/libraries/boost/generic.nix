@@ -148,6 +148,22 @@ stdenv.mkDerivation {
       stripLen = 1;
       extraPrefix = "libs/python/";
     })
+  ] ++ lib.optionals stdenv.hostPlatform.isOpenBSD [
+    # TODO make unconditional
+    # https://github.com/boostorg/fiber/pull/315
+    (fetchpatch {
+      name = "openbsd-fiber-futex.patch";
+      url = "https://github.com/boostorg/fiber/pull/315/commits/d486740347c3d2c2116f9f1e50623936c00e7889.patch";
+      hash = "sha256-upDPbHhfJfV6s4W4R2kW5PaMtyxKmvNDVWmTuwlkp9U=";
+      relative = "include";
+    })
+    # Already merged
+    (fetchpatch {
+      name = "openbsd-atomic-futex.patch";
+      url = "https://github.com/boostorg/atomic/commit/6ee31382b271193064db2bfe0a446260c5b344c0.patch";
+      hash = "sha256-8MKIK9UjVKTlGAkDCpj6Y/PdwoYLTPktNSxSNuCOueg=";
+      relative = "include";
+    })
   ];
 
   meta = with lib; {
