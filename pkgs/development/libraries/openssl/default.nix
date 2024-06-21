@@ -143,6 +143,7 @@ let
       # trying to build binaries statically.
       ++ lib.optional static "no-ct"
       ++ lib.optional withZlib "zlib"
+      ++ lib.optionals stdenv.hostPlatform.isOpenBSD [
       # /dev/crypto support has been dropped in OpenBSD 5.7.
       #
       # OpenBSD's ports does this too,
@@ -151,8 +152,10 @@ let
       # https://github.com/openssl/openssl/pull/10565 indicated the
       # intent was that this would be configured properly automatically,
       # but that doesn't appear to be the case.
-      ++ lib.optional stdenv.hostPlatform.isOpenBSD "no-devcryptoeng"
-      ++ lib.optionals (stdenv.hostPlatform.isMips && stdenv.hostPlatform ? gcc.arch) [
+      "no-devcryptoeng"
+      # WTF Hack
+      "CFLAGS=-lc"
+    ] ++ lib.optionals (stdenv.hostPlatform.isMips && stdenv.hostPlatform ? gcc.arch) [
       # This is necessary in order to avoid openssl adding -march
       # flags which ultimately conflict with those added by
       # cc-wrapper.  Openssl assumes that it can scan CFLAGS to
