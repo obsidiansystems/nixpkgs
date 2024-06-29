@@ -212,6 +212,7 @@ in let
     lld = callPackage ../common/lld {
       patches = [
         ./lld/gnu-install-dirs.patch
+        ./lld/openbsd.patch
       ];
     };
 

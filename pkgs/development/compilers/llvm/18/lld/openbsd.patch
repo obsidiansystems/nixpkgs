@@ -1,0 +1,55 @@
+diff --git a/ELF/LinkerScript.cpp b/ELF/LinkerScript.cpp
+index 9e7647f63ca5..9cd84b713120 100644
+--- a/ELF/LinkerScript.cpp
++++ b/ELF/LinkerScript.cpp
+@@ -107,7 +107,8 @@ static StringRef getOutputSectionName(const InputSectionBase *s) {
+   for (StringRef v :
+        {".data.rel.ro", ".data", ".rodata", ".bss.rel.ro", ".bss", ".ldata",
+         ".lrodata", ".lbss", ".gcc_except_table", ".init_array", ".fini_array",
+-        ".tbss", ".tdata", ".ARM.exidx", ".ARM.extab", ".ctors", ".dtors"})
++        ".tbss", ".tdata", ".ARM.exidx", ".ARM.extab", ".ctors", ".dtors",
++        ".openbsd.randomdata", ".openbsd.mutable"})
+     if (isSectionPrefix(v, s->name))
+       return v;
+ 
+diff --git a/ELF/ScriptParser.cpp b/ELF/ScriptParser.cpp
+index f0ede1f43bbd..b266f6a054c9 100644
+--- a/ELF/ScriptParser.cpp
++++ b/ELF/ScriptParser.cpp
+@@ -1606,7 +1606,9 @@ unsigned ScriptParser::readPhdrType() {
+                      .Case("PT_GNU_EH_FRAME", PT_GNU_EH_FRAME)
+                      .Case("PT_GNU_STACK", PT_GNU_STACK)
+                      .Case("PT_GNU_RELRO", PT_GNU_RELRO)
++                     .Case("PT_OPENBSD_MUTABLE", PT_OPENBSD_MUTABLE)
+                      .Case("PT_OPENBSD_RANDOMIZE", PT_OPENBSD_RANDOMIZE)
++                     .Case("PT_OPENBSD_SYSCALLS", PT_OPENBSD_SYSCALLS)
+                      .Case("PT_OPENBSD_WXNEEDED", PT_OPENBSD_WXNEEDED)
+                      .Case("PT_OPENBSD_BOOTDATA", PT_OPENBSD_BOOTDATA)
+                      .Default(-1);
+diff --git a/ELF/Writer.cpp b/ELF/Writer.cpp
+index 8a08b0fcc90d..1970e409ab95 100644
+--- a/ELF/Writer.cpp
++++ b/ELF/Writer.cpp
+@@ -2503,11 +2503,22 @@ SmallVector<PhdrEntry *, 0> Writer<ELFT>::createPhdrs(Partition &part) {
+     addHdr(PT_GNU_EH_FRAME, part.ehFrameHdr->getParent()->getPhdrFlags())
+         ->add(part.ehFrameHdr->getParent());
+ 
++  // PT_OPENBSD_MUTABLE is an OpenBSD-specific feature. That makes
++  // the dynamic linker fill the segment with zero data, like bss, but
++  // it can be treated differently.
++  if (OutputSection *cmd = findSection(".openbsd.mutable", partNo))
++    addHdr(PT_OPENBSD_MUTABLE, cmd->getPhdrFlags())->add(cmd);
++
+   // PT_OPENBSD_RANDOMIZE is an OpenBSD-specific feature. That makes
+   // the dynamic linker fill the segment with random data.
+   if (OutputSection *cmd = findSection(".openbsd.randomdata", partNo))
+     addHdr(PT_OPENBSD_RANDOMIZE, cmd->getPhdrFlags())->add(cmd);
+ 
++  // PT_OPENBSD_SYSCALLS is an OpenBSD-specific feature. That makes
++  // the kernel and dynamic linker register system call sites.
++  if (OutputSection *cmd = findSection(".openbsd.syscalls", partNo))
++    addHdr(PT_OPENBSD_SYSCALLS, cmd->getPhdrFlags())->add(cmd);
++
+   if (config->zGnustack != GnuStackKind::None) {
+     // PT_GNU_STACK is a special section to tell the loader to make the
+     // pages for the stack non-executable. If you really want an executable
