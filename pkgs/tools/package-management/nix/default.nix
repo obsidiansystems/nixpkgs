@@ -158,6 +158,9 @@ in lib.makeExtensible (self: ({
     version = "2.19.6";
     hash = "sha256-XT5xiwOLgXf+TdyOjbJVOl992wu9mBO25WXHoyli/Tk=";
     self_attribute_name = "nix_2_19";
+    patches = [
+      ./patches/lutimes.patch
+    ];
   };
 
   nix_2_20 = common {

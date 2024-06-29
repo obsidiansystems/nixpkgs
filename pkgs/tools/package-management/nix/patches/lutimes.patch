@@ -1,0 +1,183 @@
+commit bdb33c609ae72bdec68158e740c97fe2d9992c49
+Author: Brian McKenna <brian@brianmckenna.org>
+Date:   Thu Sep 15 05:56:57 2022 +0000
+
+    Guard uses of lutimes, for portability
+
+diff --git a/src/libfetchers/git.cc b/src/libfetchers/git.cc
+index cc735996b..256ca6868 100644
+--- a/src/libfetchers/git.cc
++++ b/src/libfetchers/git.cc
+@@ -33,17 +33,6 @@ bool isCacheFileWithinTtl(time_t now, const struct stat & st)
+     return st.st_mtime + settings.tarballTtl > now;
+ }
+ 
+-bool touchCacheFile(const Path & path, time_t touch_time)
+-{
+-    struct timeval times[2];
+-    times[0].tv_sec = touch_time;
+-    times[0].tv_usec = 0;
+-    times[1].tv_sec = touch_time;
+-    times[1].tv_usec = 0;
+-
+-    return lutimes(path.c_str(), times) == 0;
+-}
+-
+ Path getCachePath(std::string_view key)
+ {
+     return getCacheDir() + "/nix/gitv3/" +
+@@ -682,10 +671,14 @@ struct GitInputScheme : InputScheme
+                     warn("could not update local clone of Git repository '%s'; continuing with the most recent version", actualUrl);
+                 }
+ 
+-                if (!touchCacheFile(localRefFile, now))
+-                    warn("could not update mtime for file '%s': %s", localRefFile, strerror(errno));
++                try {
++                    setWriteTime(localRefFile, now, now);
++                } catch (Error & e) {
++                    warn("could not update mtime for file '%s': %s", localRefFile, e.msg());
++                }
+                 if (useHeadRef && !storeCachedHead(actualUrl, *input.getRef()))
+                     warn("could not update cached head '%s' for '%s'", *input.getRef(), actualUrl);
++
+             }
+ 
+             if (!input.getRev())
+diff --git a/src/libstore/local-store.cc b/src/libstore/local-store.cc
+index 2a3582ad8..c33c39e44 100644
+--- a/src/libstore/local-store.cc
++++ b/src/libstore/local-store.cc
+@@ -602,19 +602,9 @@ static void canonicaliseTimestampAndPermissions(const Path & path, const struct
+     }
+ 
+     if (st.st_mtime != mtimeStore) {
+-        struct timeval times[2];
+-        times[0].tv_sec = st.st_atime;
+-        times[0].tv_usec = 0;
+-        times[1].tv_sec = mtimeStore;
+-        times[1].tv_usec = 0;
+-#if HAVE_LUTIMES
+-        if (lutimes(path.c_str(), times) == -1)
+-            if (errno != ENOSYS ||
+-                (!S_ISLNK(st.st_mode) && utimes(path.c_str(), times) == -1))
+-#else
+-        if (!S_ISLNK(st.st_mode) && utimes(path.c_str(), times) == -1)
+-#endif
+-            throw SysError("changing modification time of '%1%'", path);
++        struct stat st2 = st;
++        st2.st_mtime = mtimeStore,
++        setWriteTime(path, st2);
+     }
+ }
+ 
+diff --git a/src/libutil/file-system.cc b/src/libutil/file-system.cc
+index c96effff9..d0f07f1d6 100644
+--- a/src/libutil/file-system.cc
++++ b/src/libutil/file-system.cc
+@@ -570,19 +570,53 @@ void replaceSymlink(const Path & target, const Path & link)
+     }
+ }
+ 
+-void setWriteTime(const fs::path & p, const struct stat & st)
++void setWriteTime(
++    const std::filesystem::path & path,
++    time_t accessedTime,
++    time_t modificationTime,
++    std::optional<bool> optIsSymlink)
+ {
+-    struct timeval times[2];
+-    times[0] = {
+-        .tv_sec = st.st_atime,
+-        .tv_usec = 0,
++    struct timeval times[2] = {
++        {
++            .tv_sec = accessedTime,
++            .tv_usec = 0,
++        },
++        {
++            .tv_sec = modificationTime,
++            .tv_usec = 0,
++        },
+     };
+-    times[1] = {
+-        .tv_sec = st.st_mtime,
+-        .tv_usec = 0,
++
++    auto nonSymlink = [&]{
++        bool isSymlink = optIsSymlink
++            ? *optIsSymlink
++            : fs::is_symlink(path);
++
++        if (!isSymlink) {
++            if (utimes(path.c_str(), times) == -1) {
++
++                throw SysError("changing modification time of '%s' (not a symlink)", path);
++            }
++        } else {
++            throw Error("Cannot modification time of symlink '%s'", path);
++        }
+     };
+-    if (lutimes(p.c_str(), times) != 0)
+-        throw SysError("changing modification time of '%s'", p);
++
++#if HAVE_LUTIMES
++    if (lutimes(path.c_str(), times) == -1) {
++        if (errno == ENOSYS)
++            nonSymlink();
++        else
++            throw SysError("changing modification time of '%s'", path);
++    }
++#else
++    nonSymlink();
++#endif
++}
++
++void setWriteTime(const fs::path & path, const struct stat & st)
++{
++    setWriteTime(path, st.st_atime, st.st_mtime, S_ISLNK(st.st_mode));
+ }
+ 
+ void copy(const fs::directory_entry & from, const fs::path & to, bool andDelete)
+diff --git a/src/libutil/file-system.hh b/src/libutil/file-system.hh
+index 4637507b3..df91bb5d3 100644
+--- a/src/libutil/file-system.hh
++++ b/src/libutil/file-system.hh
+@@ -19,6 +19,7 @@
+ #include <boost/lexical_cast.hpp>
+ 
+ #include <atomic>
++#include <filesystem>
+ #include <functional>
+ #include <map>
+ #include <sstream>
+@@ -165,6 +166,30 @@ inline Paths createDirs(PathView path)
+     return createDirs(Path(path));
+ }
+ 
++/**
++ * Set the access and modification times of the given path, not
++ * following symlinks.
++ *
++ * @param accessTime Specified in seconds.
++ *
++ * @param modificationTime Specified in seconds.
++ *
++ * @param isSymlink Whether the file in question is a symlink. Used for
++ * fallback code where we don't have `lutimes` or similar. if
++ * `std::optional` is passed, the information will be recomputed if it
++ * is needed. Race conditions are possible so be careful!
++ */
++void setWriteTime(
++    const std::filesystem::path & path,
++    time_t accessedTime,
++    time_t modificationTime,
++    std::optional<bool> isSymlink = std::nullopt);
++
++/**
++ * Convenience wrapper that takes all arguments from the `struct stat`.
++ */
++void setWriteTime(const std::filesystem::path & path, const struct stat & st);
++
+ /**
+  * Create a symlink.
+  */
