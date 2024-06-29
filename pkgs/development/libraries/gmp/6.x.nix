@@ -11,7 +11,7 @@
 
 let inherit (lib) optional; in
 
-let self = stdenv.mkDerivation rec {
+let self = stdenv.mkDerivation (rec {
   pname = "gmp${lib.optionalString cxx "-with-cxx"}";
   version = "6.3.0";
 
@@ -89,5 +89,10 @@ let self = stdenv.mkDerivation rec {
     platforms = platforms.all;
     maintainers = [ maintainers.vrthra ];
   };
-};
+} // lib.optionalAttrs (with stdenv.hostPlatform; isOpenBSD && isStatic) {
+  # Hack because the two bintools wrappers clobber each other
+  NIX_HARDENING_ENABLE = [
+    "bindnow" "format" "fortify" "fortify3" "pic" "relro" "stackprotector" "strictoverflow" "pie"
+  ];
+});
   in self

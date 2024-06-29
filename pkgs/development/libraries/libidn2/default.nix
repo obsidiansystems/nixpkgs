@@ -5,7 +5,7 @@
 # cgit) that are needed here should be included directly in Nixpkgs as
 # files.
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (rec {
   pname = "libidn2";
   version = "2.3.7";
 
@@ -44,4 +44,9 @@ stdenv.mkDerivation rec {
     platforms = lib.platforms.all;
     maintainers = with lib.maintainers; [ fpletz ];
   };
-}
+} // lib.optionalAttrs (with stdenv.hostPlatform; isOpenBSD && isStatic) {
+  # Hack because the two bintools wrappers clobber each other
+  NIX_HARDENING_ENABLE = [
+    "bindnow" "format" "fortify" "fortify3" "pic" "relro" "stackprotector" "strictoverflow" "pie"
+  ];
+})
