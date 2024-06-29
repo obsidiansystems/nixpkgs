@@ -158,6 +158,7 @@ in lib.makeExtensible (self: ({
     self_attribute_name = "nix_2_19";
     patches = [
       ./patches/lutimes.patch
+      ./patches/openbsd-ucred.patch
     ];
   };
 
