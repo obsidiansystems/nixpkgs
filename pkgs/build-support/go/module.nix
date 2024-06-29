@@ -187,13 +187,14 @@ let
         rm -rf vendor
         cp -r --reflink=auto ${goModules} vendor
       ''}
-    '' + ''
+    '' + lib.optionalString (! stdenv.hostPlatform.isOpenBSD) ''
 
       # currently pie is only enabled by default in pkgsMusl
       # this will respect the `hardening{Disable,Enable}` flags if set
       if [[ $NIX_HARDENING_ENABLE =~ "pie" ]]; then
         export GOFLAGS="-buildmode=pie $GOFLAGS"
       fi
+    '' + ''
 
       runHook postConfigure
     '');
