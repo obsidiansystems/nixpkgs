@@ -1,0 +1,29 @@
+From 33b59bb2becc7036d3da7a2026659886d369e848 Mon Sep 17 00:00:00 2001
+From: kn <kn@openbsd.org>
+Date: Sat, 11 Mar 2023 19:43:04 +0000
+Subject: [PATCH] Use proper struct sockpeercred for SO_PEERCRED
+
+getsockopt(2) documents this;  ucred is wrong ("cr_" member prefix, no pid).
+---
+ src/nix/daemon.cc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/nix/daemon.cc b/src/nix/daemon.cc
+index 373dedf7c..9a0c12564 100644
+--- a/src/nix/daemon.cc
++++ b/src/nix/daemon.cc
+@@ -202,7 +202,11 @@ static PeerInfo getPeerInfo(int remote)
+ 
+ #if defined(SO_PEERCRED)
+ 
++#if defined(__OpenBSD__)
++    struct sockpeercred cred;
++#else
+     ucred cred;
++#endif
+     socklen_t credLen = sizeof(cred);
+     if (getsockopt(remote, SOL_SOCKET, SO_PEERCRED, &cred, &credLen) == -1)
+         throw SysError("getting peer credentials");
+-- 
+2.42.0
+
