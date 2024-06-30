@@ -1,17 +1,3 @@
-diff --git a/ELF/LinkerScript.cpp b/ELF/LinkerScript.cpp
-index 9e7647f63ca5..9cd84b713120 100644
---- a/ELF/LinkerScript.cpp
-+++ b/ELF/LinkerScript.cpp
-@@ -107,7 +107,8 @@ static StringRef getOutputSectionName(const InputSectionBase *s) {
-   for (StringRef v :
-        {".data.rel.ro", ".data", ".rodata", ".bss.rel.ro", ".bss", ".ldata",
-         ".lrodata", ".lbss", ".gcc_except_table", ".init_array", ".fini_array",
--        ".tbss", ".tdata", ".ARM.exidx", ".ARM.extab", ".ctors", ".dtors"})
-+        ".tbss", ".tdata", ".ARM.exidx", ".ARM.extab", ".ctors", ".dtors",
-+        ".openbsd.randomdata", ".openbsd.mutable"})
-     if (isSectionPrefix(v, s->name))
-       return v;
- 
 diff --git a/ELF/ScriptParser.cpp b/ELF/ScriptParser.cpp
 index f0ede1f43bbd..b266f6a054c9 100644
 --- a/ELF/ScriptParser.cpp
