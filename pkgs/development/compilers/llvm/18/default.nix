@@ -138,6 +138,7 @@ in let
         # It's not clear to me why this isn't an issue for LLVM developers running
         # on macOS (nothing about this _seems_ nix specific)..
         ./llvm/lit-shell-script-runner-set-dyld-library-path.patch
+        ./llvm/openbsd-osapi.patch
       ];
       pollyPatches = [
         ./llvm/gnu-install-dirs-polly.patch

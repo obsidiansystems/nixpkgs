@@ -1,0 +1,36 @@
+commit cfbef14d3974f1dd8607da9191b5ab89269ef0e5
+Author: John Ericson <John.Ericson@Obsidian.Systems>
+Date:   Sun Jun 30 18:47:58 2024 -0400
+
+    [LLMV][LLD] Scope OpenBSD special section handling under that ELFOSABI
+    
+    As the preexisting comment (that I referred to) says:
+    
+    > section names shouldn't be significant in ELF in spirit.
+    
+    so scoping OSABI-specific magic name hacks to just the OSABI in question
+    limits the degree to which we deviate from that "spirit" for all other
+    OSABIs.
+    
+    OpenBSD in particular is very fast moving, having added a number of
+    special sections, etc. in recent years. It is unclear how possible /
+    reasonable it is for upstream to implement all these features in any
+    event, but scoping like this at least mitigates the fallout for other
+    OSABIs systems which wish to be more slow-moving.
+    
+    LLVM is likewise changed so that binaries have this ABI by default for
+    OpenBSD targets.
+
+diff --git a/llvm/include/llvm/MC/MCELFObjectWriter.h b/llvm/include/llvm/MC/MCELFObjectWriter.h
+index d7c223cdcc07..12237094ad86 100644
+--- a/include/llvm/MC/MCELFObjectWriter.h
++++ b/include/llvm/MC/MCELFObjectWriter.h
+@@ -78,6 +78,8 @@ public:
+         return ELF::ELFOSABI_FREEBSD;
+       case Triple::Solaris:
+         return ELF::ELFOSABI_SOLARIS;
++      case Triple::OpenBSD:
++        return ELF::ELFOSABI_OPENBSD;
+       default:
+         return ELF::ELFOSABI_NONE;
+     }
