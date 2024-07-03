@@ -161,6 +161,7 @@ in lib.makeExtensible (self: ({
     patches = [
       ./patches/lutimes.patch
       ./patches/openbsd-ucred.patch
+      ./patches/utimensat.patch
     ];
   };
 

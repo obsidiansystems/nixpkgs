@@ -1,0 +1,117 @@
+From 11a129bd9b7e583d19e618491da1a090a463c81e Mon Sep 17 00:00:00 2001
+From: John Ericson <John.Ericson@Obsidian.Systems>
+Date: Wed, 3 Jul 2024 11:48:42 -0400
+Subject: [PATCH] Add support for `utimensat` as an alternative to `lutimes`
+
+OpenBSD doesn't support `lutimes`, but does support `utimensat` which
+subsumes it. In fact, all the BSDs, Linux, and newer macOS all support
+it. So lets make this our first choice for the implementation.
+
+In addition, let's get rid of the `lutimes` `ENOSYS` special case. The
+Linux manpage says
+
+> ENOSYS
+>
+> The kernel does not support this call; Linux 2.6.22 or later is
+> required.
+
+which I think is the origin of this check, but that's a very old version
+of Linux at this point. The code can be simplified a lot of we drop
+support for it here (as we've done elsewhere, anyways).
+---
+ configure.ac               |  7 +++---
+ src/libutil/file-system.cc | 49 ++++++++++++++++++++++----------------
+ 2 files changed, 33 insertions(+), 23 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 281ba2c32..57da2f920 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -86,9 +86,10 @@ AC_LANG_POP(C++)
+ AC_CHECK_FUNCS([statvfs pipe2])
+ 
+ 
+-# Check for lutimes, optionally used for changing the mtime of
+-# symlinks.
+-AC_CHECK_FUNCS([lutimes])
++# Check for utimensat and lutimes, optionally used for changing the
++# mtime of symlinks.
++AC_CHECK_DECLS([AT_SYMLINK_NOFOLLOW], [], [], [[#include <fcntl.h>]])
++AC_CHECK_FUNCS([utimensat lutimes])
+ 
+ 
+ # Check whether the store optimiser can optimise symlinks.
+diff --git a/src/libutil/file-system.cc b/src/libutil/file-system.cc
+index d0f07f1d6..4b5d6b1ac 100644
+--- a/src/libutil/file-system.cc
++++ b/src/libutil/file-system.cc
+@@ -576,6 +576,22 @@ void setWriteTime(
+     time_t modificationTime,
+     std::optional<bool> optIsSymlink)
+ {
++#if HAVE_UTIMENSAT && HAVE_DECL_AT_SYMLINK_NOFOLLOW
++    struct timespec times[2] = {
++        {
++            .tv_sec = accessedTime,
++            .tv_nsec = 0,
++        },
++        {
++            .tv_sec = modificationTime,
++            .tv_nsec = 0,
++        }
++    };
++
++    // Use utimensat with AT_SYMLINK_NOFOLLOW
++    if (utimensat(AT_FDCWD, path.c_str(), times, AT_SYMLINK_NOFOLLOW) == -1)
++        throw SysError("changing modification time of '%s' (using `utimensat`)", path);
++#else
+     struct timeval times[2] = {
+         {
+             .tv_sec = accessedTime,
+@@ -587,30 +603,23 @@ void setWriteTime(
+         },
+     };
+ 
+-    auto nonSymlink = [&]{
+-        bool isSymlink = optIsSymlink
+-            ? *optIsSymlink
+-            : fs::is_symlink(path);
++# if HAVE_LUTIMES
++    if (lutimes(path.c_str(), times) == -1)
++        throw SysError("changing modification time of '%s' (using `lutimes`)", path);
++# else
++    bool isSymlink = optIsSymlink
++        ? *optIsSymlink
++        : fs::is_symlink(path);
+ 
+-        if (!isSymlink) {
+-            if (utimes(path.c_str(), times) == -1) {
++    if (!isSymlink) {
++        if (utimes(path.c_str(), times) == -1) {
+ 
+-                throw SysError("changing modification time of '%s' (not a symlink)", path);
+-            }
+-        } else {
+-            throw Error("Cannot modification time of symlink '%s'", path);
++            throw SysError("changing modification time of '%s' (using `utimes`, it's not a symlink)", path);
+         }
+-    };
+-
+-#if HAVE_LUTIMES
+-    if (lutimes(path.c_str(), times) == -1) {
+-        if (errno == ENOSYS)
+-            nonSymlink();
+-        else
+-            throw SysError("changing modification time of '%s'", path);
++    } else {
++        throw Error("Cannot modification time of symlink '%s'", path);
+     }
+-#else
+-    nonSymlink();
++# endif
+ #endif
+ }
+ 
+-- 
+2.44.1
+
