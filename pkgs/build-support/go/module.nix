@@ -185,7 +185,10 @@ in
 
     # If not set to an explicit value, set the buildid empty for reproducibility.
     ldflags = ldflags ++ lib.optional (!lib.any (lib.hasPrefix "-buildid=") ldflags) "-buildid="
-    ++ lib.optional stdenv.hostPlatform.isOpenBSD "-I=${openbsd.rtld}/libexec/ld.so";
+    ++ lib.optionals stdenv.hostPlatform.isOpenBSD [
+      "-I=${openbsd.rtld}/libexec/ld.so"
+      "-r=${openbsd.libc}/lib"
+    ];
 
     configurePhase = args.configurePhase or (''
       runHook preConfigure
