@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , fetchFromGitLab
+, gitUpdater
 , testers
 , boost
 , cmake
@@ -19,17 +20,18 @@
 , properties-cpp
 , qtbase
 , qtdeclarative
+, validatePkgConfig
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "trust-store";
-  version = "0-unstable-2023-12-27";
+  version = "2.0.2";
 
   src = fetchFromGitLab {
     owner = "ubports";
     repo = "development/core/trust-store";
-    rev = "c91e5ac54c4032525f930f0651d673ad3a1095a2";
-    hash = "sha256-zqs40tKo2AOd9yL2Xfbk52Uh8hy4uT1XDT6YtKufAaY=";
+    rev = finalAttrs.version;
+    hash = "sha256-tVwqBu4py8kdydyKECZfLvcLijpZSQszeo8ytTDagy0=";
   };
 
   outputs = [
@@ -42,12 +44,14 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     # pkg-config patching hook expects prefix variable
     substituteInPlace data/trust-store.pc.in \
-      --replace 'includedir=''${exec_prefix}' 'includedir=''${prefix}'
+      --replace-fail 'libdir=''${exec_prefix}' 'libdir=''${prefix}' \
+      --replace-fail 'includedir=''${exec_prefix}' 'includedir=''${prefix}'
 
     substituteInPlace src/core/trust/terminal_agent.h \
-      --replace '/bin/whiptail' '${lib.getExe' newt "whiptail"}'
-  '' + lib.optionalString (!finalAttrs.doCheck) ''
-    sed -i CMakeLists.txt -e '/add_subdirectory(tests)/d'
+      --replace-fail '/bin/whiptail' '${lib.getExe' newt "whiptail"}'
+  '' + lib.optionalString (!finalAttrs.finalPackage.doCheck) ''
+    substituteInPlace CMakeLists.txt \
+      --replace-fail 'add_subdirectory(tests)' ""
   '';
 
   strictDeps = true;
@@ -58,6 +62,7 @@ stdenv.mkDerivation (finalAttrs: {
     gettext
     graphviz
     pkg-config
+    validatePkgConfig
   ];
 
   buildInputs = [
@@ -106,7 +111,10 @@ stdenv.mkDerivation (finalAttrs: {
   # Starts & talks to DBus
   enableParallelChecking = false;
 
-  passthru.tests.pkg-config = testers.testMetaPkgConfig finalAttrs.finalPackage;
+  passthru = {
+    tests.pkg-config = testers.testMetaPkgConfig finalAttrs.finalPackage;
+    updateScript = gitUpdater { };
+  };
 
   meta = with lib; {
     description = "Common implementation of a trust store to be used by trusted helpers";

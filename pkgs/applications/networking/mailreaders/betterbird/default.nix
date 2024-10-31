@@ -12,13 +12,13 @@
 let
   thunderbird-unwrapped = thunderbirdPackages.thunderbird-115;
 
-  version = "115.6.0";
+  version = "115.14.0";
   majVer = lib.versions.major version;
 
   betterbird-patches = fetchFromGitHub {
     owner = "Betterbird";
     repo = "thunderbird-patches";
-    rev = "${version}-bb21-correct-series-take2";
+    rev = "${version}-bb31";
     postFetch = ''
       echo "Retrieving external patches"
 
@@ -36,7 +36,7 @@ let
       . ./external.sh
       rm external.sh
     '';
-    hash = "sha256-YERSRyLfFTexvAYmP9qG6joQkK5fSIvU4pNLhCyIbOY=";
+    hash = "sha256-dXfpu+ufBfAWl1OlpQ1i8CC7N8f0NbxfaMH6BdKr28c=";
   };
 in ((buildMozillaMach {
   pname = "betterbird";
@@ -44,12 +44,13 @@ in ((buildMozillaMach {
 
   applicationName = "Betterbird";
   binaryName = "betterbird";
+  branding = "comm/mail/branding/betterbird";
   inherit (thunderbird-unwrapped) application extraPatches;
 
   src = fetchurl {
     # https://download.cdn.mozilla.net/pub/thunderbird/releases/
     url = "mirror://mozilla/thunderbird/releases/${version}/source/thunderbird-${version}.source.tar.xz";
-    hash = "sha256-Oxz5drDQ9IJVpgP4/+jiQ5Ds1b0oX8TRD+SOG6JRN0Q=";
+    hash = "sha256-A3/D8D9e5PI9SUetKFUE0oDpJsThprIk1zUfZoxu1/A=";
   };
 
   extraPostPatch = thunderbird-unwrapped.extraPostPatch or "" + /* bash */ ''
@@ -64,8 +65,8 @@ in ((buildMozillaMach {
     cd $patches
     # fix FHS paths to libdbusmenu
     substituteInPlace 12-feature-linux-systray.patch \
-      --replace "/usr/include/libdbusmenu-glib-0.4/" "${lib.getDev libdbusmenu-gtk3}/include/libdbusmenu-glib-0.4/" \
-      --replace "/usr/include/libdbusmenu-gtk3-0.4/" "${lib.getDev libdbusmenu-gtk3}/include/libdbusmenu-gtk3-0.4/"
+      --replace-fail "/usr/include/libdbusmenu-glib-0.4/" "${lib.getDev libdbusmenu-gtk3}/include/libdbusmenu-glib-0.4/" \
+      --replace-fail "/usr/include/libdbusmenu-gtk3-0.4/" "${lib.getDev libdbusmenu-gtk3}/include/libdbusmenu-gtk3-0.4/"
     cd -
 
     chmod -R +w dom/base/test/gtest/
@@ -74,6 +75,12 @@ in ((buildMozillaMach {
       patch="''${patch%%#*}"
       patch="''${patch% }"
       if [[ $patch == "" ]]; then
+        continue
+      fi
+
+      # requires vendored icu, fails to link with our icu
+      # feature-506064 depends on those icu patches
+      if [[ $patch == 14-feature-regexp-searchterm.patch || $patch == 14-feature-regexp-searchterm-m-c.patch || $patch == feature-506064-match-diacritics.patch || $patch == feature-506064-match-diacritics-m-c.patch ]]; then
         continue
       fi
 
@@ -92,11 +99,6 @@ in ((buildMozillaMach {
     libdbusmenu-gtk3
   ];
 
-  extraConfigureFlags = [
-    "--enable-application=comm/mail"
-    "--with-branding=comm/mail/branding/betterbird"
-  ];
-
   meta = with lib; {
     description = "Betterbird is a fine-tuned version of Mozilla Thunderbird, Thunderbird on steroids, if you will";
     homepage = "https://www.betterbird.eu/";
@@ -110,6 +112,8 @@ in ((buildMozillaMach {
   webrtcSupport = false;
 
   pgoSupport = false; # console.warn: feeds: "downloadFeed: network connection unavailable"
+
+  inherit (thunderbird-unwrapped.passthru) icu73;
 }).overrideAttrs (oldAttrs: {
   postInstall = oldAttrs.postInstall or "" + ''
     mv $out/lib/thunderbird/* $out/lib/betterbird

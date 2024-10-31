@@ -1,64 +1,64 @@
-{ lib
-, python
-, buildPythonPackage
-, fetchFromGitHub
-, fetchpatch
-, isPy3k
-, substituteAll
+{
+  lib,
+  python,
+  buildPythonPackage,
+  fetchFromGitHub,
+  fetchpatch2,
+  substituteAll,
 
-# build-system
-, setuptools
+  # build-system
+  setuptools,
 
-# native dependencies
-, openmp
-, xsimd
+  # native dependencies
+  openmp,
+  xsimd,
 
-# dependencies
-, ply
-, gast
-, numpy
-, beniget
+  # dependencies
+  ply,
+  gast,
+  numpy,
+  beniget,
 }:
 
 let
   inherit (python) stdenv;
-
-in buildPythonPackage rec {
+in
+buildPythonPackage rec {
   pname = "pythran";
-  version = "0.14.0";
+  version = "0.16.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "serge-sans-paille";
     repo = "pythran";
-    rev = version;
-    hash = "sha256-in0ty0aBAIx7Is13hjiHZGS8eKbhxb6TL3bENzfx5vQ=";
+    rev = "refs/tags/${version}";
+    hash = "sha256-wiQmShniYZmB8hk/MC5FWFf1s5vqEHiYBkXTo4OeZ+E=";
   };
 
   patches = [
+    (fetchpatch2 {
+      name = "bump-gast-to-0.6.0.patch";
+      url = "https://github.com/serge-sans-paille/pythran/commit/840a0e706ec39963aec6bcd1f118bf33177c20b4.patch";
+      hash = "sha256-FHGXWuAX/Nmn6uEfQgAXfUxIdApDwSfHHtOStxyme/0=";
+    })
     # Hardcode path to mp library
     (substituteAll {
       src = ./0001-hardcode-path-to-libgomp.patch;
-      gomp = "${if stdenv.cc.isClang then openmp else stdenv.cc.cc.lib}/lib/libgomp${stdenv.hostPlatform.extensions.sharedLibrary}";
-    })
-    (fetchpatch {
-      # Python 3.12 support
-      url = "https://github.com/serge-sans-paille/pythran/commit/258ab9aaf26172f669eab1bf2a346b5f65db3ac0.patch";
-      hash = "sha256-T+FLptDYIgzHBSXShULqHr/G8ttBFamq1M5JlB2HxDM=";
+      gomp = "${
+        if stdenv.cc.isClang then openmp else stdenv.cc.cc.lib
+      }/lib/libgomp${stdenv.hostPlatform.extensions.sharedLibrary}";
     })
   ];
 
   # xsimd: unvendor this header-only C++ lib
   postPatch = ''
-    rm -r third_party/xsimd
-    ln -s '${lib.getDev xsimd}'/include/xsimd third_party/
+    rm -r pythran/xsimd
+    ln -s '${lib.getDev xsimd}'/include/xsimd pythran/
   '';
 
-  nativeBuildInputs = [
-    setuptools
-  ];
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     ply
     gast
     numpy
@@ -78,11 +78,11 @@ in buildPythonPackage rec {
   # Test suite is huge and has a circular dependency on scipy.
   doCheck = false;
 
-  disabled = !isPy3k;
-
   meta = {
+    changelog = "https://github.com/serge-sans-paille/pythran/blob/${src.rev}/Changelog";
     description = "Ahead of Time compiler for numeric kernels";
     homepage = "https://github.com/serge-sans-paille/pythran";
     license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ doronbehar ];
   };
 }

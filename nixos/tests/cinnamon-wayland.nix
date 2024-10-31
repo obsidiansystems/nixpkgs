@@ -7,14 +7,14 @@ import ./make-test-python.nix ({ pkgs, lib, ... }: {
     imports = [ ./common/user-account.nix ];
     services.xserver.enable = true;
     services.xserver.desktopManager.cinnamon.enable = true;
-    services.xserver.displayManager = {
+    services.displayManager = {
       autoLogin.enable = true;
       autoLogin.user = nodes.machine.users.users.alice.name;
       defaultSession = "cinnamon-wayland";
     };
 
     # For the sessionPath subtest.
-    services.xserver.desktopManager.cinnamon.sessionPath = [ pkgs.gnome.gpaste ];
+    services.xserver.desktopManager.cinnamon.sessionPath = [ pkgs.gpaste ];
   };
 
   enableOCR = true;
@@ -64,7 +64,7 @@ import ./make-test-python.nix ({ pkgs, lib, ... }: {
           # This is not supported at the moment.
           # https://trello.com/b/HHs01Pab/cinnamon-wayland
           machine.execute("${su "cinnamon-screensaver-command -l >&2 &"}")
-          machine.wait_until_succeeds("journalctl -b --grep 'Cinnamon Screensaver is unavailable on Wayland'")
+          machine.wait_until_succeeds("journalctl -b --grep 'cinnamon-screensaver is disabled in wayland sessions'")
 
       with subtest("Open GNOME Terminal"):
           machine.succeed("${su "dbus-launch gnome-terminal"}")

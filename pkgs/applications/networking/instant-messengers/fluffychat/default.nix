@@ -4,33 +4,35 @@
 , imagemagick
 , mesa
 , libdrm
-, flutter313
+, flutter324
 , pulseaudio
 , makeDesktopItem
-, gnome
+, zenity
+, olm
 
 , targetFlutterPlatform ? "linux"
 }:
 
 let
   libwebrtcRpath = lib.makeLibraryPath [ mesa libdrm ];
+  pubspecLock = lib.importJSON ./pubspec.lock.json;
 in
-flutter313.buildFlutterApplication (rec {
+flutter324.buildFlutterApplication (rec {
   pname = "fluffychat-${targetFlutterPlatform}";
-  version = "1.14.1";
+  version = "1.22.1";
 
   src = fetchFromGitHub {
     owner = "krille-chan";
     repo = "fluffychat";
     rev = "refs/tags/v${version}";
-    hash = "sha256-VTpZvoyZXJ5SCKr3Ocfm4iT6Z/+AWg+SCw/xmp68kMg=";
+    hash = "sha256-biFoRcMss3JVrMoilc8BzJ+R6f+e4RYpZ5dbxDpnfTk=";
   };
 
-  pubspecLock = lib.importJSON ./pubspec.lock.json;
+  inherit pubspecLock;
 
   gitHashes = {
+    flutter_shortcuts = "sha256-4nptZ7/tM2W/zylk3rfQzxXgQ6AipFH36gcIb/0RbHo=";
     keyboard_shortcuts = "sha256-U74kRujftHPvpMOIqVT0Ph+wi1ocnxNxIFA1krft4Os=";
-    wakelock_windows = "sha256-Dfwe3dSScD/6kvkP67notcbb+EgTQ3kEYcH7wpra2dI=";
   };
 
   inherit targetFlutterPlatform;
@@ -43,13 +45,14 @@ flutter313.buildFlutterApplication (rec {
     maintainers = with maintainers; [ mkg20001 gilice ];
     platforms = [ "x86_64-linux" "aarch64-linux" ];
     sourceProvenance = [ sourceTypes.fromSource ];
+    inherit (olm.meta) knownVulnerabilities;
   };
 } // lib.optionalAttrs (targetFlutterPlatform == "linux") {
   nativeBuildInputs = [ imagemagick ];
 
   runtimeDependencies = [ pulseaudio ];
 
-  extraWrapProgramArgs = "--prefix PATH : ${gnome.zenity}/bin";
+  extraWrapProgramArgs = "--prefix PATH : ${zenity}/bin";
 
   env.NIX_LDFLAGS = "-rpath-link ${libwebrtcRpath}";
 
@@ -63,7 +66,7 @@ flutter313.buildFlutterApplication (rec {
   };
 
   postInstall = ''
-    FAV=$out/app/data/flutter_assets/assets/favicon.png
+    FAV=$out/app/fluffychat-linux/data/flutter_assets/assets/favicon.png
     ICO=$out/share/icons
 
     install -D $FAV $ICO/fluffychat.png
@@ -75,15 +78,14 @@ flutter313.buildFlutterApplication (rec {
       convert $FAV -resize ''${size}x''${size} $D/fluffychat.png
     done
 
-    patchelf --add-rpath ${libwebrtcRpath} $out/app/lib/libwebrtc.so
+    patchelf --add-rpath ${libwebrtcRpath} $out/app/fluffychat-linux/lib/libwebrtc.so
   '';
 } // lib.optionalAttrs (targetFlutterPlatform == "web") {
   prePatch =
     # https://github.com/krille-chan/fluffychat/blob/v1.17.1/scripts/prepare-web.sh
     let
       # Use Olm 1.3.2, the oldest version, for FluffyChat 1.14.1 which depends on olm_flutter 1.2.0.
-      # In the future, this should be changed to use self.pubspecLock.dependencyVersions.flutter_olm as the script does.
-      olmVersion = "1.3.2";
+      olmVersion = pubspecLock.packages.flutter_olm.version;
       olmJs = fetchzip {
         url = "https://github.com/famedly/olm/releases/download/v${olmVersion}/olm.zip";
         stripRoot = false;

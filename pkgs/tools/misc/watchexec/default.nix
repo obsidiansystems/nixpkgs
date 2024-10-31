@@ -2,27 +2,27 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "watchexec";
-  version = "1.25.0";
+  version = "2.2.0";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-kEZvzIbmL+Plko+uLP5LnacPoypkBCMzxSOkRkDsLW4=";
+    hash = "sha256-kbcSm1plh5QS87hGQj9OL1rq2eK6jbGn/kfjPF6kNzo=";
   };
 
-  cargoHash = "sha256-FgTD7jFgkhJA73VVZ47FcA21xJaMX8c3SAaB13Nvrqs=";
+  cargoHash = "sha256-xLUI7B7clpdJQOMDd32ag87yQ99XgbLgPqahPwUHMZQ=";
 
   nativeBuildInputs = [ installShellFiles ];
 
-  buildInputs = lib.optionals stdenv.isDarwin [ Cocoa AppKit ];
+  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [ Cocoa AppKit ];
 
-  NIX_LDFLAGS = lib.optionalString stdenv.isDarwin "-framework AppKit";
+  NIX_LDFLAGS = lib.optionalString stdenv.hostPlatform.isDarwin "-framework AppKit";
 
   checkFlags = [ "--skip=help" "--skip=help_short" ];
 
   postPatch = ''
-    rm .cargo/config
+    rm .cargo/config.toml
   '';
 
   postInstall = ''

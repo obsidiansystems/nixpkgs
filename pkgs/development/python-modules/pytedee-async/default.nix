@@ -1,14 +1,15 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, setuptools
-, pythonOlder
-, aiohttp
+{
+  lib,
+  aiohttp,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "pytedee-async";
-  version = "0.2.11";
+  version = "0.2.20";
   pyproject = true;
 
   disabled = pythonOlder "3.9";
@@ -17,20 +18,14 @@ buildPythonPackage rec {
     owner = "zweckj";
     repo = "pytedee_async";
     rev = "refs/tags/v${version}";
-    hash = "sha256-mBTY2JU79Hk6P+oWQ+2FD0BYHL1c865EvnTUl6H+gnk=";
+    hash = "sha256-mBE5h6oGEJ2Wzb/PCD4vwFs52tWy+YmQVA06BPVW1Kg=";
   };
 
-  nativeBuildInputs = [
-    setuptools
-  ];
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
-    aiohttp
-  ];
+  dependencies = [ aiohttp ];
 
-  pythonImportsCheck = [
-    "pytedee_async"
-  ];
+  pythonImportsCheck = [ "pytedee_async" ];
 
   # Module has no tests
   doCheck = false;

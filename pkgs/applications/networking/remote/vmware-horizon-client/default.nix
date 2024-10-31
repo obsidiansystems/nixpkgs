@@ -1,6 +1,6 @@
 { stdenv
 , lib
-, buildFHSEnvChroot
+, buildFHSEnv
 , copyDesktopItems
 , fetchurl
 , gsettings-desktop-schemas
@@ -11,7 +11,7 @@
 , configText ? ""
 }:
 let
-  version = "2309.1";
+  version = "2312.1";
 
   sysArch =
     if stdenv.hostPlatform.system == "x86_64-linux" then "x64"
@@ -36,8 +36,8 @@ let
     pname = "vmware-horizon-files";
     inherit version;
     src = fetchurl {
-      url = "https://download3.vmware.com/software/CART24FQ4_LIN_2309.1_TARBALL/VMware-Horizon-Client-Linux-2309.1-8.11.1-22775487.tar.gz";
-      sha256 = "3f66d21c0e97324d1cb85ac75132a69768e8e7ff57da33841e4e8bd37089d245";
+      url = "https://download3.vmware.com/software/CART25FQ1_LIN_2312.1_TARBALL/VMware-Horizon-Client-Linux-2312.1-8.12.1-23543969.tar.gz";
+      sha256 = "23d18be2955ba60ab3cca941a529fa3b804af97ebf1602d246ca6147cced8135";
     };
     nativeBuildInputs = [ makeWrapper ];
     installPhase = ''
@@ -54,6 +54,9 @@ let
       # Deleting the bundled library is the simplest way to force it to use our version.
       rm "$out/lib/vmware/gcc/libstdc++.so.6"
 
+      # This bundled version of libpng causes browser issues, and would prevent web-based sign-on.
+      rm "$out/lib/vmware/libpng16.so.16"
+
       # This opensc library is required to support smartcard authentication during the
       # initial connection to Horizon.
       mkdir $out/lib/vmware/view/pkcs11
@@ -64,7 +67,7 @@ let
     '';
   };
 
-  vmwareFHSUserEnv = name: buildFHSEnvChroot {
+  vmwareFHSUserEnv = name: buildFHSEnv {
     inherit name;
 
     runScript = "${vmwareHorizonClientFiles}/bin/${name}_wrapper";
@@ -148,6 +151,6 @@ stdenv.mkDerivation {
     homepage = "https://www.vmware.com/go/viewclients";
     license = licenses.unfree;
     platforms = [ "x86_64-linux" ];
-    maintainers = with maintainers; [ buckley310 ];
+    maintainers = [ ];
   };
 }

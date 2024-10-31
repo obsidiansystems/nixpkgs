@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, gitUpdater
 , boost
 , cmake
 , discord-rpc
@@ -19,20 +20,23 @@
 , which
 , xdg-user-dirs
 , zlib
+, withWayland ? false
+# Affects final license
+, withAngrylionRdpPlus ? false
 }:
 
 let
-  inherit (qt6Packages) qtbase qtsvg wrapQtAppsHook;
+  inherit (qt6Packages) qtbase qtsvg qtwayland wrapQtAppsHook;
 in
 stdenv.mkDerivation rec {
   pname = "rmg";
-  version = "0.5.5";
+  version = "0.6.5";
 
   src = fetchFromGitHub {
     owner = "Rosalie241";
     repo = "RMG";
     rev = "v${version}";
-    hash = "sha256-au5GDyfW9+drkDNBWNbPY5Bgbow/hQmvP5pWJsYKbYs=";
+    hash = "sha256-mgb9Ed11fBQVnhhU5w1958a19dbTOL0ADczUOxKAnqA=";
   };
 
   nativeBuildInputs = [
@@ -59,18 +63,21 @@ stdenv.mkDerivation rec {
     vulkan-loader
     xdg-user-dirs
     zlib
-  ];
+  ] ++ lib.optional withWayland qtwayland;
 
   cmakeFlags = [
     "-DPORTABLE_INSTALL=OFF"
     # mupen64plus-input-gca is written in Rust, so we can't build it with
     # everything else.
     "-DNO_RUST=ON"
+    "-DUSE_ANGRYLION=${lib.boolToString withAngrylionRdpPlus}"
   ];
 
-  qtWrapperArgs = lib.optionals stdenv.isLinux [
+  qtWrapperArgs = lib.optionals stdenv.hostPlatform.isLinux [
     "--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader ]}"
-  ];
+  ] ++ lib.optional withWayland "--set RMG_WAYLAND 1";
+
+  passthru.updateScript = gitUpdater { rev-prefix = "v"; };
 
   meta = with lib; {
     homepage = "https://github.com/Rosalie241/RMG";
@@ -79,7 +86,7 @@ stdenv.mkDerivation rec {
       Rosalie's Mupen GUI is a free and open-source mupen64plus front-end
       written in C++. It offers a simple-to-use user interface.
     '';
-    license = licenses.gpl3;
+    license = if withAngrylionRdpPlus then licenses.unfree else licenses.gpl3Only;
     platforms = platforms.linux;
     mainProgram = "RMG";
     maintainers = with maintainers; [ slam-bert ];

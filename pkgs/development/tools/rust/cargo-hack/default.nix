@@ -2,20 +2,21 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-hack";
-  version = "0.6.15";
+  version = "0.6.32";
 
   src = fetchCrate {
     inherit pname version;
-    hash = "sha256-yjaX4lqUj9aZPkRuiJC3yBwXvfvd+Okr87Ia2IQvxfM=";
+    hash = "sha256-XjubvjK+FySm0nqlzFsRhDQOI9M0enonwwPhZ/KFFlk=";
   };
 
-  cargoHash = "sha256-6ogeqVN2V38N7mNBjimjNv/KK2JtV4aa5AorRfYMBx8=";
+  cargoHash = "sha256-sWXeGohH9iLMkmBgNjSfg25eDzZHSzWrOGgccuWPBLM=";
 
   # some necessary files are absent in the crate version
   doCheck = false;
 
   meta = with lib; {
     description = "Cargo subcommand to provide various options useful for testing and continuous integration";
+    mainProgram = "cargo-hack";
     homepage = "https://github.com/taiki-e/cargo-hack";
     changelog = "https://github.com/taiki-e/cargo-hack/blob/v${version}/CHANGELOG.md";
     license = with licenses; [ asl20 /* or */ mit ];

@@ -1,23 +1,25 @@
-{ lib
-, buildPythonPackage
-, colorful
-, fetchFromGitHub
-, git
-, httpx
-, lxml
-, packaging
-, poetry-core
-, pytestCheckHook
-, python-dateutil
-, pythonOlder
-, semver
-, rich
-, tomlkit
+{
+  lib,
+  buildPythonPackage,
+  colorful,
+  fetchFromGitHub,
+  git,
+  httpx,
+  lxml,
+  packaging,
+  poetry-core,
+  pytestCheckHook,
+  python-dateutil,
+  pythonOlder,
+  semver,
+  shtab,
+  rich,
+  tomlkit,
 }:
 
 buildPythonPackage rec {
   pname = "pontos";
-  version = "23.12.1";
+  version = "24.9.0";
   pyproject = true;
 
   disabled = pythonOlder "3.9";
@@ -26,20 +28,19 @@ buildPythonPackage rec {
     owner = "greenbone";
     repo = "pontos";
     rev = "refs/tags/v${version}";
-    hash = "sha256-N10Jn5jq/PktpmeRNlqZyN/rUyAeW+ghY3/RK9Aas7I=";
+    hash = "sha256-CgO88I2M8RGpYyJchXZtqxIBjNaULSqnDgfFCUQDFUw=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
-  ];
+  build-system = [ poetry-core ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     colorful
     httpx
     lxml
     packaging
     python-dateutil
     semver
+    shtab
     rich
     tomlkit
   ] ++ httpx.optional-dependencies.http2;
@@ -71,9 +72,7 @@ buildPythonPackage rec {
     "test_verify_version_does_not_match"
   ];
 
-  pythonImportsCheck = [
-    "pontos"
-  ];
+  pythonImportsCheck = [ "pontos" ];
 
   meta = with lib; {
     description = "Collection of Python utilities, tools, classes and functions";

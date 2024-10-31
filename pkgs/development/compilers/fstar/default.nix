@@ -12,13 +12,13 @@
 
 let
 
-  version = "2023.09.03";
+  version = "2024.09.05";
 
   src = fetchFromGitHub {
     owner = "FStarLang";
     repo = "FStar";
     rev = "v${version}";
-    hash = "sha256-ymoP5DvaLdrdwJcnhZnLEvwNxUFzhkICajPyK4lvacc=";
+    hash = "sha256-yaA6WpP2XIQhjK7kpXBdBFUgKZyvtThd6JmSchUCfbI=";
   };
 
   fstar-dune = ocamlPackages.callPackage ./dune.nix { inherit version src; };

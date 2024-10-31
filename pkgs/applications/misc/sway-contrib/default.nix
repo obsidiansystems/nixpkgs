@@ -1,4 +1,4 @@
-{ lib, stdenv
+{ lib, stdenvNoCC
 , fetchFromGitHub
 , coreutils
 , makeWrapper
@@ -9,18 +9,19 @@
 , slurp
 , grim
 , jq
+, gnugrep
 , bash
 
 , python3Packages
 }:
 
 let
-  version = "unstable-2023-06-30";
+  version = "0-unstable-2024-03-19";
   src = fetchFromGitHub {
     owner = "OctopusET";
     repo = "sway-contrib";
-    rev = "7e138bfc112872b79ac9fd766bc57c0f125b96d4";
-    hash = "sha256-u4sw1NeAhl4FJCG2YOeY45SHoN7tw6cSJwEL5iqr0uQ=";
+    rev = "5d33a290e3cac3f0fed38ff950939da28e3ebfd7";
+    hash = "sha256-2qYxkXowSSzVcpsPO4JoUqaH/VUkOOWu1RKFXp1CXGs=";
   };
 
   meta = with lib; {
@@ -31,7 +32,7 @@ let
 in
 {
 
-grimshot = stdenv.mkDerivation rec {
+grimshot = stdenvNoCC.mkDerivation {
   inherit version src;
 
   pname = "grimshot";
@@ -46,6 +47,7 @@ grimshot = stdenv.mkDerivation rec {
   buildInputs = [ bash ];
   installPhase = ''
     installManPage grimshot.1
+    installShellCompletion --cmd grimshot grimshot-completion.bash
 
     install -Dm 0755 grimshot $out/bin/grimshot
     wrapProgram $out/bin/grimshot --set PATH \
@@ -57,6 +59,7 @@ grimshot = stdenv.mkDerivation rec {
         slurp
         grim
         jq
+        gnugrep
         ] }"
   '';
 
@@ -70,19 +73,20 @@ grimshot = stdenv.mkDerivation rec {
     fi
   '';
 
-  meta = with lib; {
-    description = "A helper for screenshots within sway";
+  meta = with lib; meta // {
+    description = "Helper for screenshots within sway";
     maintainers = with maintainers; [ evils ];
     mainProgram = "grimshot";
   };
 };
 
 
-inactive-windows-transparency = python3Packages.buildPythonApplication rec {
-  inherit version src;
-
+inactive-windows-transparency = let
   # long name is long
   lname = "inactive-windows-transparency";
+in python3Packages.buildPythonApplication {
+  inherit version src;
+
   pname = "sway-${lname}";
 
   format = "other";
@@ -95,7 +99,7 @@ inactive-windows-transparency = python3Packages.buildPythonApplication rec {
     install -Dm 0755 $src/${lname}.py $out/bin/${lname}.py
   '';
 
-  meta = with lib; {
+  meta = with lib; meta // {
     description = "It makes inactive sway windows transparent";
     mainProgram = "${lname}.py";
     maintainers = with maintainers; [

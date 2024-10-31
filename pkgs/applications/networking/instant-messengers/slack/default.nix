@@ -45,14 +45,14 @@ let
 
   pname = "slack";
 
-  x86_64-darwin-version = "4.36.138";
-  x86_64-darwin-sha256 = "1dj4q98sva25kbniqnwz2l38lg48dhrdmjx31sg8j0ayrs82hha4";
+  x86_64-darwin-version = "4.40.128";
+  x86_64-darwin-sha256 = "0hfgl2pfarnd9gh921rfz9s9kkvyf8fmmhgb6j87jgbwf8rjrjmm";
 
-  x86_64-linux-version = "4.36.138";
-  x86_64-linux-sha256 = "06h258fvpprx37vjvd5sxl6bxnfcq3shviwx9wv8m9fmg2riwnsg";
+  x86_64-linux-version = "4.40.128";
+  x86_64-linux-sha256 = "1p7ybwrsfy5iq5ggpz1p4mx58ilwzsvn7k149i5ifi0zifahwwdg";
 
-  aarch64-darwin-version = "4.36.138";
-  aarch64-darwin-sha256 = "10xg5aa668iq0n56la1rqgpbzw8jym0y8dgv99f1l7yn03fcwpql";
+  aarch64-darwin-version = "4.40.128";
+  aarch64-darwin-sha256 = "0h6659lny80kxrqaf9qidirkw702wi7hjwwdhk9y0gcy87s9rqwd";
 
   version = {
     x86_64-darwin = x86_64-darwin-version;
@@ -65,15 +65,15 @@ let
     base = "https://downloads.slack-edge.com";
   in {
     x86_64-darwin = fetchurl {
-      url = "${base}/releases/macos/${version}/prod/x64/Slack-${version}-macOS.dmg";
+      url = "${base}/desktop-releases/mac/universal/${version}/Slack-${version}-macOS.dmg";
       sha256 = x86_64-darwin-sha256;
     };
     x86_64-linux = fetchurl {
-      url = "${base}/releases/linux/${version}/prod/x64/slack-desktop-${version}-amd64.deb";
+      url = "${base}/desktop-releases/linux/x64/${version}/slack-desktop-${version}-amd64.deb";
       sha256 = x86_64-linux-sha256;
     };
     aarch64-darwin = fetchurl {
-      url = "${base}/releases/macos/${version}/prod/arm64/Slack-${version}-macOS.dmg";
+      url = "${base}/desktop-releases/mac/arm64/${version}/Slack-${version}-macOS.dmg";
       sha256 = aarch64-darwin-sha256;
     };
   }.${system} or throwSystem;
@@ -84,7 +84,7 @@ let
     changelog = "https://slack.com/release-notes";
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = licenses.unfree;
-    maintainers = with maintainers; [ mmahut amaxine ];
+    maintainers = with maintainers; [ mmahut teutat3s ];
     platforms = [ "x86_64-darwin" "x86_64-linux" "aarch64-darwin" ];
     mainProgram = "slack";
   };
@@ -181,7 +181,11 @@ let
         --replace /usr/bin/ $out/bin/ \
         --replace /usr/share/pixmaps/slack.png slack \
         --replace bin/slack "bin/slack -s"
-
+    '' + lib.optionalString stdenv.hostPlatform.isLinux ''
+      # Prevent Un-blacklist pipewire integration to enable screen sharing on wayland.
+      # https://github.com/flathub/com.slack.Slack/issues/101#issuecomment-1807073763
+      sed -i -e 's/,"WebRTCPipeWireCapturer"/,"LebRTCPipeWireCapturer"/' $out/lib/slack/resources/app.asar
+    '' + ''
       runHook postInstall
     '';
   };
@@ -203,6 +207,6 @@ let
     '';
   };
 in
-if stdenv.isDarwin
+if stdenv.hostPlatform.isDarwin
 then darwin
 else linux

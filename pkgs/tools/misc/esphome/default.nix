@@ -6,10 +6,14 @@
 , platformio
 , esptool
 , git
+, inetutils
+, stdenv
+, nixosTests
 }:
 
 let
   python = python3Packages.python.override {
+    self = python;
     packageOverrides = self: super: {
       esphome-dashboard = self.callPackage ./dashboard.nix { };
     };
@@ -17,32 +21,45 @@ let
 in
 python.pkgs.buildPythonApplication rec {
   pname = "esphome";
-  version = "2023.12.8";
+  version = "2024.10.2";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-aDFp0lWltju31MJigmkXS0dcdALd5d2hXBRaPUCbMJ4=";
+    hash = "sha256-WEsFgmwH6OGkAn1c0h/HBhBJr2329YHSKMZzjEDTKNg=";
   };
 
-  nativeBuildInputs = with python.pkgs; [
+  build-systems = with python.pkgs; [
     setuptools
     argcomplete
+  ];
+
+  nativeBuildInputs = [
     installShellFiles
   ];
 
-  postPatch = ''
-    # remove all version pinning (E.g tornado==5.1.1 -> tornado)
-    sed -i -e "s/==[0-9.]*//" requirements.txt
+  pythonRelaxDeps = true;
 
-    # drop coverage testing
-    sed -i '/--cov/d' pytest.ini
+  pythonRemoveDeps = [
+    "esptool"
+    "platformio"
+  ];
+
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace-fail "setuptools==" "setuptools>="
+
+    # ensure component dependencies are available
+    cat requirements_optional.txt >> requirements.txt
+    # relax strict runtime version check
+    substituteInPlace esphome/components/font/__init__.py \
+      --replace-fail "10.2.0" "${python.pkgs.pillow.version}"
   '';
 
   # Remove esptool and platformio from requirements
-  ESPHOME_USE_SUBPROCESS = "";
+  env.ESPHOME_USE_SUBPROCESS = "";
 
   # esphome has optional dependencies it does not declare, they are
   # loaded when certain config blocks are used, like `font`, `image`
@@ -50,23 +67,27 @@ python.pkgs.buildPythonApplication rec {
   # They have validation functions like:
   # - validate_cryptography_installed
   # - validate_pillow_installed
-  propagatedBuildInputs = with python.pkgs; [
+  dependencies = with python.pkgs; [
     aioesphomeapi
     argcomplete
+    cairosvg
     click
     colorama
     cryptography
     esphome-dashboard
+    icmplib
     kconfiglib
+    packaging
     paho-mqtt
     pillow
     platformio
     protobuf
+    puremagic
     pyparsing
     pyserial
-    python-magic
     pyyaml
     requests
+    ruamel-yaml
     tornado
     tzdata
     tzlocal
@@ -74,27 +95,26 @@ python.pkgs.buildPythonApplication rec {
   ];
 
   makeWrapperArgs = [
-    # platformio is used in esphomeyaml/platformio_api.py
-    # esptool is used in esphomeyaml/__main__.py
-    # git is used in esphomeyaml/writer.py
-    "--prefix PATH : ${lib.makeBinPath [ platformio esptool git ]}"
-    "--prefix PYTHONPATH : $PYTHONPATH" # will show better error messages
+    # platformio is used in esphome/platformio_api.py
+    # esptool is used in esphome/__main__.py
+    # git is used in esphome/writer.py
+    # inetutils is used in esphome/dashboard/status/ping.py
+    "--prefix PATH : ${lib.makeBinPath [ platformio esptool git inetutils ]}"
+    "--prefix PYTHONPATH : ${python.pkgs.makePythonPath dependencies}" # will show better error messages
+    "--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ stdenv.cc.cc.lib ]}"
     "--set ESPHOME_USE_SUBPROCESS ''"
   ];
+
+  # Needed for tests
+  __darwinAllowLocalNetworking = true;
 
   nativeCheckInputs = with python3Packages; [
     hypothesis
     mock
     pytest-asyncio
+    pytest-cov-stub
     pytest-mock
     pytestCheckHook
-  ];
-
-  disabledTestPaths = [
-    # requires hypothesis 5.49, we have 6.x
-    # ImportError: cannot import name 'ip_addresses' from 'hypothesis.provisional'
-    "tests/unit_tests/test_core.py"
-    "tests/unit_tests/test_helpers.py"
   ];
 
   postCheck = ''
@@ -115,6 +135,7 @@ python.pkgs.buildPythonApplication rec {
   passthru = {
     dashboard = python.pkgs.esphome-dashboard;
     updateScript = callPackage ./update.nix { };
+    tests = { inherit (nixosTests) esphome; };
   };
 
   meta = with lib; {

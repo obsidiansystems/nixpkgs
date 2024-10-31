@@ -11,19 +11,18 @@
   # Default native-image arguments. You probably don't want to set this,
   # except in special cases. In most cases, use extraNativeBuildArgs instead
 , nativeImageBuildArgs ? [
-    (lib.optionalString stdenv.isDarwin "-H:-CheckToolchain")
-    (lib.optionalString (stdenv.isLinux && stdenv.isAarch64) "-H:PageSize=64K")
+    (lib.optionalString stdenv.hostPlatform.isDarwin "-H:-CheckToolchain")
+    (lib.optionalString (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isAarch64) "-H:PageSize=64K")
     "-H:Name=${executable}"
     "-march=compatibility"
     "--verbose"
-    "-J-Dsun.stdout.encoding=UTF-8"
-    "-J-Dsun.stderr.encoding=UTF-8"
   ]
   # Extra arguments to be passed to the native-image
 , extraNativeImageBuildArgs ? [ ]
   # XMX size of GraalVM during build
 , graalvmXmx ? "-J-Xmx6g"
 , meta ? { }
+, LC_ALL ? "en_US.UTF-8"
 , ...
 } @ args:
 
@@ -45,6 +44,8 @@ in
 stdenv.mkDerivation ({
   inherit dontUnpack jar;
 
+  env = { inherit LC_ALL; };
+
   nativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ [ graalvmDrv glibcLocales removeReferencesTo ];
 
   nativeImageBuildArgs = nativeImageBuildArgs ++ extraNativeImageBuildArgs ++ [ graalvmXmx ];
@@ -52,7 +53,7 @@ stdenv.mkDerivation ({
   buildPhase = args.buildPhase or ''
     runHook preBuild
 
-    native-image -jar "$jar" $(export -p | sed -n 's/^declare -x \([^=]\+\)=.*$/ -E\1/p' | tr -d \\n) ''${nativeImageBuildArgs[@]}
+    native-image -jar "$jar" ''${nativeImageBuildArgs[@]}
 
     runHook postBuild
   '';

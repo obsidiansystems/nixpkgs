@@ -1,7 +1,6 @@
 { lib
 , stdenv
 , fetchFromGitHub
-, fetchpatch
 , callPackage
 , patchelf
 , unzip
@@ -16,18 +15,18 @@
 }:
 
 let
-  version = "2.8";
+  version = "2.8.3";
   craftos2-lua = fetchFromGitHub {
     owner = "MCJack123";
     repo = "craftos2-lua";
     rev = "v${version}";
-    hash = "sha256-xuNcWt3Wnh3WlYe6pB4dvP3PY9S5ghL9QQombGn8iyY=";
+    hash = "sha256-OCHN/ef83X4r5hZcPfFFvNJHjINCTiK+COf369/WPsA=";
   };
   craftos2-rom = fetchFromGitHub {
     owner = "McJack123";
     repo = "craftos2-rom";
     rev = "v${version}";
-    hash = "sha256-WZs/KIdpqLLzvpH2hiJpe/AehluoQMtewBbAb4htz8k=";
+    hash = "sha256-YidLt/JLwBMW0LMo5Q5PV6wGhF0J72FGX+iWYn6v0Z4=";
   };
 in
 
@@ -39,19 +38,12 @@ stdenv.mkDerivation rec {
     owner = "MCJack123";
     repo = "craftos2";
     rev = "v${version}";
-    hash = "sha256-nT/oN2XRU1Du1/IHlkRCzLqFwQ5s9Sr4FQs3ES+aPFs=";
+    hash = "sha256-DbxAsXxpsa42dF6DaLmgIa+Hs/PPqJ4dE97PoKxG2Ig=";
   };
 
-  patches = [
-    ( # Fixes CCEmuX. This is a one-character change that did not make it into the release.
-      fetchpatch {
-        url = "https://github.com/MCJack123/craftos2/commit/9ef7e16b69ead69b5fe076724842a1e24b3de058.patch";
-        hash = "sha256-SjNnsooDFt3JoVOO0xf6scrGXEQQmrQf91GY7VWaTOw=";
-      }
-    )
-  ];
-
-  buildInputs = [ patchelf poco openssl SDL2 SDL2_mixer ncurses libpng pngpp libwebp ];
+  nativeBuildInputs = [ patchelf unzip ];
+  buildInputs = [ poco openssl SDL2 SDL2_mixer ncurses libpng pngpp libwebp ];
+  strictDeps = true;
 
   preBuild = ''
     cp -R ${craftos2-lua}/* ./craftos2-lua/
@@ -74,6 +66,17 @@ stdenv.mkDerivation rec {
     patchelf --replace-needed craftos2-lua/src/liblua.so liblua.so $out/bin/craftos
     cp -R api $out/include/CraftOS-PC
     cp -R ${craftos2-rom}/* $out/share/craftos
+
+    mkdir -p resources/linux-icons
+    unzip resources/linux-icons.zip -d resources/linux-icons
+    for dim in 16 24 32 48 64 96 128 256 1024; do
+      dir="$out/share/icons/hicolor/$dimx$dim/apps"
+      mkdir -p "$dir"
+      cp "resources/linux-icons/$dim.png" "$dir/craftos.png"
+    done
+
+    mkdir -p $out/share/applications
+    cp resources/linux-icons/CraftOS-PC.desktop $out/share/applications/CraftOS-PC.desktop
   '';
 
   passthru.tests = {
@@ -82,7 +85,7 @@ stdenv.mkDerivation rec {
   };
 
   meta = with lib; {
-    description = "An implementation of the CraftOS-PC API written in C++ using SDL";
+    description = "Implementation of the CraftOS-PC API written in C++ using SDL";
     homepage = "https://www.craftos-pc.cc";
     license = with licenses; [ mit free ];
     platforms = platforms.linux;

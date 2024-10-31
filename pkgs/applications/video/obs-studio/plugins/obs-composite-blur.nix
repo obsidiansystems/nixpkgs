@@ -24,8 +24,15 @@ stdenv.mkDerivation rec {
     cmake
   ];
 
+  postInstall = ''
+    rm -rf "$out/share"
+    mkdir -p "$out/share/obs"
+    mv "$out/data/obs-plugins" "$out/share/obs"
+    rm -rf "$out/obs-plugins" "$out/data"
+  '';
+
   meta = with lib; {
-    description = "A comprehensive blur plugin for OBS that provides several different blur algorithms, and proper compositing";
+    description = "Comprehensive blur plugin for OBS that provides several different blur algorithms, and proper compositing";
     homepage = "https://github.com/FiniteSingularity/obs-composite-blur";
     license = licenses.gpl2Only;
     maintainers = with maintainers; [ GaetanLepage ];

@@ -23,13 +23,13 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "powerlevel10k";
-  version = "1.19.0";
+  version = "1.20.0";
 
   src = fetchFromGitHub {
     owner = "romkatv";
     repo = "powerlevel10k";
     rev = "refs/tags/v${version}";
-    hash = "sha256-+hzjSbbrXr0w1rGHm6m2oZ6pfmD6UUDBfPd7uMg5l5c=";
+    hash = "sha256-ES5vJXHjAKw/VHjWs8Au/3R+/aotSbY7PWnWAMzCR8E=";
   };
 
   strictDeps = true;
@@ -52,7 +52,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     changelog = "https://github.com/romkatv/powerlevel10k/releases/tag/v${version}";
-    description = "A fast reimplementation of Powerlevel9k ZSH theme";
+    description = "Fast reimplementation of Powerlevel9k ZSH theme";
     longDescription = ''
       To make use of this derivation, use
       `programs.zsh.promptInit = "source ''${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme";`

@@ -1,27 +1,24 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, setuptools
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "types-markdown";
-  version = "3.5.0.20240106";
+  version = "3.7.0.20240822";
   pyproject = true;
 
   src = fetchPypi {
     pname = "types-Markdown";
     inherit version;
-    hash = "sha256-vkfTXL5h1Fi9F67BJ/HaIzzW7Zb6mhMccQN4pOiFcDA=";
+    hash = "sha256-GDVXyfT4Zb3v2PX5ajgUXDGBknHN4RHTVVfDvSBp540=";
   };
 
-  nativeBuildInputs = [
-    setuptools
-  ];
+  nativeBuildInputs = [ setuptools ];
 
-  pythonImportsCheck = [
-    "markdown-stubs"
-  ];
+  pythonImportsCheck = [ "markdown-stubs" ];
 
   meta = with lib; {
     description = "Typing stubs for Markdown";

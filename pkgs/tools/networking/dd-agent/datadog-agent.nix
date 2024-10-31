@@ -21,12 +21,12 @@ let
   owner   = "DataDog";
   repo    = "datadog-agent";
   goPackagePath = "github.com/${owner}/${repo}";
-  version = "7.50.1";
+  version = "7.50.3";
 
   src = fetchFromGitHub {
     inherit owner repo;
     rev = version;
-    hash = "sha256-03+ofnS8ecx2SRAWb0KX6TxRd0SDEOCd4+EBVgoMFZk=";
+    hash = "sha256-AN5BruLPyrpIGSUkcYkZC0VgItk9NHiZTXstv6j9TlY=";
   };
   rtloader = stdenv.mkDerivation {
     pname = "datadog-agent-rtloader";
@@ -43,7 +43,7 @@ in buildGoModule rec {
 
   doCheck = false;
 
-  vendorHash = "sha256-X+QLz45kWg12ls1dkGzThbNxPw7WEJ1odRYkuhOyhk8=";
+  vendorHash = "sha256-Rn8EB/6FHQk9COlOaxm4TQXjGCIPZHJV2QQnPDcbRnM=";
 
   subPackages = [
     "cmd/agent"
@@ -103,8 +103,8 @@ in buildGoModule rec {
     cp -R $src/pkg/status/templates $out/share/datadog-agent
 
     wrapProgram "$out/bin/agent" \
-      --set PYTHONPATH "$out/${python.sitePackages}"'' + lib.optionalString withSystemd '' \
-      --prefix LD_LIBRARY_PATH : '' + lib.makeLibraryPath [ (lib.getLib systemd) rtloader ];
+      --set PYTHONPATH "$out/${python.sitePackages}"''
+      + lib.optionalString withSystemd " --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ (lib.getLib systemd) rtloader ]}";
 
   passthru.tests.version = testers.testVersion {
     package = datadog-agent;
@@ -120,6 +120,9 @@ in buildGoModule rec {
     license     = licenses.bsd3;
     maintainers = with maintainers; [ thoughtpolice domenkozar ];
     # never built on aarch64-darwin since first introduction in nixpkgs
-    broken = stdenv.isDarwin && stdenv.isAarch64;
+    # broken = stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64;
+
+    # Upstream does not support Go > 1.21; for update refer to https://github.com/NixOS/nixpkgs/issues/351119
+    broken = true;
   };
 }

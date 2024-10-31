@@ -58,6 +58,9 @@ stdenv.mkDerivation rec {
       cmake/Modules/FindOpenSSL_EP.cmake
   '';
 
+  # upstream will hopefully fix this in some newer release
+  env.CXXFLAGS = "-include random";
+
   # (bundled) blosc headers have a warning on some archs that it will be using
   # unaccelerated routines.
   cmakeFlags = [
@@ -105,7 +108,7 @@ stdenv.mkDerivation rec {
 
   installTargets = [ "install-tiledb" "doc" ];
 
-  postInstall = lib.optionalString stdenv.isDarwin ''
+  postInstall = lib.optionalString stdenv.hostPlatform.isDarwin ''
     install_name_tool -add_rpath ${tbb}/lib $out/lib/libtiledb.dylib
   '';
 

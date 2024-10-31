@@ -1,17 +1,19 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, numba
-, numpy
-, pillow
-, scipy
-, pytestCheckHook
-,
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  numba,
+  numpy,
+  pillow,
+  pytestCheckHook,
+  scipy,
+  setuptools,
 }:
+
 buildPythonPackage rec {
   pname = "pymatting";
   version = "1.1.10";
-  format = "setuptools";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "pymatting";
@@ -20,7 +22,7 @@ buildPythonPackage rec {
     hash = "sha256-wHCTqcBvVN/pTXH3iW57DPpMEsnehutRQB5NaugS6Zs=";
   };
 
-  patches = [ ./01-kdtree-signature.patch ];
+  nativeBuildInputs = [ setuptools ];
 
   propagatedBuildInputs = [
     numba
@@ -29,11 +31,9 @@ buildPythonPackage rec {
     scipy
   ];
 
-  pythonImportsCheck = [ "pymatting" ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  nativeCheckInputs = [
-    pytestCheckHook
-  ];
+  pythonImportsCheck = [ "pymatting" ];
 
   disabledTests = [
     # no access to input data set
@@ -45,11 +45,10 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    description = "A Python library for alpha matting";
+    description = "Python library for alpha matting";
     homepage = "https://github.com/pymatting/pymatting";
     changelog = "https://github.com/pymatting/pymatting/blob/${src.rev}/CHANGELOG.md";
     license = licenses.mit;
     maintainers = with maintainers; [ blaggacao ];
   };
 }
-

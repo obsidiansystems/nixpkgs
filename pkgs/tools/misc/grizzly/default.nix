@@ -5,21 +5,21 @@
 
 buildGoModule rec {
   pname = "grizzly";
-  version = "0.3.0";
+  version = "0.4.5";
 
   src = fetchFromGitHub {
     owner = "grafana";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-Yc15mD21Ohga7Pw+iowegkI2DWbKIZOZQ2vkKOdsKUk=";
+    hash = "sha256-cHPF+WHiUU0Cd30mEe+vMbkoG2mh2jMwlKhd851woH0=";
   };
 
-  vendorHash = "sha256-8myfB2LKDPUCFV9GBSXrBo9E+WrCOCm0ZHKTQ1dEb9U=";
+  vendorHash = "sha256-lioFmaFzqaxN1wnYJaoHA54to1xGZjaLGaqAFIfTaTs=";
 
   subPackages = [ "cmd/grr" ];
 
   meta = with lib; {
-    description = "A utility for managing Jsonnet dashboards against the Grafana API";
+    description = "Utility for managing Jsonnet dashboards against the Grafana API";
     homepage = "https://grafana.github.io/grizzly/";
     license = licenses.asl20;
     maintainers = with lib.maintainers; [ nrhtr ];
