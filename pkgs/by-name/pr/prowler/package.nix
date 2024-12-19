@@ -6,14 +6,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "prowler";
-  version = "4.4.1";
+  version = "5.0.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "prowler-cloud";
     repo = "prowler";
     rev = "refs/tags/${version}";
-    hash = "sha256-9pqp9DJKvzOzApWuSXNn7uQ4bxdPmQ9QtOEAlbrT9Eg=";
+    hash = "sha256-yT6hyOmKkndJvtbxGQdzmW/miC8kz1yIo3DxvMPJ30Y=";
   };
 
   pythonRelaxDeps = true;
@@ -37,6 +37,7 @@ python3.pkgs.buildPythonApplication rec {
     azure-mgmt-rdbms
     azure-mgmt-resource
     azure-mgmt-security
+    azure-mgmt-search
     azure-mgmt-sql
     azure-mgmt-storage
     azure-mgmt-subscription

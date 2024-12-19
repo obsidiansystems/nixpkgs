@@ -1,14 +1,15 @@
-{ lib
-, stdenv
-, fetchurl
-, cairo
-, expat
-, ffmpeg
-, libexif
-, pango
-, pkg-config
-, wxGTK
-, darwin
+{
+  lib,
+  stdenv,
+  fetchurl,
+  cairo,
+  expat,
+  ffmpeg,
+  libexif,
+  pango,
+  pkg-config,
+  wxGTK,
+  darwin,
 }:
 
 let
@@ -53,7 +54,7 @@ stdenv.mkDerivation rec {
       Graphics (SVG) files with the wxWidgets toolkit.
     '';
     license = licenses.gpl2Plus;
-    maintainers = [ maintainers.AndersonTorres ];
+    maintainers = [ ];
     inherit (wxGTK.meta) platforms;
   };
 }

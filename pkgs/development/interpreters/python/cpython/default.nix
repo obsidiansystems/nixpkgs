@@ -25,7 +25,7 @@
 
 # platform-specific dependencies
 , bash
-, configd
+, apple-sdk_11
 , darwin
 , windows
 
@@ -178,11 +178,12 @@ let
     bluez
   ] ++ optionals enableFramework [
     darwin.apple_sdk.frameworks.Cocoa
+  ] ++ optionals stdenv.hostPlatform.isDarwin [
+    # Work around for ld64 crashes on x86_64-darwin. Remove once 11.0 becomes the default.
+    apple-sdk_11
   ] ++ optionals stdenv.hostPlatform.isMinGW [
     windows.dlfcn
     windows.mingw_w64_pthreads
-  ] ++ optionals stdenv.hostPlatform.isDarwin [
-    configd
   ] ++ optionals tzdataSupport [
     tzdata
   ] ++ optionals withGdbm [
@@ -270,11 +271,6 @@ in with passthru; stdenv.mkDerivation (finalAttrs: {
   ] ++ optionals mimetypesSupport [
     # Make the mimetypes module refer to the right file
     ./mimetypes.patch
-  ] ++ optionals (pythonAtLeast "3.7" && pythonOlder "3.11") [
-    # Fix darwin build https://bugs.python.org/issue34027
-    ./3.7/darwin-libutil.patch
-  ] ++ optionals (pythonAtLeast "3.11") [
-    ./3.11/darwin-libutil.patch
   ] ++ optionals (pythonAtLeast "3.9" && pythonOlder "3.11" && stdenv.hostPlatform.isDarwin) [
     # Stop checking for TCL/TK in global macOS locations
     ./3.9/darwin-tcl-tk.patch
@@ -310,12 +306,28 @@ in with passthru; stdenv.mkDerivation (finalAttrs: {
     mingw-patch = fetchgit {
       name = "mingw-python-patches";
       url = "https://src.fedoraproject.org/rpms/mingw-python3.git";
-      rev = "45c45833ab9e5480ad0ae00778a05ebf35812ed4"; # for python 3.11.5 at the time of writing.
-      sha256 = "sha256-KIyNvO6MlYTrmSy9V/DbzXm5OsIuyT/BEpuo7Umm9DI=";
+      rev = "3edecdbfb4bbf1276d09cd5e80e9fb3dd88c9511"; # for python 3.11.9 at the time of writing.
+      hash = "sha256-kpXoIHlz53+0FAm/fK99ZBdNUg0u13erOr1XP2FSkQY=";
     };
-  in [
-    "${mingw-patch}/*.patch"
-  ]);
+  in (
+    builtins.map (f: "${mingw-patch}/${f}")
+    [
+      # The other patches in that repo are already applied to 3.11.10
+      "mingw-python3_distutils.patch"
+      "mingw-python3_frozenmain.patch"
+      "mingw-python3_make-sysconfigdata.py-relocatable.patch"
+      "mingw-python3_mods-failed.patch"
+      "mingw-python3_module-select.patch"
+      "mingw-python3_module-socket.patch"
+      "mingw-python3_modules.patch"
+      "mingw-python3_platform-mingw.patch"
+      "mingw-python3_posix-layout.patch"
+      "mingw-python3_pthread_threadid.patch"
+      "mingw-python3_pythonw.patch"
+      "mingw-python3_setenv.patch"
+      "mingw-python3_win-modules.patch"
+    ])
+  );
 
   postPatch = optionalString (!stdenv.hostPlatform.isWindows) ''
     substituteInPlace Lib/subprocess.py \
@@ -362,9 +374,6 @@ in with passthru; stdenv.mkDerivation (finalAttrs: {
     (enableFeature enableGIL "gil")
   ] ++ optionals enableOptimizations [
     "--enable-optimizations"
-  ] ++ optionals (stdenv.hostPlatform.isDarwin && configd == null) [
-    # Make conditional on Darwin for now to avoid causing Linux rebuilds.
-    "py_cv_module__scproxy=n/a"
   ] ++ optionals (sqlite != null) [
     "--enable-loadable-sqlite-extensions"
   ] ++ optionals (libxcrypt != null) [

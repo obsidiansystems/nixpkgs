@@ -1,11 +1,10 @@
 {
-  stdenv,
   lib,
-  fetchFromGitHub,
-  rustPlatform,
+  stdenv,
+  apple-sdk_11,
   capnproto,
-  darwin,
   extra-cmake-modules,
+  fetchFromGitHub,
   fontconfig,
   llvmPackages,
   nix-update-script,
@@ -13,21 +12,23 @@
   pkg-config,
   protobuf,
   rust-jemalloc-sys,
+  rustPlatform,
   zlib,
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "turbo-unwrapped";
-  version = "2.2.3";
+  version = "2.3.3";
 
   src = fetchFromGitHub {
     owner = "vercel";
     repo = "turbo";
     rev = "refs/tags/v${version}";
-    hash = "sha256-MDvwitzZVPVjdIVEAV1aKMAVeLSTMM2owH5RSfVg+rU=";
+    hash = "sha256-L51RgXUlA9hnVt232qdLo6t0kqXl7b01jotUk1r8wO0=";
   };
 
-  cargoHash = "sha256-XBI/eiOyKk80ZDFLD2HCTFYRWvC7qtzQY/zFCmKdKSM=";
+  useFetchCargoVendor = true;
+  cargoHash = "sha256-qv5bK65vA94M/YSjSRaYilg44NqkzF2ybmUVapu8cpI=";
 
   nativeBuildInputs =
     [
@@ -39,21 +40,12 @@ rustPlatform.buildRustPackage rec {
     # https://github.com/vercel/turbo/blob/ea740706e0592b3906ab34c7cfa1768daafc2a84/CONTRIBUTING.md#linux-dependencies
     ++ lib.optional stdenv.hostPlatform.isLinux llvmPackages.bintools;
 
-  buildInputs =
-    [
-      fontconfig
-      openssl
-      rust-jemalloc-sys
-      zlib
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isDarwin (
-      with darwin.apple_sdk_11_0.frameworks;
-      [
-        CoreFoundation
-        CoreServices
-        IOKit
-      ]
-    );
+  buildInputs = [
+    fontconfig
+    openssl
+    rust-jemalloc-sys
+    zlib
+  ] ++ lib.optional stdenv.hostPlatform.isDarwin apple-sdk_11;
 
   cargoBuildFlags = [
     "--package"
@@ -72,7 +64,7 @@ rustPlatform.buildRustPackage rec {
     updateScript = nix-update-script {
       extraArgs = [
         "--version-regex"
-        "'v(\d+\.\d+\.\d+)'"
+        "'v(\\d+\\.\\d+\\.\\d+)'"
       ];
     };
   };

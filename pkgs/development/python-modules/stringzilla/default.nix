@@ -1,42 +1,27 @@
 {
   buildPythonPackage,
-  cargo,
   fetchFromGitHub,
   lib,
   numpy,
   pytest-repeat,
   pytestCheckHook,
-  rustPlatform,
-  rustc,
   setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "stringzilla";
-  version = "3.10.5";
+  version = "3.11.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "ashvardanian";
     repo = "stringzilla";
     rev = "refs/tags/v${version}";
-    hash = "sha256-E7w6s813OGCld/GRTHMbjVAReTGb37HlB687gP9N9FA=";
-  };
-
-  cargoDeps = rustPlatform.fetchCargoTarball {
-    inherit src;
-    name = "${pname}-${version}";
-    hash = "sha256-36LN9AoAWA//pldmQZtKMrck4EoGUW9G2vzdsRw08SA=";
+    hash = "sha256-8HcX0P/PCaJAV333oSYZJ6xVKwYet/CF8vnEe9/dMo4=";
   };
 
   build-system = [
     setuptools
-  ];
-
-  nativeBuildInputs = [
-    cargo
-    rustPlatform.cargoSetupHook
-    rustc
   ];
 
   pythonImportsCheck = [ "stringzilla" ];

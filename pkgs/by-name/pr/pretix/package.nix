@@ -1,12 +1,13 @@
-{ lib
-, buildNpmPackage
-, fetchFromGitHub
-, fetchPypi
-, nodejs
-, python3
-, gettext
-, nixosTests
-, plugins ? [ ]
+{
+  lib,
+  buildNpmPackage,
+  fetchFromGitHub,
+  fetchPypi,
+  nodejs,
+  python3,
+  gettext,
+  nixosTests,
+  plugins ? [ ],
 }:
 
 let
@@ -51,13 +52,13 @@ let
   };
 
   pname = "pretix";
-  version = "2024.9.0";
+  version = "2024.10.0";
 
   src = fetchFromGitHub {
     owner = "pretix";
     repo = "pretix";
     rev = "refs/tags/v${version}";
-    hash = "sha256-L6mTfLIx8kD/5s0Dfp24TEATmjxBXERQjynB0szH3DM=";
+    hash = "sha256-MCiCr00N7894DjckAw3vpxdiNtlgzqivlbSY4A/327E=";
   };
 
   npmDeps = buildNpmPackage {
@@ -65,7 +66,7 @@ let
     inherit version src;
 
     sourceRoot = "${src.name}/src/pretix/static/npm_dir";
-    npmDepsHash = "sha256-zUui5tYINTDKA91WgRV51ilIPFBJpZ+S2fJwW85KJ9k=";
+    npmDepsHash = "sha256-PPcA6TBsU/gGk4wII+w7VZOm65nS7qGjZ/UoQs31s9M=";
 
     dontBuild = true;
 
@@ -91,16 +92,20 @@ python.pkgs.buildPythonApplication rec {
 
   pythonRelaxDeps = [
     "django-phonenumber-field"
+    "dnspython"
     "importlib-metadata"
     "kombu"
     "markdown"
     "pillow"
     "protobuf"
+    "pycryptodome"
     "pyjwt"
     "python-bidi"
     "qrcode"
+    "redis"
     "requests"
     "sentry-sdk"
+    "ua-parser"
   ];
 
   pythonRemoveDeps = [
@@ -128,86 +133,88 @@ python.pkgs.buildPythonApplication rec {
     tomli
   ];
 
-  dependencies = with python.pkgs; [
-    arabic-reshaper
-    babel
-    beautifulsoup4
-    bleach
-    celery
-    chardet
-    cryptography
-    css-inline
-    defusedcsv
-    django
-    django-bootstrap3
-    django-compressor
-    django-countries
-    django-filter
-    django-formset-js-improved
-    django-formtools
-    django-hierarkey
-    django-hijack
-    django-i18nfield
-    django-libsass
-    django-localflavor
-    django-markup
-    django-oauth-toolkit
-    django-otp
-    django-phonenumber-field
-    django-redis
-    django-scopes
-    django-statici18n
-    djangorestframework
-    dnspython
-    drf-ujson2
-    geoip2
-    importlib-metadata
-    isoweek
-    jsonschema
-    kombu
-    libsass
-    lxml
-    markdown
-    mt-940
-    oauthlib
-    openpyxl
-    packaging
-    paypalrestsdk
-    paypal-checkout-serversdk
-    pyjwt
-    phonenumberslite
-    pillow
-    pretix-plugin-build
-    protobuf
-    psycopg2-binary
-    pycountry
-    pycparser
-    pycryptodome
-    pypdf
-    python-bidi
-    python-dateutil
-    pytz
-    pytz-deprecation-shim
-    pyuca
-    qrcode
-    redis
-    reportlab
-    requests
-    sentry-sdk
-    sepaxml
-    slimit
-    stripe
-    text-unidecode
-    tlds
-    tqdm
-    ua-parser
-    vat-moss
-    vobject
-    webauthn
-    zeep
-  ]
-  ++ django.optional-dependencies.argon2
-  ++ plugins;
+  dependencies =
+    with python.pkgs;
+    [
+      arabic-reshaper
+      babel
+      beautifulsoup4
+      bleach
+      celery
+      chardet
+      cryptography
+      css-inline
+      defusedcsv
+      django
+      django-bootstrap3
+      django-compressor
+      django-countries
+      django-filter
+      django-formset-js-improved
+      django-formtools
+      django-hierarkey
+      django-hijack
+      django-i18nfield
+      django-libsass
+      django-localflavor
+      django-markup
+      django-oauth-toolkit
+      django-otp
+      django-phonenumber-field
+      django-redis
+      django-scopes
+      django-statici18n
+      djangorestframework
+      dnspython
+      drf-ujson2
+      geoip2
+      importlib-metadata
+      isoweek
+      jsonschema
+      kombu
+      libsass
+      lxml
+      markdown
+      mt-940
+      oauthlib
+      openpyxl
+      packaging
+      paypalrestsdk
+      paypal-checkout-serversdk
+      pyjwt
+      phonenumberslite
+      pillow
+      pretix-plugin-build
+      protobuf
+      psycopg2-binary
+      pycountry
+      pycparser
+      pycryptodome
+      pypdf
+      python-bidi
+      python-dateutil
+      pytz
+      pytz-deprecation-shim
+      pyuca
+      qrcode
+      redis
+      reportlab
+      requests
+      sentry-sdk
+      sepaxml
+      slimit
+      stripe
+      text-unidecode
+      tlds
+      tqdm
+      ua-parser
+      vat-moss
+      vobject
+      webauthn
+      zeep
+    ]
+    ++ django.optional-dependencies.argon2
+    ++ plugins;
 
   optional-dependencies = with python.pkgs; {
     memcached = [
@@ -225,20 +232,24 @@ python.pkgs.buildPythonApplication rec {
 
   dontStrip = true; # no binaries
 
-  nativeCheckInputs = with python.pkgs; [
-    pytestCheckHook
-    pytest-xdist
-    pytest-mock
-    pytest-django
-    pytest-asyncio
-    pytest-rerunfailures
-    freezegun
-    fakeredis
-    responses
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  nativeCheckInputs =
+    with python.pkgs;
+    [
+      pytestCheckHook
+      pytest-xdist
+      pytest-mock
+      pytest-django
+      pytest-asyncio
+      pytest-rerunfailures
+      freezegun
+      fakeredis
+      responses
+    ]
+    ++ lib.flatten (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
-    "--reruns" "3"
+    "--reruns"
+    "3"
   ];
 
   disabledTests = [
@@ -262,9 +273,9 @@ python.pkgs.buildPythonApplication rec {
     inherit
       npmDeps
       python
-    ;
-    plugins = lib.recurseIntoAttrs
-      (python.pkgs.callPackage ./plugins {
+      ;
+    plugins = lib.recurseIntoAttrs (
+      python.pkgs.callPackage ./plugins {
         inherit (python.pkgs) callPackage;
       }
     );

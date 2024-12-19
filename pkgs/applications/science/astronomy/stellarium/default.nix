@@ -1,27 +1,29 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, fetchpatch
-, cmake
-, perl
-, wrapGAppsHook3
-, wrapQtAppsHook
-, qtbase
-, qtcharts
-, qtpositioning
-, qtmultimedia
-, qtserialport
-, qtwayland
-, qtwebengine
-, calcmysky
-, qxlsx
-, indilib
-, libnova
-, qttools
-, exiv2
-, nlopt
-, testers
-, xvfb-run
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  fetchpatch,
+  cmake,
+  perl,
+  wrapGAppsHook3,
+  wrapQtAppsHook,
+  qtbase,
+  qtcharts,
+  qtpositioning,
+  qtmultimedia,
+  qtserialport,
+  qtwayland,
+  qtwebengine,
+  calcmysky,
+  qxlsx,
+  indilib,
+  libnova,
+  qttools,
+  exiv2,
+  nlopt,
+  testers,
+  xvfb-run,
+  gitUpdater,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -59,28 +61,32 @@ stdenv.mkDerivation (finalAttrs: {
     qttools
   ];
 
-  buildInputs = [
-    qtbase
-    qtcharts
-    qtpositioning
-    qtmultimedia
-    qtserialport
-    qtwebengine
-    calcmysky
-    qxlsx
-    indilib
-    libnova
-    exiv2
-    nlopt
-  ] ++ lib.optionals stdenv.hostPlatform.isLinux [
-    qtwayland
-  ];
+  buildInputs =
+    [
+      qtbase
+      qtcharts
+      qtpositioning
+      qtmultimedia
+      qtserialport
+      qtwebengine
+      calcmysky
+      qxlsx
+      indilib
+      libnova
+      exiv2
+      nlopt
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      qtwayland
+    ];
 
-  preConfigure = ''
-    export SOURCE_DATE_EPOCH=$(date -d 20${lib.versions.major finalAttrs.version}0101 +%s)
-  '' + lib.optionalString stdenv.hostPlatform.isDarwin ''
-    export LC_ALL=en_US.UTF-8
-  '';
+  preConfigure =
+    ''
+      export SOURCE_DATE_EPOCH=$(date -d 20${lib.versions.major finalAttrs.version}0101 +%s)
+    ''
+    + lib.optionalString stdenv.hostPlatform.isDarwin ''
+      export LC_ALL=en_US.UTF-8
+    '';
 
   # fatal error: 'QtSerialPort/QSerialPortInfo' file not found
   env.NIX_CFLAGS_COMPILE = lib.optionalString stdenv.hostPlatform.isDarwin "-F${qtserialport}/lib";
@@ -95,19 +101,22 @@ stdenv.mkDerivation (finalAttrs: {
     qtWrapperArgs+=("''${gappsWrapperArgs[@]}")
   '';
 
-  passthru.tests.version = testers.testVersion {
-    package = finalAttrs.finalPackage;
-    command = ''
-      # Create a temporary home directory because stellarium aborts with an
-      # error if it can't write some configuration files.
-      tmpdir=$(mktemp -d)
+  passthru = {
+    tests.version = testers.testVersion {
+      package = finalAttrs.finalPackage;
+      command = ''
+        # Create a temporary home directory because stellarium aborts with an
+        # error if it can't write some configuration files.
+        tmpdir=$(mktemp -d)
 
-      # stellarium can't be run in headless mode, therefore we need xvfb-run.
-      HOME="$tmpdir" ${xvfb-run}/bin/xvfb-run stellarium --version
-    '';
+        # stellarium can't be run in headless mode, therefore we need xvfb-run.
+        HOME="$tmpdir" ${lib.getExe xvfb-run} stellarium --version
+      '';
+    };
+    updateScript = gitUpdater { rev-prefix = "v"; };
   };
 
-  meta =  {
+  meta = {
     description = "Free open-source planetarium";
     mainProgram = "stellarium";
     homepage = "https://stellarium.org/";

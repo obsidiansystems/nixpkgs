@@ -11,18 +11,19 @@
   vulkan-headers,
   vulkan-loader,
   xorg,
+  openxr-loader,
 }:
 
 stdenv.mkDerivation {
   pname = "opencomposite";
-  version = "0-unstable-2024-10-02";
+  version = "0-unstable-2024-11-11";
 
   src = fetchFromGitLab {
     owner = "znixian";
     repo = "OpenOVR";
-    rev = "f969a972e9a151de776fa8d1bd6e67056f0a5d5d";
+    rev = "34311dabf430d6051d7e97f6081842a5394d2a67";
     fetchSubmodules = true;
-    hash = "sha256-3Aar7HGhn9nd/EtJoeUbQTkUR16jx946ZXMNDOXSdfQ=";
+    hash = "sha256-sjgnai7RJemIXuviXhW6+L/zioz7UePaOUh3mVteGww=";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -61,5 +62,7 @@ stdenv.mkDerivation {
     homepage = "https://gitlab.com/znixian/OpenOVR";
     license = with lib.licenses; [ gpl3Only ];
     maintainers = with lib.maintainers; [ Scrumplex ];
+    # This can realistically only work on systems that support OpenXR Loader
+    inherit (openxr-loader.meta) platforms;
   };
 }

@@ -3,7 +3,6 @@
   stdenv,
   buildNpmPackage,
   fetchFromGitHub,
-  overrideSDK,
 
   electron,
   nodejs,
@@ -20,26 +19,21 @@
   libXtst,
   libXi,
   wayland,
-  darwin,
+  apple-sdk_11,
 }:
 
-let
-  buildNpmPackage' = buildNpmPackage.override {
-    stdenv = if stdenv.isDarwin then overrideSDK stdenv "11.0" else stdenv;
-  };
-in
-buildNpmPackage' rec {
+buildNpmPackage rec {
   pname = "kando";
-  version = "1.4.0";
+  version = "1.6.0";
 
   src = fetchFromGitHub {
     owner = "kando-menu";
     repo = "kando";
     rev = "refs/tags/v${version}";
-    hash = "sha256-JcPTplqrMgDsT0HDTh7liChUWvLqe9gwS51ANM3Wsds=";
+    hash = "sha256-OTNxK2D7lM8IluZa6Rydd3WSP3hPNcT9nkQm1smq4ms=";
   };
 
-  npmDepsHash = "sha256-13NuhGq5Pv5GSLeXASWxbXZYaUb9KzMgR7y5I7mv+MA=";
+  npmDepsHash = "sha256-1LIfYwhLL8M2A4C6u9l5YUe7Y6xJeir8A5HQ7QghvhA=";
 
   npmFlags = [ "--ignore-scripts" ];
 
@@ -51,20 +45,22 @@ buildNpmPackage' rec {
       zip
       makeWrapper
     ]
-    ++ lib.optionals stdenv.isLinux [
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       wayland-scanner
       copyDesktopItems
     ];
 
   buildInputs =
-    lib.optionals stdenv.isLinux [
+    lib.optionals stdenv.hostPlatform.isLinux [
       libxkbcommon
       libX11
       libXtst
       libXi
       wayland
     ]
-    ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk_11_0.frameworks.AppKit ];
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
+      apple-sdk_11
+    ];
 
   dontUseCmakeConfigure = true;
 
@@ -73,7 +69,7 @@ buildNpmPackage' rec {
     # use our own node headers since we skip downloading them
     NIX_CFLAGS_COMPILE = "-I${nodejs}/include/node";
     # disable code signing on Darwin
-    CSC_IDENTITY_AUTO_DISCOVERY = lib.optionalString stdenv.isDarwin "false";
+    CSC_IDENTITY_AUTO_DISCOVERY = lib.optionalString stdenv.hostPlatform.isDarwin "false";
   };
 
   postConfigure = ''
@@ -107,7 +103,7 @@ buildNpmPackage' rec {
   installPhase = ''
     runHook preInstall
 
-    ${lib.optionalString stdenv.isLinux ''
+    ${lib.optionalString stdenv.hostPlatform.isLinux ''
       mkdir -p $out/share/kando
       cp -r out/*/{locales,resources{,.pak}} $out/share/kando
 
@@ -115,11 +111,11 @@ buildNpmPackage' rec {
 
       makeWrapper ${lib.getExe electron} $out/bin/kando \
           --add-flags $out/share/kando/resources/app \
-          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}}" \
+          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
           --inherit-argv0
     ''}
 
-    ${lib.optionalString stdenv.isDarwin ''
+    ${lib.optionalString stdenv.hostPlatform.isDarwin ''
       mkdir -p $out/Applications
       cp -r out/*/Kando.app $out/Applications
       makeWrapper $out/Applications/Kando.app/Contents/MacOS/Kando $out/bin/kando

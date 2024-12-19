@@ -1,35 +1,39 @@
-{ lib
-, stdenv
-, autoconf-archive
-, autoreconfHook
-, cppunit
-, curl
-, fetchFromGitHub
-, installShellFiles
-, libsigcxx
-, libtool
-, libtorrent
-, ncurses
-, openssl
-, pkg-config
-, xmlrpc_c
-, zlib
-, nixosTests
-, gitUpdater
+{
+  lib,
+  stdenv,
+  autoconf-archive,
+  autoreconfHook,
+  cppunit,
+  curl,
+  fetchFromGitHub,
+  fetchpatch,
+  installShellFiles,
+  libsigcxx,
+  libtool,
+  libtorrent,
+  ncurses,
+  openssl,
+  pkg-config,
+  zlib,
+  nixosTests,
+  unstableGitUpdater,
 }:
 
 stdenv.mkDerivation rec {
   pname = "rakshasa-rtorrent";
-  version = "0.10.0";
+  version = "0.10.0-unstable-2024-12-06";
 
   src = fetchFromGitHub {
     owner = "rakshasa";
     repo = "rtorrent";
-    rev = "v${version}";
-    hash = "sha256-G/30Enycpqg/pWC95CzT9LY99kN4tI+S8aSQhnQO+M8=";
+    rev = "5a200f5d8f8bc8ed28dfc948321451585f724b15";
+    hash = "sha256-RLFOHJLpt7xkrEvYwEBWs5wQRThrK1N2olI64p2TPeA=";
   };
 
-  outputs = [ "out" "man" ];
+  outputs = [
+    "out"
+    "man"
+  ];
 
   passthru = {
     inherit libtorrent;
@@ -50,17 +54,16 @@ stdenv.mkDerivation rec {
     libtorrent
     ncurses
     openssl
-    xmlrpc_c
     zlib
   ];
 
   configureFlags = [
-    "--with-xmlrpc-c"
+    "--with-xmlrpc-tinyxml2"
     "--with-posix-fallocate"
   ];
 
   passthru = {
-    updateScript = gitUpdater { rev-prefix = "v"; };
+    updateScript = unstableGitUpdater { tagPrefix = "v"; };
     tests = {
       inherit (nixosTests) rtorrent;
     };
@@ -77,7 +80,11 @@ stdenv.mkDerivation rec {
     homepage = "https://rakshasa.github.io/rtorrent/";
     description = "Ncurses client for libtorrent, ideal for use with screen, tmux, or dtach";
     license = lib.licenses.gpl2Plus;
-    maintainers = with lib.maintainers; [ ebzzry codyopel thiagokokada ];
+    maintainers = with lib.maintainers; [
+      ebzzry
+      codyopel
+      thiagokokada
+    ];
     platforms = lib.platforms.unix;
     mainProgram = "rtorrent";
   };

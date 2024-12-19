@@ -2,25 +2,22 @@
   autoconf,
   autogen,
   automake,
-  clang,
-  fetchFromGitHub,
+  clangStdenv,
+  fetchfossil,
   lib,
-  stdenv,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+clangStdenv.mkDerivation (finalAttrs: {
   pname = "objfw";
-  version = "1.1.7";
+  version = "1.2.2";
 
-  src = fetchFromGitHub {
-    owner = "ObjFW";
-    repo = "ObjFW";
-    rev = "refs/tags/1.1.7-release";
-    hash = "sha256-0ylG/2ZSO3b8zdh6W9QJH5OJW9V344CCik1DduV5mhI=";
+  src = fetchfossil {
+    url = "https://objfw.nil.im/home";
+    rev = "${finalAttrs.version}-release";
+    hash = "sha256-s1VTI4POllvX8WHlZJezhIx1jt4SRbXlAaYRBeL05Bw=";
   };
 
   nativeBuildInputs = [
-    clang
     automake
     autogen
     autoconf
@@ -35,7 +32,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "A portable framework for the Objective-C language";
-    homepage = "https://github.com/ObjFW/ObjFW";
+    homepage = "https://objfw.nil.im";
     license = lib.licenses.lgpl3;
     maintainers = [ lib.maintainers.steeleduncan ];
     platforms = lib.platforms.linux;

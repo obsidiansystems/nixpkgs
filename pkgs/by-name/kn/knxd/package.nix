@@ -1,27 +1,30 @@
-{ lib
-, stdenv
-, buildPackages
-, fetchFromGitHub
-, autoreconfHook
-, pkg-config
-, indent
-, perl
-, argp-standalone
-, fmt_9
-, libev
-, withSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd, systemd
-, withUsb ? stdenv.hostPlatform.isLinux, libusb1
+{
+  lib,
+  stdenv,
+  buildPackages,
+  fetchFromGitHub,
+  autoreconfHook,
+  pkg-config,
+  indent,
+  perl,
+  argp-standalone,
+  fmt_9,
+  libev,
+  withSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
+  systemd,
+  withUsb ? stdenv.hostPlatform.isLinux,
+  libusb1,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "knxd";
-  version = "0.14.63";
+  version = "0.14.66";
 
   src = fetchFromGitHub {
     owner = "knxd";
     repo = "knxd";
     rev = finalAttrs.version;
-    hash = "sha256-Ka4ATC20PS/yqHj+dbcIXxeqFYHDMKu6DvJWGd4rUMI=";
+    hash = "sha256-3Npf+SlCWOMBd9CBLPysGtYe2Zk7I7T4t1bQHZTq3rI=";
   };
 
   postPatch = ''
@@ -29,9 +32,18 @@ stdenv.mkDerivation (finalAttrs: {
     sed -i '2i exit' tools/get_libfmt
   '';
 
-  nativeBuildInputs = [ autoreconfHook pkg-config indent perl ];
+  nativeBuildInputs = [
+    autoreconfHook
+    pkg-config
+    indent
+    perl
+  ];
 
-  buildInputs = [ fmt_9 libev ]
+  buildInputs =
+    [
+      fmt_9
+      libev
+    ]
     ++ lib.optional withSystemd systemd
     ++ lib.optional withUsb libusb1
     ++ lib.optional stdenv.hostPlatform.isDarwin argp-standalone;

@@ -153,8 +153,8 @@ let
         # https://github.com/Golevka/emacs-clang-complete-async/issues/90
         auto-complete-clang-async = (addPackageRequires super.auto-complete-clang-async [ self.auto-complete ]).overrideAttrs (old: {
           buildInputs = old.buildInputs ++ [ pkgs.llvmPackages.llvm ];
-          CFLAGS = "-I${pkgs.llvmPackages.libclang.lib}/include";
-          LDFLAGS = "-L${pkgs.llvmPackages.libclang.lib}/lib";
+          CFLAGS = "-I${lib.getLib pkgs.llvmPackages.libclang}/include";
+          LDFLAGS = "-L${lib.getLib pkgs.llvmPackages.libclang}/lib";
         });
 
         # part of a larger package
@@ -172,7 +172,7 @@ let
 
         dune = dontConfigure super.dune;
 
-        emacsql = super.emacsql.overrideAttrs (old: {
+        emacsql = super.emacsql.overrideAttrs (old: lib.optionalAttrs (lib.versionOlder old.version "20241115.1939") {
           buildInputs = old.buildInputs ++ [ pkgs.sqlite ];
 
           postBuild = ''
@@ -550,6 +550,13 @@ let
           '';
         });
 
+        treemacs = super.treemacs.overrideAttrs (attrs: {
+          postPatch = (attrs.postPatch or "") + ''
+            substituteInPlace src/elisp/treemacs-customization.el \
+              --replace 'treemacs-python-executable (treemacs--find-python3)' 'treemacs-python-executable "${lib.getExe pkgs.python3}"'
+          '';
+        });
+
         treemacs-magit = super.treemacs-magit.overrideAttrs (attrs: {
           # searches for Git at build time
           nativeBuildInputs =
@@ -806,7 +813,11 @@ let
         boa-mode = ignoreCompilationError super.boa-mode; # elisp error
 
         # missing optional dependencies
-        boogie-friends = addPackageRequires super.boogie-friends [ self.lsp-mode ];
+        # https://github.com/boogie-org/boogie-friends/issues/42
+        boogie-friends = ignoreCompilationError (addPackageRequires super.boogie-friends [ self.lsp-mode ]);
+
+        # this package probably should not be compiled in nix build sandbox
+        borg = ignoreCompilationError super.borg;
 
         bpr = super.bpr.overrideAttrs (
           finalAttrs: previousAttrs: {
@@ -929,6 +940,12 @@ let
 
         # missing optional dependencies
         conda = addPackageRequires super.conda [ self.projectile ];
+
+        consult-gh = super.consult-gh.overrideAttrs (old: {
+          propagatedUserEnvPkgs = old.propagatedUserEnvPkgs or [ ] ++ [ pkgs.gh ];
+        });
+
+        consult-gh-forge = buildWithGit super.consult-gh-forge;
 
         counsel-gtags = ignoreCompilationError super.counsel-gtags; # elisp error
 
@@ -1113,6 +1130,8 @@ let
 
         gh-notify = buildWithGit super.gh-notify;
 
+        "git-gutter-fringe+" = ignoreCompilationError super."git-gutter-fringe+"; # elisp error
+
         # https://github.com/nlamirault/emacs-gitlab/issues/68
         gitlab = addPackageRequires super.gitlab [ self.f ];
 
@@ -1227,6 +1246,23 @@ let
 
         # missing optional dependencies: vterm or eat
         julia-snail = addPackageRequires super.julia-snail [ self.eat ];
+
+        kanagawa-themes = super.kanagawa-themes.overrideAttrs (
+          finalAttrs: previousAttrs: {
+            patches =
+              if lib.versionOlder finalAttrs.version "20241015.2237" then
+                previousAttrs.patches or [ ]
+                ++ [
+                  (pkgs.fetchpatch {
+                    name = "fix-compilation-error.patch";
+                    url = "https://github.com/Fabiokleis/kanagawa-emacs/commit/83c2b5c292198b46a06ec0ad62619d83fd965433.patch";
+                    hash = "sha256-pB1ht03XCh+BWKHhxBAp701qt/KWAMJ2SQQaN3FgMjU=";
+                  })
+                ]
+              else
+                previousAttrs.patches or null;
+          }
+        );
 
         kite = ignoreCompilationError super.kite; # elisp error
 
@@ -1355,6 +1391,13 @@ let
         org-special-block-extras = ignoreCompilationError super.org-special-block-extras; # elisp error
 
         org-trello = ignoreCompilationError super.org-trello; # elisp error
+
+        # Requires xwidgets compiled into emacs, so mark this package
+        # as broken if emacs hasn't been compiled with the flag.
+        org-xlatex =
+          if self.emacs.withXwidgets
+          then super.org-xlatex
+          else markBroken super.org-xlatex;
 
         # Optimizer error: too much on the stack
         orgnav = ignoreCompilationError super.orgnav;

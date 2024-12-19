@@ -727,6 +727,16 @@
     };
     version = "1.0.6";
   };
+  csv = {
+    groups = ["default"];
+    platforms = [];
+    source = {
+      remotes = ["https://rubygems.org"];
+      sha256 = "sha256-C70d79wxE0q+/tAnpjmzcjwnU4YhUPTD7mHKtxsg1n0=";
+      type = "gem";
+    };
+    version = "3.3.0";
+  };
   curb = {
     groups = ["default"];
     platforms = [];
@@ -1548,6 +1558,17 @@
     };
     version = "0.4.0";
   };
+  jekyll-compose = {
+    dependencies = ["jekyll"];
+    groups = ["default"];
+    platforms = [];
+    source = {
+      remotes = ["https://rubygems.org"];
+      sha256 = "1ny8xps0mrmx2w0xxc9rwa15ch1wkxvdrzxiwnqramqwja566y04";
+      type = "gem";
+    };
+    version = "0.12.0";
+  };
   jekyll-default-layout = {
     dependencies = ["jekyll"];
     groups = ["default"];
@@ -2362,10 +2383,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "1nc14wls1yiigz593vw7580hb99lf4n485axapiz6sqpg1jnlhcr";
+      sha256 = "0qlfhp9b445g0qp9kkdiylfjlpfzrv6nqvry4ar6y0yacn0zr5y8";
       type = "gem";
     };
-    version = "1.4.10";
+    version = "1.4.11";
   };
   net-http = {
     dependencies = ["uri"];
@@ -2543,10 +2564,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "1vg2chy1cfmdj6c1gryl8zvjhhmb3plwgyh1jfnpq4fnfqv7asrk";
+      sha256 = "sha256-gYhvU+6JGfMwqjAHbTINiO75vIWq4idTdrSvsAfGkmA=";
       type = "gem";
     };
-    version = "3.0.1";
+    version = "3.1.0";
   };
   opus-ruby = {
     dependencies = ["ffi"];
@@ -2586,10 +2607,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "04gq05mgy3v8gac0dk8ldr59865vbjhkzna51w8wh900512lakyq";
+      sha256 = "sha256-Gf4ySW/iE1UP5TWm6/oXsi9lo654hrfa7LBY+nZSTaw=";
       type = "gem";
     };
-    version = "1.1.2";
+    version = "2.0.1";
   };
   pango = {
     dependencies = ["cairo-gobject" "gobject-introspection"];
@@ -2624,14 +2645,15 @@
     version = "3.3.0.5";
   };
   paru = {
+    dependencies = ["csv"];
     groups = ["default"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "10jiv4c28bdvp4r98s042ilzks8wx36qw5a4byragwa1fzwy87va";
+      sha256 = "sha256-Q0iafTt/9NuoAyxm2U6mWq9J4v1QR0D73ERsqnbIYOs=";
       type = "gem";
     };
-    version = "1.2.0";
+    version = "1.4.1";
   };
   pastel = {
     dependencies = ["tty-color"];

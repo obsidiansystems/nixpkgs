@@ -17,25 +17,25 @@
   setuptools,
   snitun,
   syrupy,
+  webrtc-models,
   xmltodict,
 }:
 
 buildPythonPackage rec {
   pname = "hass-nabucasa";
-  version = "0.82.0";
+  version = "0.86.0";
   pyproject = true;
 
-  disabled = pythonOlder "3.11";
+  disabled = pythonOlder "3.12";
 
   src = fetchFromGitHub {
     owner = "nabucasa";
     repo = "hass-nabucasa";
     rev = "refs/tags/${version}";
-    hash = "sha256-hRhRXpiIPrI3umOhsVWLwkSwtEfwevC3fNvJElhKy+I=";
+    hash = "sha256-ySo0G/Zh+KQMocMxrvUua704gt2tWQMlArqxBS/C9hs=";
   };
 
   pythonRelaxDeps = [ "acme" ];
-
 
   build-system = [ setuptools ];
 
@@ -49,6 +49,7 @@ buildPythonPackage rec {
     pycognito
     pyjwt
     snitun
+    webrtc-models
   ];
 
   nativeCheckInputs = [

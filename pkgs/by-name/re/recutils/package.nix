@@ -1,9 +1,20 @@
-{ lib
-, stdenv
-, fetchurl
-, bc
-, check
-, curl
+{
+  lib,
+  stdenv,
+  fetchurl,
+  bc,
+  check,
+  curl,
+
+  withEncryption ? true,
+  libgcrypt,
+  libgpg-error,
+
+  withUuid ? true,
+  libuuid,
+
+  withBashBuiltins ? true,
+  bash,
 }:
 
 stdenv.mkDerivation rec {
@@ -17,9 +28,24 @@ stdenv.mkDerivation rec {
 
   hardeningDisable = lib.optional stdenv.cc.isClang "format";
 
-  buildInputs = [
-    curl
+  configureFlags = lib.optionals withBashBuiltins [
+    "--with-bash-headers=${bash.dev}/include/bash"
   ];
+
+  buildInputs =
+    [
+      curl
+    ]
+    ++ lib.optionals withEncryption [
+      libgpg-error.dev
+      libgcrypt.dev
+    ]
+    ++ lib.optionals withUuid [
+      libuuid
+    ]
+    ++ lib.optionals withBashBuiltins [
+      bash.dev
+    ];
 
   nativeCheckInputs = [
     bc

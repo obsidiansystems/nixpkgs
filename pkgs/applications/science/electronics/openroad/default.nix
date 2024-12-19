@@ -1,35 +1,36 @@
-{ lib
-, mkDerivation
-, fetchFromGitHub
-, fetchpatch
-, bison
-, cmake
-, doxygen
-, flex
-, git
-, python3
-, swig
-, boost179
-, cbc       # for clp
-, cimg
-, clp       # for or-tools
-, eigen
-, glpk
-, lcov
-, lemon-graph
-, libjpeg
-, or-tools
-, pcre
-, pkg-config
-, qtbase
-, re2       # for or-tools
-, readline
-, spdlog
-, tcl
-, tclPackages
-, xorg
-, yosys
-, zlib
+{
+  lib,
+  mkDerivation,
+  fetchFromGitHub,
+  fetchpatch,
+  bison,
+  cmake,
+  doxygen,
+  flex,
+  git,
+  python3,
+  swig,
+  boost179,
+  cbc, # for clp
+  cimg,
+  clp, # for or-tools
+  eigen,
+  glpk,
+  lcov,
+  lemon-graph,
+  libjpeg,
+  or-tools,
+  pcre,
+  pkg-config,
+  qtbase,
+  re2, # for or-tools
+  readline,
+  spdlog,
+  tcl,
+  tclPackages,
+  xorg,
+  yosys,
+  zlib,
 }:
 
 mkDerivation rec {
@@ -128,5 +129,6 @@ mkDerivation rec {
     license = licenses.bsd3;
     maintainers = with maintainers; [ trepetti ];
     platforms = platforms.linux;
+    broken = true; # last successful build 2024-06-30
   };
 }

@@ -19,7 +19,7 @@ rustPlatform.buildRustPackage {
 
   passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
-  cargoHash = "sha256-3OjZhWAgfmMZ0OGeRawk3KZpPqz1QCVkwsyGM+E7o88=";
+  cargoHash = "sha256-DOG/IMtHYjdzfPVyFDN20+VB4oEzdSle28F07DydETc=";
 
   buildInputs = [
     libxkbcommon
@@ -31,7 +31,7 @@ rustPlatform.buildRustPackage {
     license = licenses.agpl3Only;
     maintainers = with lib.maintainers; [
       purrpurrn
-      jappie3 /* upstream dev */
+      jappie3 # upstream dev
     ];
     mainProgram = "wayfreeze";
     platforms = platforms.linux;

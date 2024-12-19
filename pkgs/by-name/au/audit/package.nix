@@ -1,19 +1,20 @@
-{ lib
-, stdenv
-, fetchurl
-, fetchpatch
-, autoreconfHook
-, bash
-, buildPackages
-, linuxHeaders
-, python3
-, swig
-, pkgsCross
+{
+  lib,
+  stdenv,
+  fetchurl,
+  fetchpatch,
+  autoreconfHook,
+  bash,
+  buildPackages,
+  linuxHeaders,
+  python3,
+  swig,
+  pkgsCross,
 
-# Enabling python support while cross compiling would be possible, but the
-# configure script tries executing python to gather info instead of relying on
-# python3-config exclusively
-, enablePython ? stdenv.hostPlatform == stdenv.buildPlatform,
+  # Enabling python support while cross compiling would be possible, but the
+  # configure script tries executing python to gather info instead of relying on
+  # python3-config exclusively
+  enablePython ? stdenv.hostPlatform == stdenv.buildPlatform,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -44,7 +45,12 @@ stdenv.mkDerivation (finalAttrs: {
                 "${linuxHeaders}/include/linux/audit.h"
   '';
 
-  outputs = [ "bin" "dev" "out" "man" ];
+  outputs = [
+    "bin"
+    "dev"
+    "out"
+    "man"
+  ];
 
   strictDeps = true;
 
@@ -52,13 +58,14 @@ stdenv.mkDerivation (finalAttrs: {
     buildPackages.stdenv.cc
   ];
 
-  nativeBuildInputs = [
-    autoreconfHook
-  ]
-  ++ lib.optionals enablePython [
-    python3
-    swig
-  ];
+  nativeBuildInputs =
+    [
+      autoreconfHook
+    ]
+    ++ lib.optionals enablePython [
+      python3
+      swig
+    ];
 
   buildInputs = [
     bash
@@ -84,7 +91,7 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Audit Library";
     changelog = "https://github.com/linux-audit/audit-userspace/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.gpl2Plus;
-    maintainers = with lib.maintainers; [ AndersonTorres ];
+    maintainers = with lib.maintainers; [ ];
     platforms = lib.platforms.linux;
   };
 })

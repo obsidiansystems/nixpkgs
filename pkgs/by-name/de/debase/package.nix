@@ -1,5 +1,5 @@
 {
-  darwin,
+  apple-sdk_11,
   fetchFromGitHub,
   fetchpatch, # Delete at next version bump.
   lib,
@@ -53,7 +53,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     libgit2
-  ] ++ lib.optionals stdenv.hostPlatform.isDarwin [ darwin.apple_sdk_11_0.frameworks.Foundation ];
+  ] ++ lib.optionals stdenv.hostPlatform.isDarwin [ apple-sdk_11 ];
 
   installPhase = ''
     runHook preInstall
@@ -72,7 +72,7 @@ stdenv.mkDerivation rec {
       else if stdenv.hostPlatform.isAarch64 then
         "arm64"
       else
-        abort "unsupported system: ${stdenv.system}"
+        throw "unsupported system: ${stdenv.system}"
     }"
   ];
 

@@ -34,9 +34,12 @@ let
         flakeIgnore = [ "E501" ]; # ignores PEP8's line length limit of 79 (black defaults to 88 characters)
       }
       (
-        builtins.replaceStrings [ "@NIX_STORE_VERITY@" ] [
-          partitionTypes.usr-verity
-        ] (builtins.readFile ./assert_uki_repart_match.py)
+        builtins.replaceStrings
+          [ "@NIX_STORE_VERITY@" ]
+          [
+            partitionTypes.usr-verity
+          ]
+          (builtins.readFile ./assert_uki_repart_match.py)
       );
 in
 {
@@ -117,10 +120,6 @@ in
 
               # do not prepare the ESP, this is done in the final image
               systemdRepartFlags = previousAttrs.systemdRepartFlags ++ [ "--defer-partitions=esp" ];
-
-              # the image will be self-contained so we can drop references
-              # to the closure that was used to build it
-              unsafeDiscardReferences.out = true;
             }
           );
 
@@ -210,10 +209,6 @@ in
 
                 rm -v repart-output_orig.json
               '';
-
-              # the image will be self-contained so we can drop references
-              # to the closure that was used to build it
-              unsafeDiscardReferences.out = true;
             }
           );
     };

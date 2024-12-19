@@ -17,6 +17,7 @@
   dataclasses-json,
   grandalf,
   httpx,
+  langgraph-checkpoint-duckdb,
   langgraph-checkpoint-postgres,
   langgraph-checkpoint-sqlite,
   langsmith,
@@ -34,14 +35,14 @@
 
 buildPythonPackage rec {
   pname = "langgraph";
-  version = "0.2.39";
+  version = "0.2.56";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "langchain-ai";
     repo = "langgraph";
-    rev = "refs/tags/${version}";
-    hash = "sha256-VZRGlE3MSOzur1TWC6swQjf/o5M62LsYncx2g8dtS+o=";
+    tag = version;
+    hash = "sha256-X/IMNEmggu9bSJFUaTohbFYxGZBguf+eFb3ObmQGplk=";
   };
 
   postgresqlTestSetupPost = ''
@@ -70,6 +71,7 @@ buildPythonPackage rec {
     dataclasses-json
     grandalf
     httpx
+    langgraph-checkpoint-duckdb
     langgraph-checkpoint-postgres
     langgraph-checkpoint-sqlite
     langsmith
@@ -112,9 +114,7 @@ buildPythonPackage rec {
     "tests/test_pregel.py"
   ];
 
-  passthru = {
-    updateScript = langgraph-sdk.updateScript;
-  };
+  passthru.updateScript = langgraph-sdk.updateScript;
 
   meta = {
     description = "Build resilient language agents as graphs";

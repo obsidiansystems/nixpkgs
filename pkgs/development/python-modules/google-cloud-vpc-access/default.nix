@@ -15,7 +15,7 @@
 
 buildPythonPackage rec {
   pname = "google-cloud-vpc-access";
-  version = "1.11.0";
+  version = "1.12.0";
   pyproject = true;
 
   disabled = pythonOlder "3.8";
@@ -23,7 +23,7 @@ buildPythonPackage rec {
   src = fetchPypi {
     pname = "google_cloud_vpc_access";
     inherit version;
-    hash = "sha256-WtgnMVuQHXSpSKSP9mRT9gXkjszF/bOjcdiJlxFUZiE=";
+    hash = "sha256-SmtqD6b5VnHMrL8kmWeFZZTt/WMRzMEc4VxX9FYmUiE=";
   };
 
   build-system = [ setuptools ];

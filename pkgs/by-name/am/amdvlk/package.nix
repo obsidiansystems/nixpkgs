@@ -23,19 +23,17 @@
 let
 
   suffix = if stdenv.system == "x86_64-linux" then "64" else "32";
-  # Fix https://github.com/NixOS/nixpkgs/issues/348903 until the glslang update to 15.0.0 is merged into master
-  glslang_fixed = glslang.overrideAttrs (finalAttrs: oldAttrs: { cmakeFlags = [ ]; });
 
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "amdvlk";
-  version = "2024.Q3.2";
+  version = "2024.Q4.2";
 
   src = fetchRepoProject {
     name = "amdvlk-src";
     manifest = "https://github.com/GPUOpen-Drivers/AMDVLK.git";
     rev = "refs/tags/v-${finalAttrs.version}";
-    hash = "sha256-1Svdr93ShjhaWJUTLn5y1kBM4hHey1dUVDiHqFIKgrU=";
+    hash = "sha256-16eHtdxoSCVEPQNvi7Kuo7CP4yddMsZqpuRsWobEOnw=";
   };
 
   buildInputs =
@@ -61,7 +59,7 @@ stdenv.mkDerivation (finalAttrs: {
     [
       cmake
       directx-shader-compiler
-      glslang_fixed
+      glslang
       ninja
       patchelf
       perl
@@ -77,7 +75,7 @@ stdenv.mkDerivation (finalAttrs: {
     [
       libdrm
       openssl
-      stdenv.cc.cc.lib
+      stdenv.cc.cc
       zlib
     ]
     ++ (with xorg; [

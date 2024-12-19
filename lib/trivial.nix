@@ -317,6 +317,40 @@ in {
   flip = f: a: b: f b a;
 
   /**
+    Return `maybeValue` if not null, otherwise return `default`.
+
+
+    # Inputs
+
+    `default`
+
+    : 1\. Function argument
+
+    `maybeValue`
+
+    : 2\. Function argument
+
+
+    # Examples
+    :::{.example}
+    ## `lib.trivial.defaultTo` usage example
+
+    ```nix
+    defaultTo "default" null
+    => "default"
+    defaultTo "default" "foo"
+    => "foo"
+    defaultTo "default" false
+    => false
+    ```
+
+    :::
+  */
+  defaultTo = default: maybeValue:
+    if maybeValue != null then maybeValue
+    else default;
+
+  /**
     Apply function if the supplied argument is non-null.
 
 
@@ -415,7 +449,7 @@ in {
     On each release the first letter is bumped and a new animal is chosen
     starting with that new letter.
   */
-  codeName = "Vicuna";
+  codeName = "Warbler";
 
   /**
     Returns the current nixpkgs version suffix as string.

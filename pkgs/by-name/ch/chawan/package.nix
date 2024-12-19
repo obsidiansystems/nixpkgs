@@ -11,25 +11,24 @@
 , zlib
 , unstableGitUpdater
 , libseccomp
-, substituteAll
+, replaceVars
 }:
 
 stdenv.mkDerivation {
   pname = "chawan";
-  version = "0-unstable-2024-09-03";
+  version = "0-unstable-2024-10-25";
 
   src = fetchFromSourcehut {
     owner = "~bptato";
     repo = "chawan";
-    rev = "298684d174be90be57967f15c2f1bf0d24ba2446";
-    hash = "sha256-R/+qLoyewqoOfi264GvZUvpZbN5FX8LtGikQ3FxJEvw=";
+    rev = "28bf2922a33dd987a0a3095bc461589ef23ad37d";
+    hash = "sha256-Bxt9uovo69whyAtrpCDz3DyAYjCYaZfMZknnFW0WDao=";
     fetchSubmodules = true;
   };
 
   patches = [
     # Include chawan's man pages in mancha's search path
-    (substituteAll {
-      src = ./mancha-augment-path.diff;
+    (replaceVars ./mancha-augment-path.diff {
       out = placeholder "out";
     })
   ];

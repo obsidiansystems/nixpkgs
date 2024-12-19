@@ -2,20 +2,29 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  testers,
+  nix-update-script,
+  typos,
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "typos";
-  version = "1.26.0";
+  version = "1.28.2";
 
   src = fetchFromGitHub {
     owner = "crate-ci";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-yfQSGmLWXyOI5slB8AMcVTfQQKUXY3mBaeDPya4KtKo=";
+    hash = "sha256-6qu5Xe0lDT8u21VxU9lqs2BTre7BRa7+qNf8oukzTmc=";
   };
 
-  cargoHash = "sha256-WuYAE2msctMf+7C1h5pNGyjrEInnT6PxfZ94bZhzB5w=";
+  cargoHash = "sha256-lC0K56eslfePdZfP75Lz6XRh3LORsAPShC15ZFj/UG4=";
+
+  passthru = {
+    tests.version = testers.testVersion { package = typos; };
+
+    updateScript = nix-update-script { };
+  };
 
   meta = with lib; {
     description = "Source code spell checker";

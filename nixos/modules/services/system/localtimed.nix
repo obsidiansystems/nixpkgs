@@ -1,10 +1,16 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.services.localtimed;
-in {
+in
+{
   imports = [ (lib.mkRenamedOptionModule [ "services" "localtime" ] [ "services" "localtimed" ]) ];
 
   options = {
@@ -24,7 +30,7 @@ in {
         '';
       };
       package = mkPackageOption pkgs "localtime" { };
-      geoclue2Package = mkPackageOption pkgs "geoclue2-with-demo-agent" { };
+      geoclue2Package = mkPackageOption pkgs "Geoclue2" { default = "geoclue2-with-demo-agent"; };
     };
   };
 

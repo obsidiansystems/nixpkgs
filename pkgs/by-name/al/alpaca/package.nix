@@ -18,14 +18,14 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "alpaca";
-  version = "2.6.5";
+  version = "2.9.0";
   pyproject = false; # Built with meson
 
   src = fetchFromGitHub {
     owner = "Jeffser";
     repo = "Alpaca";
     rev = "refs/tags/${version}";
-    hash = "sha256-tXUM2XxYXUTXsycfq0hmkzc4quHKh7+0qit1YuKdCeQ=";
+    hash = "sha256-ionioPA69haDIyXjqU84nuTNtI32jOnhd6oCTRI6vcA=";
   };
 
   nativeBuildInputs = [
@@ -51,13 +51,20 @@ python3Packages.buildPythonApplication rec {
     pypdf
     pytube
     html2text
+    youtube-transcript-api
+    pydbus
   ];
 
   dontWrapGApps = true;
 
   makeWrapperArgs = [
     "\${gappsWrapperArgs[@]}"
-    "--prefix PATH : ${lib.makeBinPath [ xdg-utils ollama ]}"
+    "--prefix PATH : ${
+      lib.makeBinPath [
+        xdg-utils
+        ollama
+      ]
+    }"
     # Declared but not used in src/window.py, for later reference
     # https://github.com/flatpak/flatpak/issues/3229
     "--set FLATPAK_DEST ${placeholder "out"}"

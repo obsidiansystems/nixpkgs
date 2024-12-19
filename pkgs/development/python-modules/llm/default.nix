@@ -10,6 +10,7 @@
   openai,
   pip,
   pluggy,
+  puremagic,
   pydantic,
   python-ulid,
   pyyaml,
@@ -21,7 +22,7 @@
 let
   llm = buildPythonPackage rec {
     pname = "llm";
-    version = "0.16";
+    version = "0.19.1";
     pyproject = true;
 
     build-system = [ setuptools ];
@@ -31,8 +32,8 @@ let
     src = fetchFromGitHub {
       owner = "simonw";
       repo = "llm";
-      rev = "refs/tags/${version}";
-      hash = "sha256-ew8080Lv1ObjUaGicaGrj8IXXA7rtdgcWhp41O8gfVE=";
+      tag = version;
+      hash = "sha256-MMqlcKSvBAdM6Xfz3MQTIbCfWEqzVeCPzuJJzFVpxb4=";
     };
 
     patches = [ ./001-disable-install-uninstall-commands.patch ];
@@ -43,6 +44,7 @@ let
       openai
       pip
       pluggy
+      puremagic
       pydantic
       python-ulid
       pyyaml

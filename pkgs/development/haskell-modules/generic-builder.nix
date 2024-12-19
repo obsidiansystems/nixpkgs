@@ -34,6 +34,8 @@ in
 , version, revision ? null
 , sha256 ? null
 , src ? fetchurl { url = "mirror://hackage/${pname}-${version}.tar.gz"; inherit sha256; }
+, sourceRoot ? null
+, setSourceRoot ? null
 , buildDepends ? [], setupHaskellDepends ? [], libraryHaskellDepends ? [], executableHaskellDepends ? []
 , buildTarget ? ""
 , buildTools ? [], libraryToolDepends ? [], executableToolDepends ? [], testToolDepends ? [], benchmarkToolDepends ? []
@@ -800,7 +802,7 @@ stdenv.mkDerivation ({
         buildInputs =
           otherBuildInputsSystem;
         LANG = "en_US.UTF-8";
-        LOCALE_ARCHIVE = lib.optionalString (stdenv.hostPlatform.libc == "glibc") "${buildPackages.glibcLocales}/lib/locale/locale-archive";
+        LOCALE_ARCHIVE = lib.optionalString (stdenv.buildPlatform.libc == "glibc") "${buildPackages.glibcLocales}/lib/locale/locale-archive";
         "NIX_${ghcCommandCaps}" = "${ghcEnv}/bin/${ghcCommand}";
         "NIX_${ghcCommandCaps}PKG" = "${ghcEnv}/bin/${ghcCommand}-pkg";
         # TODO: is this still valid?
@@ -825,6 +827,8 @@ stdenv.mkDerivation ({
          ;
 
 }
+// optionalAttrs (args ? sourceRoot)             { inherit sourceRoot; }
+// optionalAttrs (args ? setSourceRoot)          { inherit setSourceRoot; }
 // optionalAttrs (args ? preCompileBuildDriver)  { inherit preCompileBuildDriver; }
 // optionalAttrs (args ? postCompileBuildDriver) { inherit postCompileBuildDriver; }
 // optionalAttrs (args ? preUnpack)              { inherit preUnpack; }

@@ -1,4 +1,13 @@
-{ lib, stdenv, bison, fetchFromGitHub, flex, perl, postgresql }:
+{
+  lib,
+  stdenv,
+  bison,
+  fetchFromGitHub,
+  flex,
+  perl,
+  postgresql,
+  buildPostgresqlExtension,
+}:
 
 let
   hashes = {
@@ -11,18 +20,20 @@ let
     "12" = "sha256-JFNk17ESsIt20dwXrfBkQ5E6DbZzN/Q9eS6+WjCXGd4=";
   };
 in
-stdenv.mkDerivation rec {
+buildPostgresqlExtension rec {
   pname = "age";
   version = "1.5.0-rc0";
 
   src = fetchFromGitHub {
     owner = "apache";
     repo = "age";
-    rev = "PG${lib.versions.major postgresql.version}/v${builtins.replaceStrings ["."] ["_"] version}";
-    hash = hashes.${lib.versions.major postgresql.version} or (throw "Source for Age is not available for ${postgresql.version}");
+    rev = "PG${lib.versions.major postgresql.version}/v${
+      builtins.replaceStrings [ "." ] [ "_" ] version
+    }";
+    hash =
+      hashes.${lib.versions.major postgresql.version}
+      or (throw "Source for Age is not available for ${postgresql.version}");
   };
-
-  buildInputs = [ postgresql ];
 
   makeFlags = [
     "BISON=${bison}/bin/bison"
@@ -30,12 +41,7 @@ stdenv.mkDerivation rec {
     "PERL=${perl}/bin/perl"
   ];
 
-  installPhase = ''
-    install -D -t $out/lib *${postgresql.dlSuffix}
-    install -D -t $out/share/postgresql/extension *.sql
-    install -D -t $out/share/postgresql/extension *.control
-  '';
-
+  enableUpdateScript = false;
   passthru.tests = stdenv.mkDerivation {
     inherit version src;
 
@@ -43,22 +49,24 @@ stdenv.mkDerivation rec {
 
     dontConfigure = true;
 
-    buildPhase = let
-      postgresqlAge = postgresql.withPackages (ps: [ ps.age ]);
-    in ''
-      # The regression tests need to be run in the order specified in the Makefile.
-      echo -e "include Makefile\nfiles:\n\t@echo \$(REGRESS)" > Makefile.regress
-      REGRESS_TESTS=$(make -f Makefile.regress files)
+    buildPhase =
+      let
+        postgresqlAge = postgresql.withPackages (ps: [ ps.age ]);
+      in
+      ''
+        # The regression tests need to be run in the order specified in the Makefile.
+        echo -e "include Makefile\nfiles:\n\t@echo \$(REGRESS)" > Makefile.regress
+        REGRESS_TESTS=$(make -f Makefile.regress files)
 
-      ${lib.getDev postgresql}/lib/pgxs/src/test/regress/pg_regress \
-        --inputdir=./ \
-        --bindir='${postgresqlAge}/bin' \
-        --encoding=UTF-8 \
-        --load-extension=age \
-        --inputdir=./regress --outputdir=./regress --temp-instance=./regress/instance \
-        --port=61958 --dbname=contrib_regression \
-        $REGRESS_TESTS
-    '';
+        ${lib.getDev postgresql}/lib/pgxs/src/test/regress/pg_regress \
+          --inputdir=./ \
+          --bindir='${postgresqlAge}/bin' \
+          --encoding=UTF-8 \
+          --load-extension=age \
+          --inputdir=./regress --outputdir=./regress --temp-instance=./regress/instance \
+          --port=61958 --dbname=contrib_regression \
+          $REGRESS_TESTS
+      '';
 
     installPhase = ''
       touch $out

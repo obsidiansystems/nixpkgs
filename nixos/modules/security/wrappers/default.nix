@@ -253,8 +253,8 @@ in
           };
       in
       { # These are mount related wrappers that require the +s permission.
-        fusermount  = mkSetuidRoot "${pkgs.fuse}/bin/fusermount";
-        fusermount3 = mkSetuidRoot "${pkgs.fuse3}/bin/fusermount3";
+        fusermount  = mkSetuidRoot "${lib.getBin pkgs.fuse}/bin/fusermount";
+        fusermount3 = mkSetuidRoot "${lib.getBin pkgs.fuse3}/bin/fusermount3";
         mount  = mkSetuidRoot "${lib.getBin pkgs.util-linux}/bin/mount";
         umount = mkSetuidRoot "${lib.getBin pkgs.util-linux}/bin/umount";
       };
@@ -321,9 +321,9 @@ in
     };
 
     ###### wrappers consistency checks
-    system.checks = lib.singleton (pkgs.runCommandLocal
-      "ensure-all-wrappers-paths-exist" { }
-      ''
+    system.checks = lib.singleton (pkgs.runCommand "ensure-all-wrappers-paths-exist" {
+      preferLocalBuild = true;
+    } ''
         # make sure we produce output
         mkdir -p $out
 

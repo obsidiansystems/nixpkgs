@@ -1,21 +1,22 @@
-{ lib
-, buildGoModule
-, fetchFromGitHub
-, installShellFiles
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+  installShellFiles,
 }:
 
 buildGoModule rec {
   pname = "oh-my-posh";
-  version = "23.15.0";
+  version = "24.11.4";
 
   src = fetchFromGitHub {
     owner = "jandedobbeleer";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-gZCR7cDSI0gRaTnYADOLpyHe26URo27JXJjnNxr4Jwc=";
+    hash = "sha256-hb5XgwBg9llX/PDX8A8hL5fJbG03nTjrvEd252k2Il0=";
   };
 
-  vendorHash = "sha256-EBLfbdTV15wSTOThzBY0d2KrSJzRaB8vNH53Uwc+XfM=";
+  vendorHash = "sha256-bOjIwBPxu/BfRaAcZTXf4xCGvVXnumb2++JZTx7ZG1s=";
 
   sourceRoot = "${src.name}/src";
 
@@ -57,6 +58,9 @@ buildGoModule rec {
     homepage = "https://ohmyposh.dev";
     changelog = "https://github.com/JanDeDobbeleer/oh-my-posh/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ lucperkins urandom ];
+    maintainers = with maintainers; [
+      lucperkins
+      urandom
+    ];
   };
 }

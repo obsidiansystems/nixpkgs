@@ -6,7 +6,7 @@
   fetchFromGitHub,
   pnpm_9,
   wrapGAppsHook3,
-  cargo-tauri,
+  cargo-tauri_1,
   darwin,
   desktop-file-utils,
   esbuild,
@@ -15,7 +15,7 @@
   jq,
   nodejs,
   pkg-config,
-  libsoup,
+  libsoup_2_4,
   moreutils,
   openssl,
   rust,
@@ -55,7 +55,7 @@ rustPlatform.buildRustPackage rec {
   };
 
   nativeBuildInputs = [
-    cargo-tauri.hook
+    cargo-tauri_1.hook
     desktop-file-utils
     jq
     moreutils
@@ -70,7 +70,7 @@ rustPlatform.buildRustPackage rec {
     [ openssl ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [
       glib-networking
-      libsoup
+      libsoup_2_4
       webkitgtk_4_0
     ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin (
@@ -173,5 +173,6 @@ rustPlatform.buildRustPackage rec {
       techknowlogick
     ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
+    broken = true; # build fails on darwin and linux
   };
 }

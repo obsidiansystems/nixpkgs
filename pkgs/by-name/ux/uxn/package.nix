@@ -1,22 +1,26 @@
-{ lib
-, stdenv
-, fetchFromSourcehut
-, SDL2
-, unstableGitUpdater
+{
+  lib,
+  stdenv,
+  fetchFromSourcehut,
+  SDL2,
+  unstableGitUpdater,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "uxn";
-  version = "1.0-unstable-2024-09-20";
+  version = "1.0-unstable-2024-11-30";
 
   src = fetchFromSourcehut {
     owner = "~rabbits";
     repo = "uxn";
-    rev = "f8c53f59b012dd56d44ae50cdf90dd1dad6cce23";
-    hash = "sha256-Ee4hN3OnqF/OhKieGtzT4XOhNJIhywCgP6Us0DZTVBI=";
+    rev = "ac3f9ccb20dcbd63180d121d0df43efa01a91a8f";
+    hash = "sha256-YHRdELTVf6BNa7HFu1buAG9HKRdpx++XjU60P2huY/Q=";
   };
 
-  outputs = [ "out" "projects" ];
+  outputs = [
+    "out"
+    "projects"
+  ];
 
   nativeBuildInputs = [
     SDL2

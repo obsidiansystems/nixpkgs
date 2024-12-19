@@ -21,7 +21,7 @@
 }:
 
 let
-  version = "0.22.0";
+  version = "0.24.0";
 in
 
 rustPlatform.buildRustPackage {
@@ -32,10 +32,10 @@ rustPlatform.buildRustPackage {
     owner = "martinvonz";
     repo = "jj";
     rev = "v${version}";
-    hash = "sha256-GbKmX1Ev/8di3A1XT5ZIRjzn2zP6DMye2NpA26PGVIs=";
+    hash = "sha256-XsD4P2UygZFcnlV2o3E/hRRgsGjwKw1r9zniEeAk758";
   };
 
-  cargoHash = "sha256-+3oO2M2293Nba6P8bejgZD5OxgCpkIRdcPICDswJyEU=";
+  cargoHash = "sha256-9JwRdeHo8JkwRQwPA+UsIEWar4gYQS4SIM/uj1TU2yg";
 
   nativeBuildInputs = [
     installShellFiles
@@ -93,9 +93,9 @@ rustPlatform.buildRustPackage {
       installManPage ./jj.1
 
       installShellCompletion --cmd jj \
-        --bash <(${jj} util completion bash) \
-        --fish <(${jj} util completion fish) \
-        --zsh <(${jj} util completion zsh)
+        --bash <(COMPLETE=bash ${jj}) \
+        --fish <(COMPLETE=fish ${jj}) \
+        --zsh <(COMPLETE=zsh ${jj})
     '';
 
   passthru = {

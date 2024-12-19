@@ -9,7 +9,6 @@ let
   # version. In other words: Do not remove the second-to-last minor version from nixpkgs,
   # yet. Update first.
   versions = {
-    postgresql_12 = ./12.nix;
     postgresql_13 = ./13.nix;
     postgresql_14 = ./14.nix;
     postgresql_15 = ./15.nix;
@@ -17,14 +16,18 @@ let
     postgresql_17 = ./17.nix;
   };
 
-  mkAttributes = jitSupport:
-    self.lib.mapAttrs' (version: path:
+  mkAttributes =
+    jitSupport:
+    self.lib.mapAttrs' (
+      version: path:
       let
         attrName = if jitSupport then "${version}_jit" else version;
       in
-      self.lib.nameValuePair attrName (import path {
-        inherit jitSupport self;
-      })
+      self.lib.nameValuePair attrName (
+        import path {
+          inherit jitSupport self;
+        }
+      )
     ) versions;
 
 in

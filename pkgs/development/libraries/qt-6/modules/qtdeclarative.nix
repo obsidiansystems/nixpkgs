@@ -1,18 +1,24 @@
-{ qtModule
-, qtbase
-, qtlanguageserver
-, qtshadertools
-, openssl
-, stdenv
-, lib
-, pkgsBuildBuild
-, fetchpatch2
+{
+  qtModule,
+  qtbase,
+  qtlanguageserver,
+  qtshadertools,
+  openssl,
+  stdenv,
+  lib,
+  pkgsBuildBuild,
+  fetchpatch2,
 }:
 
 qtModule {
   pname = "qtdeclarative";
 
-  propagatedBuildInputs = [ qtbase qtlanguageserver qtshadertools openssl ];
+  propagatedBuildInputs = [
+    qtbase
+    qtlanguageserver
+    qtshadertools
+    openssl
+  ];
   strictDeps = true;
 
   patches = [
@@ -31,15 +37,22 @@ qtModule {
       url = "https://github.com/qt/qtdeclarative/commit/2aefbca84d2f3dca2c2697f13710b6907c0c7e59.patch";
       hash = "sha256-a/BX0gpW6juJbjDRo8OleMahOC6WWqreURmYZNiGm5c=";
     })
+    # Backport patch to fix Kirigami applications crashing
+    # FIXME: remove for 6.8.1
+    (fetchpatch2 {
+      url = "https://github.com/qt/qtdeclarative/commit/0ae3697cf40bcd3ae1de20621abad17cf6c5f52d.patch";
+      hash = "sha256-YuTHqHCWOsqUOATfaAZRxPSwMsFNylxoqnqCeW5kPjs=";
+    })
   ];
 
-  cmakeFlags = [
-    "-DQt6ShaderToolsTools_DIR=${pkgsBuildBuild.qt6.qtshadertools}/lib/cmake/Qt6ShaderTools"
-    # for some reason doesn't get found automatically on Darwin
-    "-DPython_EXECUTABLE=${lib.getExe pkgsBuildBuild.python3}"
-  ]
-  # Conditional is required to prevent infinite recursion during a cross build
-  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
-    "-DQt6QmlTools_DIR=${pkgsBuildBuild.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
-  ];
+  cmakeFlags =
+    [
+      "-DQt6ShaderToolsTools_DIR=${pkgsBuildBuild.qt6.qtshadertools}/lib/cmake/Qt6ShaderTools"
+      # for some reason doesn't get found automatically on Darwin
+      "-DPython_EXECUTABLE=${lib.getExe pkgsBuildBuild.python3}"
+    ]
+    # Conditional is required to prevent infinite recursion during a cross build
+    ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+      "-DQt6QmlTools_DIR=${pkgsBuildBuild.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    ];
 }

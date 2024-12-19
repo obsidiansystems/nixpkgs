@@ -5,6 +5,7 @@
   fetchFromGitHub,
   bazel_6,
   jdk,
+  nix-update-script,
 }:
 
 let
@@ -18,13 +19,13 @@ let
 in
 buildBazelPackage rec {
   pname = "bant";
-  version = "0.1.7";
+  version = "0.1.9";
 
   src = fetchFromGitHub {
     owner = "hzeller";
     repo = "bant";
     rev = "v${version}";
-    hash = "sha256-QbxPosjlrpxbz6gQKUKccF2Gu/i5xvqh2gwfABYE8kE=";
+    hash = "sha256-TIVbf5qZNohZAFugi/E7m1Sgekn82/qqtx8jSHo75Js=";
   };
 
   bazelFlags = [
@@ -39,8 +40,8 @@ buildBazelPackage rec {
   fetchAttrs = {
     hash =
       {
-        aarch64-linux = "sha256-LNca4h4yceSgve9GYUoXqlODKPjLAa71kh1BWXqRYtk=";
-        x86_64-linux = "sha256-bRFIfaVbsU2WroXR/i0E7J4rWeaNEoum93r8qOMXXvc=";
+        aarch64-linux = "sha256-8pLgn67kwVNdqhUXYsdi7OsArCZZmW55UPzUBlIyBbk=";
+        x86_64-linux = "sha256-dUNdvSJA3SlIIRWmhaq3Hu0+84mBBhxbU/eBDXIv/iI=";
       }
       .${system} or (throw "No hash for system: ${system}");
   };
@@ -60,14 +61,16 @@ buildBazelPackage rec {
     '';
   };
 
-  meta = with lib; {
+  passthru.updateScript = nix-update-script { };
+
+  meta = {
     description = "Bazel/Build Analysis and Navigation Tool";
     homepage = "http://bant.build/";
-    license = licenses.gpl2Only;
-    maintainers = with maintainers; [
+    license = lib.licenses.gpl2Only;
+    maintainers = with lib.maintainers; [
       hzeller
       lromor
     ];
-    platforms = platforms.linux;
+    platforms = lib.platforms.linux;
   };
 }

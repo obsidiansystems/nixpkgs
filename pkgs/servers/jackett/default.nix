@@ -1,30 +1,32 @@
-{ lib
-, stdenv
-, buildDotnetModule
-, fetchFromGitHub
-, dotnetCorePackages
-, openssl
-, mono
-, nixosTests
+{
+  lib,
+  stdenv,
+  buildDotnetModule,
+  fetchFromGitHub,
+  dotnetCorePackages,
+  openssl,
+  mono,
+  nixosTests,
 }:
 
 buildDotnetModule rec {
   pname = "jackett";
-  version = "0.21.2831";
+  version = "0.22.1064";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "v${version}";
-    hash = "sha512-Ka993M45A9RYs6txl3gxhoq8c/vKRJzeLP2Ycx2L9uiNPWFsKlDwDr2rPLvZ9H0soZJs7sjeBAt0RFHSAlSvBg==";
+    hash = "sha512-+4A3hQllNoBul1V8lK1nNx+ZN9apMPOOnEeyegKIRDRXV/voDzxpEf2+RS7XhquPyPkQkDNkPN+iMrD5+eyA5Q==";
   };
 
   projectFile = "src/Jackett.Server/Jackett.Server.csproj";
   nugetDeps = ./deps.nix;
 
-  dotnet-runtime = dotnetCorePackages.aspnetcore_6_0;
+  dotnet-runtime = dotnetCorePackages.aspnetcore_8_0;
+  dotnet-sdk = dotnetCorePackages.sdk_8_0;
 
-  dotnetInstallFlags = [ "-p:TargetFramework=net6.0" ];
+  dotnetInstallFlags = [ "-p:TargetFramework=net8.0" ];
 
   runtimeDeps = [ openssl ];
 
@@ -47,6 +49,10 @@ buildDotnetModule rec {
     homepage = "https://github.com/Jackett/Jackett/";
     changelog = "https://github.com/Jackett/Jackett/releases/tag/v${version}";
     license = licenses.gpl2Only;
-    maintainers = with maintainers; [ edwtjo nyanloutre purcell ];
+    maintainers = with maintainers; [
+      edwtjo
+      nyanloutre
+      purcell
+    ];
   };
 }
