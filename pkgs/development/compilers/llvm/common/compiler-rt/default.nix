@@ -76,7 +76,7 @@ stdenv.mkDerivation ({
   sourceRoot = "${src'.name}/${baseName}";
 
   nativeBuildInputs = [ cmake ]
-    ++ (lib.optional (lib.versionAtLeast release_version "15") ninja)
+    ++ (lib.optional (lib.versionAtLeast release_version "15" && !stdenv.targetPlatform.isAarch32) ninja)
     ++ [ python3 libllvm.dev ];
   buildInputs =
     lib.optional (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isRiscV) linuxHeaders
