@@ -63,7 +63,7 @@ stdenv.mkDerivation ({
     else "${src'.name}/${baseName}";
 
   nativeBuildInputs = [ cmake ]
-    ++ (lib.optional (lib.versionAtLeast release_version "15") ninja)
+    ++ (lib.optional (lib.versionAtLeast release_version "15" && !stdenv.targetPlatform.isAarch32) ninja)
     ++ [ python3 libllvm.dev ]
     ++ lib.optional stdenv.isDarwin xcbuild.xcrun;
   buildInputs =
