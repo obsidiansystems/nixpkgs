@@ -42,6 +42,8 @@ stdenv.mkDerivation (finalAttrs: {
     # The relative location of LD_PRELOAD works for Glibc but not for other loaders (e.g. pkgsMusl)
     substituteInPlace tests/meson.build \
       --replace "LD_PRELOAD=libumockdev-preload.so.0" "LD_PRELOAD=${lib.getLib umockdev}/lib/libumockdev-preload.so.0"
+  '' + ''
+    substituteInPlace gudev/meson.build --replace-fail "'-export-dynamic'" "'-Wl,-export-dynamic'"
   '';
 
   strictDeps = true;
@@ -85,7 +87,7 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Library that provides GObject bindings for libudev";
     homepage = "https://gitlab.gnome.org/GNOME/libgudev";
     teams = [ lib.teams.gnome ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     license = lib.licenses.lgpl2Plus;
   };
 })
