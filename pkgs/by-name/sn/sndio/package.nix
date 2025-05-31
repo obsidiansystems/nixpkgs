@@ -5,6 +5,7 @@
   alsa-lib,
   fixDarwinDylibNames,
   gitUpdater,
+  deterministic-host-uname,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -16,8 +17,9 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-vr07/QHFDJN2zz54FLk3m+2eF9A5O1ETt+t6PQ0DjFQ=";
   };
 
-  nativeBuildInputs = lib.optional stdenv.hostPlatform.isDarwin fixDarwinDylibNames;
-  buildInputs = lib.optional stdenv.hostPlatform.isLinux alsa-lib;
+  nativeBuildInputs = lib.optional stdenv.hostPlatform.isDarwin fixDarwinDylibNames
+    ++ [ deterministic-host-uname ];
+  buildInputs = lib.optional (lib.meta.availableOn stdenv.hostPlatform alsa-lib) alsa-lib;
   configurePlatforms = [ ];
 
   postInstall = ''

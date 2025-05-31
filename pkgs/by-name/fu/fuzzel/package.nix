@@ -83,6 +83,6 @@ stdenv.mkDerivation (finalAttrs: {
       fionera
       rodrgz
     ];
-    platforms = with lib.platforms; linux;
+    platforms = with lib.platforms; linux ++ freebsd;
   };
 })

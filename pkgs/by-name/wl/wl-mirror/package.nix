@@ -90,6 +90,6 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Simple Wayland output mirror client";
     license = lib.licenses.gpl3;
     maintainers = with lib.maintainers; [ synthetica ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

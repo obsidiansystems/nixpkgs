@@ -40,6 +40,6 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/fcitx/xcb-imdkit";
     license = lib.licenses.lgpl21Plus;
     maintainers = with lib.maintainers; [ poscat ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

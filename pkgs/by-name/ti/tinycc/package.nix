@@ -145,7 +145,8 @@ stdenv.mkDerivation (finalAttrs: {
     ];
     platforms = lib.platforms.unix;
     # https://www.mail-archive.com/tinycc-devel@nongnu.org/msg10199.html
-    broken = stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64;
+    broken = (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64)
+      || !(stdenv.buildPlatform.canExecute stdenv.hostPlatform);
   };
 })
 # TODO: self-compilation

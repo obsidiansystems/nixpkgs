@@ -34,6 +34,8 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   env.NIX_CFLAGS_COMPILE = lib.optionalString stdenv.cc.isClang "-Wno-error=nullability-inferred-on-nested-type -Wno-error=nullability-completeness-on-arrays -Wno-error=implicit-const-int-float-conversion";
+  # otherwise uses -ansi and examples fail on FreeBSD
+  env.CXXFLAGS = "-std=c++11";
 
   # Disable parallel build as it fails as:
   #   make: *** No rule to make target '../../../lib/libportaudio.la',

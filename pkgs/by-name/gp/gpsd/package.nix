@@ -6,6 +6,7 @@
   # nativeBuildInputs
   scons,
   pkg-config,
+  buildPackages,
 
   # buildInputs
   dbus,
@@ -31,6 +32,10 @@
 
   gpsdUser ? "gpsd",
   gpsdGroup ? "dialout",
+
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -43,15 +48,17 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   # TODO: render & install HTML documentation using asciidoctor
-  nativeBuildInputs = [
-    pkg-config
-    python3Packages.wrapPython
-    scons
-  ]
-  ++ lib.optionals guiSupport [
-    gobject-introspection
-    wrapGAppsHook3
-  ];
+  nativeBuildInputs =
+    [
+      pkg-config
+      python3Packages.wrapPython
+      scons
+    ]
+    ++ lib.optionals guiSupport [
+      wrapGAppsHook3
+    ] ++ lib.optionals (guiSupport && withIntrospection) [
+      gobject-introspection
+    ];
 
   buildInputs = [
     dbus
@@ -78,8 +85,9 @@ stdenv.mkDerivation (finalAttrs: {
     python3Packages.pyserial
   ]
   ++ lib.optionals guiSupport [
-    python3Packages.pygobject3
     python3Packages.pycairo
+  ] ++ lib.optionals (guiSupport && withIntrospection) [
+    python3Packages.pygobject3
   ];
 
   patches = [
@@ -100,11 +108,16 @@ stdenv.mkDerivation (finalAttrs: {
     "leapfetch=no"
     "gpsd_user=${gpsdUser}"
     "gpsd_group=${gpsdGroup}"
-    "systemd=yes"
+    "systemd=${if stdenv.hostPlatform.isLinux then "yes" else "no"}"
     "xgps=${if guiSupport then "True" else "False"}"
     "udevdir=${placeholder "out"}/lib/udev"
     "python_libdir=${placeholder "out"}/${python3Packages.python.sitePackages}"
+    "magic_hat=${if stdenv.hostPlatform.isLinux then "yes" else "no"}"
   ];
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isFreeBSD {
+    NIX_CFLAGS_COMPILE = "-D__BSD_VISIBLE -D_XOPEN_SOURCE=700";
+  };
 
   preCheck = ''
     export LD_LIBRARY_PATH="$PWD"

@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  evdev-proto,
   testers,
 }:
 
@@ -15,6 +16,19 @@ stdenv.mkDerivation (finalAttrs: {
     rev = finalAttrs.version;
     sha256 = "sha256-NXDof1tfr66ywYhCBDlPa+8DUfFj6YH0dvSaxHFqsXI=";
   };
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isFreeBSD {
+    NIX_CFLAGS_COMPILE = "-D__BSD_VISIBLE";
+  };
+
+  buildInputs = lib.optionals stdenv.hostPlatform.isFreeBSD [
+    evdev-proto
+  ];
+
+  postPatch = lib.optionalString stdenv.hostPlatform.isFreeBSD ''
+    sed -E -i -e /sysmacros.h/d udev.h
+    sed -E -i -e s_linux/netlink.h_netlink/netlink.h_g udev_monitor.c
+  '';
 
   makeFlags = [
     "PREFIX=$(out)"

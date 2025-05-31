@@ -59,7 +59,7 @@ stdenv.mkDerivation (finalAttrs: {
       "alsa"
       "alsa-topology"
     ];
-    platforms = with lib.platforms; linux ++ freebsd;
+    platforms = with lib.platforms; linux;
     maintainers = [ ];
   };
 })

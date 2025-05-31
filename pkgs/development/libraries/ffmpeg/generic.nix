@@ -109,7 +109,7 @@
   withNvdec ? withHeadlessDeps && withNvcodec,
   withNvenc ? withHeadlessDeps && withNvcodec,
   withOpenal ? withFullDeps, # OpenAL 1.1 capture support
-  withOpenapv ? withHeadlessDeps && lib.versionAtLeast version "8.0", # APV encoding support
+  withOpenapv ? withHeadlessDeps && lib.versionAtLeast version "8.0" && !stdenv.hostPlatform.isFreeBSD, # APV encoding support
   withOpencl ? withHeadlessDeps,
   withOpencoreAmrnb ? withFullDeps && withVersion3, # AMR-NB de/encoder
   withOpencoreAmrwb ? withFullDeps && withVersion3, # AMR-WB decoder

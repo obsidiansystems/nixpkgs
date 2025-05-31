@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  buildPackages,
   meson,
   ninja,
   pkg-config,
@@ -13,6 +14,9 @@
   gtk3,
   gobject-introspection,
   vala,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -43,13 +47,13 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
-    gobject-introspection
+    wayland-scanner
     gtk-doc
     docbook-xsl-nons
     docbook_xml_dtd_43
-    wayland-scanner
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
     vala
-    wayland-scanner
   ];
 
   buildInputs = [
@@ -58,8 +62,9 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Ddocs=true"
     "-Dexamples=true"
+    "-Ddocs=true"
+    (lib.mesonBool "introspection" withIntrospection)
   ];
 
   meta = {

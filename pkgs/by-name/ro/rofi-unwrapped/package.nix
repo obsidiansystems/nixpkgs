@@ -117,7 +117,7 @@ stdenv.mkDerivation (finalAttrs: {
       bew
       SchweGELBin
     ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     mainProgram = "rofi";
   };
 })

@@ -91,6 +91,6 @@ stdenv.mkDerivation (finalAttrs: {
       mit
       zlib
     ];
-    platforms = with lib.platforms; linux;
+    platforms = with lib.platforms; linux ++ freebsd;
   };
 })

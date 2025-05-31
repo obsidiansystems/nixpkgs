@@ -44,7 +44,7 @@
   wireplumber,
   wrapGAppsHook3,
 
-  cavaSupport ? true,
+  cavaSupport ? stdenv.hostPlatform.isLinux,
   enableManpages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
   evdevSupport ? true,
   experimentalPatches ? true,
@@ -54,8 +54,8 @@
   mpdSupport ? true,
   mprisSupport ? stdenv.hostPlatform.isLinux,
   niriSupport ? true,
-  nlSupport ? true,
-  pipewireSupport ? true,
+  nlSupport ? stdenv.hostPlatform.isLinux,
+  pipewireSupport ? stdenv.hostPlatform.isLinux,
   pulseSupport ? true,
   rfkillSupport ? true,
   runTests ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
@@ -64,7 +64,7 @@
   traySupport ? true,
   udevSupport ? true,
   upowerSupport ? true,
-  wireplumberSupport ? true,
+  wireplumberSupport ? stdenv.hostPlatform.isLinux,
   withMediaPlayer ? mprisSupport && false,
   nix-update-script,
 }:

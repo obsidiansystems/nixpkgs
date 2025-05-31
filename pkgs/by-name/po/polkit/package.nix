@@ -23,6 +23,7 @@
   gtk-doc,
   coreutils,
   useSystemd ? lib.meta.availableOn stdenv.hostPlatform systemdMinimal,
+  useConsolekit ? stdenv.hostPlatform.isFreeBSD,
   systemdMinimal,
   elogind,
   buildPackages,
@@ -144,9 +145,7 @@ stdenv.mkDerivation rec {
     "-Dgtk_doc=${lib.boolToString withIntrospection}"
     "-Dman=true"
     "-Dsystemdsystemunitdir=${placeholder "out"}/lib/systemd/system"
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isLinux [
-    "-Dsession_tracking=${if useSystemd then "logind" else "elogind"}"
+    "-Dsession_tracking=${if useSystemd then "logind" else if useConsolekit then "ConsoleKit" else "elogind"}"
   ];
 
   inherit doCheck;
@@ -186,7 +185,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/polkit-org/polkit";
     description = "Toolkit for defining and handling the policy that allows unprivileged processes to speak to privileged processes";
     license = lib.licenses.lgpl2Plus;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     badPlatforms = [
       # mandatory libpolkit-gobject shared library
       lib.systems.inspect.platformPatterns.isStatic

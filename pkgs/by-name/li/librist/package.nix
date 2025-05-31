@@ -2,6 +2,7 @@
   stdenv,
   lib,
   fetchFromGitLab,
+  fetchpatch,
   meson,
   ninja,
   pkg-config,
@@ -26,6 +27,12 @@ stdenv.mkDerivation (finalAttrs: {
   patches = lib.optionals stdenv.hostPlatform.isDarwin [
     # https://code.videolan.org/rist/librist/-/issues/192
     ./no-brew-darwin.diff
+  ] ++ [
+    (fetchpatch {
+      url = "https://github.com/freebsd/freebsd-ports/raw/c9b5763a8e183e65f126a92d0de94db29c3644d9/multimedia/librist/files/patch-meson.build";
+      hash = "sha256-KRVuoQDsyOg+uRDzHzjo4l5u1rb1BoZZHYQ9dP+p7Gw=";
+      extraPrefix = "";
+    })
   ];
 
   nativeBuildInputs = [

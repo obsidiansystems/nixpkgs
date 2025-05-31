@@ -42,8 +42,8 @@ stdenv.mkDerivation (finalAttrs: {
   ''
   + lib.optionalString (stdenv.buildPlatform != stdenv.hostPlatform) ''
     substituteInPlace makefile.machine \
-      --replace 'CC=gcc'  'CC=${stdenv.cc.targetPrefix}gcc' \
-      --replace 'CXX=g++' 'CXX=${stdenv.cc.targetPrefix}g++'
+      --replace 'CC=gcc'  'CC=${stdenv.cc.targetPrefix}cc' \
+      --replace 'CXX=g++' 'CXX=${stdenv.cc.targetPrefix}c++'
   '';
 
   preConfigure = ''
