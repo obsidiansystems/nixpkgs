@@ -56,24 +56,33 @@ stdenv.mkDerivation (finalAttrs: {
       hash = "sha256-J7SrypmVSbvYUzxWWvK2EwEbRsfGGLg4vNZuLEe6Xe0=";
     })
     (fetchpatch {
+      url = "https://github.com/gcc-mirror/gcc/commit/6b008944e7bc3a342a734c4fcf1001d63fd0a6f8.diff";
+      hash = "sha256-preG5DdRX+a0NIebsapAVnqiLYtPjsR4H5BkAXL/65g=";
+    })
+    (fetchpatch {
+      url = "https://github.com/gcc-mirror/gcc/commit/784fe43e93cdefe1d033195ab43e88d450b5882b.diff";
+      excludes = [ "gcc/configure" ];
+      hash = "sha256-MlnshN4LX1Us+ESoZTnxFzJWB9J1wGRnR4MJIGW4Xh8=";
+    })
+    (fetchpatch {
       name = "find_a_program-separate-from-find_a_file.patch";
-      url = "https://inbox.sourceware.org/gcc-patches/20250822234120.1988059-1-git@JohnEricson.me/raw";
-      hash = "sha256-0gaWaeFZq+a8q7Bcr3eILNjHh1LfzL/Lz4F+W+H6XIU=";
+      url = "https://github.com/Ericson2314/gcc/commit/063e833bd7e379ed8055005563dfcdd48d94fdaa.diff";
+      hash = "sha256-sqZl9edkBLslvL7rkXO8VrqA5eY24i/X3iUZhe4XbQo=";
     })
     (fetchpatch {
       name = "simplify-find_a_program-and-find_a_file.patch";
-      url = "https://inbox.sourceware.org/gcc-patches/20250822234120.1988059-2-git@JohnEricson.me/raw";
-      hash = "sha256-ojdyszxLGL+njHK4eAaeBkxAhFTDI57j6lGuAf0A+N0=";
+      url = "https://github.com/Ericson2314/gcc/commit/994ef87ad5839d9e72eeee517eed9aa3f4c1c1eb.diff";
+      hash = "sha256-XpVFXZUC1SusQM7JaTMDSjgv1WKI4iGx9DV+9KbHaw8=";
     })
     (fetchpatch {
       name = "for_each_path-pass-machine-specific.patch";
-      url = "https://inbox.sourceware.org/gcc-patches/20250822234120.1988059-3-git@JohnEricson.me/raw";
-      hash = "sha256-C5jUSyNchmZcE8RTXc2dHfCqNKuBHeiouLruK9UooSM=";
+      url = "https://github.com/Ericson2314/gcc/commit/a63112e32cf014b17fe854d7574bf3590becf20f.diff";
+      hash = "sha256-fBxJVh3dZ0VWXhWRPKenexO09ZhBwc5c54ptl24PjSU=";
     })
     (fetchpatch {
       name = "find_a_program-search-with-machine-prefix.patch";
-      url = "https://inbox.sourceware.org/gcc-patches/20250822234120.1988059-4-git@JohnEricson.me/raw";
-      hash = "sha256-MwcO4OXPlcdaSYivsh5ru+Cfq6qybeAtgCgTEPGYg40=";
+      url = "https://github.com/Ericson2314/gcc/commit/d8bec8cf8ecd621656565f9a5f1142ab0fd4b5c5.diff";
+      hash = "sha256-Bzy/Bt9SbdSCFgHqo7FKKYeD4XPLOKIYf7fGTFSbl8w=";
     })
 
     (getVersionFile "gcc/fix-collect2-paths.diff")
