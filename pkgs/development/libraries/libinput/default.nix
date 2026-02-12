@@ -9,7 +9,7 @@
   libevdev,
   mtdev,
   udev,
-  wacomSupport ? true,
+  wacomSupport ? stdenv.hostPlatform.isLinux,
   libwacom,
   documentationSupport ? false,
   doxygen,
@@ -26,6 +26,8 @@
   nixosTests,
   wayland-scanner,
   udevCheckHook,
+  epoll-shim,
+  libudev-devd,
 }:
 
 let
@@ -106,9 +108,9 @@ stdenv.mkDerivation rec {
     wayland-scanner
   ];
 
-  propagatedBuildInputs = [
-    udev
-  ];
+  propagatedBuildInputs =
+    lib.optional stdenv.hostPlatform.isLinux udev
+    ++ lib.optional stdenv.hostPlatform.isFreeBSD libudev-devd;
 
   nativeCheckInputs = [
     check
@@ -122,6 +124,9 @@ stdenv.mkDerivation rec {
     (mkFlag wacomSupport "libwacom")
     "--sysconfdir=/etc"
     "--libexecdir=${placeholder "bin"}/libexec"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isBSD [
+    "-Depoll-dir=${epoll-shim}"
   ];
 
   doCheck = testsSupport && stdenv.hostPlatform == stdenv.buildPlatform;
@@ -152,7 +157,7 @@ stdenv.mkDerivation rec {
     mainProgram = "libinput";
     homepage = "https://www.freedesktop.org/wiki/Software/libinput/";
     license = lib.licenses.mit;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     maintainers = with lib.maintainers; [ codyopel ];
     teams = [ lib.teams.freedesktop ];
     changelog = "https://gitlab.freedesktop.org/libinput/libinput/-/releases/${version}";
