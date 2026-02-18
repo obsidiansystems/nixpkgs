@@ -27,6 +27,7 @@
   libliftoff,
   libdisplay-info,
   lcms2,
+  evdev-proto,
   nixosTests,
   testers,
 
@@ -88,7 +89,6 @@ let
         libliftoff
         libdisplay-info
         libGL
-        libcap
         libxkbcommon
         libgbm
         pixman
@@ -102,10 +102,14 @@ let
         libxcb-render-util
         libxcb-wm
       ]
+      ++ lib.optional stdenv.hostPlatform.isLinux libcap
+      ++ lib.optional stdenv.hostPlatform.isFreeBSD evdev-proto
       ++ lib.optional finalAttrs.enableXWayland xwayland
       ++ extraBuildInputs;
 
-      mesonFlags = lib.optional (!finalAttrs.enableXWayland) "-Dxwayland=disabled";
+      mesonFlags =
+        lib.optional (!finalAttrs.enableXWayland) "-Dxwayland=disabled"
+        ++ lib.optional (!stdenv.hostPlatform.isLinux) "-Dallocators=gbm";
 
       postFixup = ''
         # Install ALL example programs to $examples:
@@ -136,7 +140,7 @@ let
         inherit (finalAttrs.src.meta) homepage;
         changelog = "https://gitlab.freedesktop.org/wlroots/wlroots/-/tags/${version}";
         license = lib.licenses.mit;
-        platforms = lib.platforms.linux;
+        platforms = lib.platforms.linux ++ lib.platforms.freebsd;
         maintainers = with lib.maintainers; [
           synthetica
           wineee
