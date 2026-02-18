@@ -24,7 +24,8 @@
   vala,
   shared-mime-info,
   # Requires building a cdylib.
-  withPixbufLoader ? !stdenv.hostPlatform.isStatic,
+  withPixbufLoader ?
+    !stdenv.hostPlatform.isStatic && stdenv.hostPlatform.emulatorAvailable buildPackages,
   withIntrospection ?
     lib.meta.availableOn stdenv.hostPlatform gobject-introspection
     && stdenv.hostPlatform.emulatorAvailable buildPackages,
