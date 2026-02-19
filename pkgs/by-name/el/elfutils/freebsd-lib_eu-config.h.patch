@@ -1,0 +1,25 @@
+diff --git a/lib/eu-config.h b/lib/eu-config.h
+index 0bf2aa76..101f6a70 100644
+--- a/lib/eu-config.h
++++ b/lib/eu-config.h
+@@ -168,6 +168,20 @@ asm (".section predict_data, \"aw\"; .previous\n"
+ # define used_in_asm /* empty */
+ #endif
+ 
++/* FreeBSD ports of glibcisms */
++#include <sys/cdefs.h>
++#include <stdlib.h>
++
++#define	program_invocation_short_name	__DECONST(char *, getprogname())
++#undef basename
++
++static inline void
++tdestroy(void *vroot __unused, void (*freefct)(void *) __unused)
++{
++
++	/* XXX: Just leak the memory for now. */
++}
++
+ #ifdef SYMBOL_VERSIONING
+ # define NEW_INTDEF(name) __typeof (name) INTUSE(name) \
+   __attribute__ ((alias ("_new." #name))) attribute_hidden;

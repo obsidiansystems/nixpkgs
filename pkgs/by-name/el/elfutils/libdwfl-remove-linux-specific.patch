@@ -1,0 +1,50 @@
+diff --git a/libdw/Makefile.am b/libdw/Makefile.am
+index c98fe31f..0911c283 100644
+--- a/libdw/Makefile.am
++++ b/libdw/Makefile.am
+@@ -107,7 +107,7 @@ am_libdw_pic_a_OBJECTS = $(libdw_a_SOURCES:.c=.os)
+ 
+ libdw_so_LIBS = ../libebl/libebl_pic.a ../backends/libebl_backends_pic.a \
+ 		../libcpu/libcpu_pic.a libdw_pic.a ../libdwelf/libdwelf_pic.a \
+-		../libdwfl/libdwfl_pic.a ../libdwfl_stacktrace/libdwfl_stacktrace_pic.a
++		../libdwfl/libdwfl_pic.a
+ libdw_so_DEPS = ../lib/libeu.a ../libelf/libelf.so
+ libdw_so_LDLIBS = $(libdw_so_DEPS) -ldl -lz $(argp_LDADD) $(fts_LIBS) $(obstack_LIBS) $(zip_LIBS) -pthread
+ libdw.so: $(srcdir)/libdw.map $(libdw_so_LIBS) $(libdw_so_DEPS)
+@@ -135,9 +135,6 @@ uninstall: uninstall-am
+ libdwfl_objects = $(shell cat ../libdwfl/libdwfl.manifest)
+ libdw_a_LIBADD = $(addprefix ../libdwfl/,$(libdwfl_objects))
+ 
+-libdwfl_stacktrace_objects = $(shell cat ../libdwfl_stacktrace/libdwfl_stacktrace.manifest)
+-libdw_a_LIBADD += $(addprefix ../libdwfl_stacktrace/,$(libdwfl_stacktrace_objects))
+-
+ libdwelf_objects = $(shell cat ../libdwelf/libdwelf.manifest)
+ libdw_a_LIBADD += $(addprefix ../libdwelf/,$(libdwelf_objects))
+ 
+diff --git a/libdw/libdw.map b/libdw/libdw.map
+index b45647e6..042eeaaa 100644
+--- a/libdw/libdw.map
++++ b/libdw/libdw.map
+@@ -392,22 +392,3 @@ ELFUTILS_0.193 {
+     dwarf_language_lower_bound;
+ } ELFUTILS_0.192;
+ 
+-/* XXX Experimental libdwfl_stacktrace API. */
+-ELFUTILS_0.193_EXPERIMENTAL {
+-  global:
+-    dwflst_perf_sample_preferred_regs_mask;
+-    dwflst_tracker_begin;
+-    dwflst_tracker_dwfl_begin;
+-    dwflst_tracker_end;
+-    dwflst_tracker_find_cached_elf;
+-    dwflst_tracker_cache_elf;
+-    dwflst_module_gettracker;
+-    dwflst_tracker_linux_proc_find_elf;
+-    dwflst_tracker_find_pid;
+-    dwflst_perf_sample_getframes;
+-};
+-
+-ELFUTILS_0.194_EXPERIMENTAL {
+-  global:
+-    dwflst_sample_getframes;
+-} ELFUTILS_0.193_EXPERIMENTAL;

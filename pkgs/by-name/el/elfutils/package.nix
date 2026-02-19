@@ -23,6 +23,8 @@
   libmicrohttpd,
   libarchive,
   gitUpdater,
+  libintl,
+  autoreconfHook,
 }:
 
 # TODO: Look at the hardcoded paths to kernel, modules etc.
@@ -60,7 +62,21 @@ stdenv.mkDerivation (finalAttrs: {
     # https://patchwork.sourceware.org/project/elfutils/patch/20251205145241.1165646-1-arnout@bzzt.net/
     ./test-run-sysroot-reliability.patch
   ]
-  ++ lib.optionals stdenv.hostPlatform.isMusl [ ./musl-error_h.patch ];
+  ++ lib.optionals stdenv.hostPlatform.isMusl [ ./musl-error_h.patch ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    (fetchpatch {
+      name = "patch-lib_stdio__ext.h.patch";
+      url = "https://raw.githubusercontent.com/freebsd/freebsd-ports/bb4edea68f4c14afe893377c2d30885583a06d86/devel/elfutils/files/patch-lib_stdio__ext.h";
+      extraPrefix = "";
+      postFetch = ''
+        substituteInPlace $out --replace-fail ".orig" ""
+      '';
+      hash = "sha256-GY0jKPdh6QNgFkDLuW3DdL/Ch5pW0yPGWJKg2PrFs6c=";
+    })
+    # Many of the upstream patches were designed for older elfutils, so we have to keep our own in tree
+    ./freebsd-lib_eu-config.h.patch
+    ./libdwfl-remove-linux-specific.patch
+  ];
 
   postPatch = ''
     patchShebangs tests/*.sh
@@ -70,6 +86,10 @@ stdenv.mkDerivation (finalAttrs: {
     #
     # > dwfl_thread_getframes: No DWARF information found
     sed -i s/run-backtrace-dwarf.sh//g tests/Makefile.in
+  ''
+  # On FreeBSD alloca is part of stdlib.h. There is no dedicated header
+  + lib.optionalString stdenv.hostPlatform.isFreeBSD ''
+    sed -E -i -e "/alloca.h/d" lib/libeu.h
   '';
 
   outputs = [
@@ -88,17 +108,24 @@ stdenv.mkDerivation (finalAttrs: {
     gettext
     bzip2
   ]
-  ++ lib.optional enableDebuginfod pkg-config;
+  ++ lib.optional enableDebuginfod pkg-config
+  ++ lib.optional stdenv.hostPlatform.isFreeBSD autoreconfHook;
   buildInputs = [
     zlib
     zstd
     bzip2
     xz
   ]
-  ++ lib.optionals stdenv.hostPlatform.isMusl [
+  ++ lib.optionals (!stdenv.hostPlatform.isGnu) [
     argp-standalone
-    musl-fts
+    # Despite its name, musl-obstack works perfectly fine on non-musl libcs
     musl-obstack
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isMusl [
+    musl-fts
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    libintl
   ]
   ++ lib.optionals enableDebuginfod [
     sqlite
@@ -122,7 +149,14 @@ stdenv.mkDerivation (finalAttrs: {
     # Versioned symbols are nice to have, but we can do without.
     (lib.enableFeature (!stdenv.hostPlatform.isMicroBlaze) "symbol-versioning")
   ]
-  ++ lib.optional (stdenv.targetPlatform.useLLVM or false) "--disable-demangler";
+  ++ lib.optional (stdenv.targetPlatform.useLLVM or false) "--disable-demangler"
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    "--disable-stacktrace"
+  ];
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isFreeBSD {
+    NIX_CFLAGS_COMPILE = "-Wno-error=format-nonliteral -Wno-error=unused-but-set-variable";
+  };
 
   enableParallelBuilding = true;
 
@@ -144,7 +178,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     homepage = "https://sourceware.org/elfutils/";
     description = "Set of utilities to handle ELF objects";
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     # https://lists.fedorahosted.org/pipermail/elfutils-devel/2014-November/004223.html
     badPlatforms = [ lib.systems.inspect.platformPatterns.isStatic ];
     # licenses are GPL2 or LGPL3+ for libraries, GPL3+ for bins,
