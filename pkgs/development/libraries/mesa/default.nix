@@ -7,6 +7,7 @@
   expat,
   fetchCrate,
   fetchFromGitLab,
+  fetchpatch,
   file,
   flex,
   glslang,
@@ -53,52 +54,78 @@
 
   # We enable as many drivers as possible here, to build cross tools
   # and support emulation use cases (emulated x86_64 on aarch64, etc)
-  galliumDrivers ? [
-    "asahi" # Apple AGX
-    "crocus" # Intel legacy
-    "d3d12" # WSL emulated GPU (aka Dozen)
-    "ethosu" # ARM Ethos NPU
-    "etnaviv" # Vivante GPU designs (mostly NXP/Marvell SoCs)
-    "freedreno" # Qualcomm Adreno (all Qualcomm SoCs)
-    "i915" # Intel extra legacy
-    "iris" # new Intel (Broadwell+)
-    "lima" # ARM Mali 4xx
-    "llvmpipe" # software renderer
-    "nouveau" # Nvidia
-    "panfrost" # ARM Mali Midgard and up (T/G series)
-    "r300" # very old AMD
-    "r600" # less old AMD
-    "radeonsi" # new AMD (GCN+)
-    "rocket" # Rockchip NPU
-    "softpipe" # older software renderer
-    "svga" # VMWare virtualized GPU
-    "tegra" # Nvidia Tegra SoCs
-    "v3d" # Broadcom VC5 (Raspberry Pi 4)
-    "vc4" # Broadcom VC4 (Raspberry Pi 0-3)
-    "virgl" # QEMU virtualized GPU (aka VirGL)
-    "zink" # generic OpenGL over Vulkan, experimental
-  ],
-  vulkanDrivers ? [
-    "amd" # AMD (aka RADV)
-    "asahi" # Apple AGX
-    "broadcom" # Broadcom VC5 (Raspberry Pi 4, aka V3D)
-    "freedreno" # Qualcomm Adreno (all Qualcomm SoCs)
-    "gfxstream" # Android virtualized GPU
-    "imagination" # PowerVR Rogue (currently N/A)
-    "intel_hasvk" # Intel Haswell/Broadwell, "legacy" Vulkan driver (https://www.phoronix.com/news/Intel-HasVK-Drop-Dead-Code)
-    "intel" # new Intel (aka ANV)
-    "microsoft-experimental" # WSL virtualized GPU (aka DZN/Dozen)
-    "nouveau" # Nouveau (aka NVK)
-    "panfrost" # ARM Mali Midgard and up (T/G series)
-    "swrast" # software renderer (aka Lavapipe)
-  ]
-  ++
-    lib.optionals
-      (stdenv.hostPlatform.isAarch -> lib.versionAtLeast stdenv.hostPlatform.parsed.cpu.version "6")
+  galliumDrivers ?
+    if stdenv.hostPlatform.isLinux then
       [
-        # QEMU virtualized GPU (aka VirGL)
-        # Requires ATOMIC_INT_LOCK_FREE == 2.
-        "virtio"
+        "asahi" # Apple AGX
+        "crocus" # Intel legacy
+        "d3d12" # WSL emulated GPU (aka Dozen)
+        "ethosu" # ARM Ethos NPU
+        "etnaviv" # Vivante GPU designs (mostly NXP/Marvell SoCs)
+        "freedreno" # Qualcomm Adreno (all Qualcomm SoCs)
+        "i915" # Intel extra legacy
+        "iris" # new Intel (Broadwell+)
+        "lima" # ARM Mali 4xx
+        "llvmpipe" # software renderer
+        "nouveau" # Nvidia
+        "panfrost" # ARM Mali Midgard and up (T/G series)
+        "r300" # very old AMD
+        "r600" # less old AMD
+        "radeonsi" # new AMD (GCN+)
+        "rocket" # Rockchip NPU
+        "softpipe" # older software renderer
+        "svga" # VMWare virtualized GPU
+        "tegra" # Nvidia Tegra SoCs
+        "v3d" # Broadcom VC5 (Raspberry Pi 4)
+        "vc4" # Broadcom VC4 (Raspberry Pi 0-3)
+        "virgl" # QEMU virtualized GPU (aka VirGL)
+        "zink" # generic OpenGL over Vulkan, experimental
+      ]
+    else
+      # Unfortunately many drivers only build on Linux, these work on FreeBSD
+      [
+        "i915"
+        "iris"
+        "llvmpipe"
+        "panfrost"
+        "r300"
+        "r600"
+        "radeonsi"
+        "svga"
+        "zink"
+      ],
+  vulkanDrivers ?
+    if stdenv.hostPlatform.isLinux then
+      (
+        [
+          "amd" # AMD (aka RADV)
+          "asahi" # Apple AGX
+          "broadcom" # Broadcom VC5 (Raspberry Pi 4, aka V3D)
+          "freedreno" # Qualcomm Adreno (all Qualcomm SoCs)
+          "gfxstream" # Android virtualized GPU
+          "imagination" # PowerVR Rogue (currently N/A)
+          "intel_hasvk" # Intel Haswell/Broadwell, "legacy" Vulkan driver (https://www.phoronix.com/news/Intel-HasVK-Drop-Dead-Code)
+          "intel" # new Intel (aka ANV)
+          "microsoft-experimental" # WSL virtualized GPU (aka DZN/Dozen)
+          "nouveau" # Nouveau (aka NVK)
+          "panfrost" # ARM Mali Midgard and up (T/G series)
+          "swrast" # software renderer (aka Lavapipe)
+        ]
+        ++
+          lib.optionals
+            (stdenv.hostPlatform.isAarch -> lib.versionAtLeast stdenv.hostPlatform.parsed.cpu.version "6")
+            [
+              # QEMU virtualized GPU (aka VirGL)
+              # Requires ATOMIC_INT_LOCK_FREE == 2.
+              "virtio"
+            ]
+      )
+    else
+      # Unfortunately many drivers only build on Linux, these work on FreeBSD
+      [
+        "amd"
+        "intel"
+        "swrast"
       ],
   eglPlatforms ? [
     "x11"
@@ -154,6 +181,17 @@ stdenv.mkDerivation {
 
   patches = [
     ./opencl.patch
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    (fetchpatch {
+      name = "patch-src_intel_common_xe_intel__gem.c";
+      url = "https://raw.githubusercontent.com/freebsd/freebsd-ports/4802819042c3b791bec276dcaa22c46478d3454f/graphics/mesa-dri/files/patch-src_intel_common_xe_intel__gem.c";
+      extraPrefix = "";
+      postFetch = ''
+        substituteInPlace $out --replace-fail ".orig" ""
+      '';
+      hash = "sha256-gMUT8vqE50yL6Ax3HJTANXvU4B/P0vlXNfDhz122FpY=";
+    })
   ];
 
   postPatch = ''
@@ -172,6 +210,8 @@ stdenv.mkDerivation {
     # OpenCL drivers pull in ~1G of extra LLVM stuff, so don't install them
     # if the user didn't explicitly ask for it
     "opencl"
+  ]
+  ++ lib.optionals (lib.elem "microsoft-experimental" vulkanDrivers) [
     # the Dozen drivers depend on libspirv2dxil, but link it statically, and
     # libspirv2dxil itself is pretty chonky, so relocate it to its own output in
     # case anything wants to use it at some point
@@ -232,7 +272,7 @@ stdenv.mkDerivation {
     (lib.mesonOption "gallium-rusticl-enable-drivers" "auto")
 
     # Enable more sensors in gallium-hud
-    (lib.mesonBool "gallium-extra-hud" true)
+    (lib.mesonBool "gallium-extra-hud" stdenv.hostPlatform.isLinux)
 
     # Disable valgrind on targets where it's not available
     (lib.mesonEnable "valgrind" withValgrind)
@@ -257,13 +297,17 @@ stdenv.mkDerivation {
   ++ lib.optionals needNativeCLC [
     (lib.mesonOption "mesa-clc" "system")
     (lib.mesonOption "precomp-compiler" "system")
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    (lib.mesonEnable "lmsensors" false)
   ];
+
+  hardeningDisable = lib.optional stdenv.hostPlatform.isFreeBSD "fortify";
 
   strictDeps = true;
 
   buildInputs = [
     directx-headers
-    elfutils
     expat
     spirv-tools
     libdisplay-info
@@ -284,16 +328,19 @@ stdenv.mkDerivation {
     llvmPackages.clang-unwrapped
     llvmPackages.libclc
     llvmPackages.libllvm
-    lm_sensors
     python3Packages.python # for shebang
     spirv-llvm-translator
-    udev
     vulkan-loader
     wayland
     wayland-protocols
     libxcb-keysyms
     xorgproto
     zstd
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    elfutils
+    lm_sensors
+    udev
   ]
   ++ lib.optionals withValgrind [
     valgrind-light
