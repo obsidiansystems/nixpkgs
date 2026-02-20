@@ -42,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/artizirk/wdisplays";
     maintainers = with lib.maintainers; [ ma27 ];
     license = lib.licenses.gpl3Plus;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     mainProgram = "wdisplays";
   };
 })

@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitLab,
+  fetchpatch,
   autoconf,
   automake,
   gettext,
@@ -26,6 +27,15 @@ stdenv.mkDerivation (finalAttrs: {
   ];
   buildInputs = [ ncurses ];
 
+  patches = lib.optionals stdenv.hostPlatform.isFreeBSD [
+    ./freebsd.patch
+    (fetchpatch {
+      url = "https://gitlab.com/psmisc/psmisc/-/commit/dd9b91670ab2cf618e619b59aec62a73446a1da9.patch";
+      hash = "sha256-6y7WQWpK8NOq2EBsiAOcV1WXED8DvYU9daVXBAJJrDk=";
+    })
+  ];
+  configureFlags = lib.optionals stdenv.hostPlatform.isFreeBSD [ "--disable-statx" ];
+
   preConfigure =
     lib.optionalString (stdenv.buildPlatform != stdenv.hostPlatform) ''
       # Goes past the rpl_malloc linking failure
@@ -40,7 +50,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     homepage = "https://gitlab.com/psmisc/psmisc";
     description = "Set of small useful utilities that use the proc filesystem (such as fuser, killall and pstree)";
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     license = lib.licenses.gpl2Plus;
     maintainers = with lib.maintainers; [ ryantm ];
   };

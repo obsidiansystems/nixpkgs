@@ -223,6 +223,6 @@ stdenv.mkDerivation (finalAttrs: {
       synthetica
       khaneliman
     ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

@@ -103,7 +103,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/ErikReider/SwayNotificationCenter";
     changelog = "https://github.com/ErikReider/SwayNotificationCenter/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.gpl3;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     mainProgram = "swaync";
     maintainers = with lib.maintainers; [
       berbiche

@@ -60,6 +60,6 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.mit;
     mainProgram = "swayidle";
     maintainers = with lib.maintainers; [ wineee ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

@@ -70,6 +70,6 @@ stdenv.mkDerivation (finalAttrs: {
     mainProgram = "gtk4-layer-demo";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ donovanglover ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

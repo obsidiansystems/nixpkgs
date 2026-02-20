@@ -49,7 +49,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     changelog = "https://github.com/emersion/slurp/releases/tag/v${finalAttrs.version}";
     description = "Select a region in a Wayland compositor";
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     homepage = "https://github.com/emersion/slurp";
     license = lib.licenses.mit;
     mainProgram = "slurp";

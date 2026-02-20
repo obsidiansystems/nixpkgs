@@ -71,6 +71,6 @@ stdenv.mkDerivation (finalAttrs: {
       eonpatapon
       donovanglover
     ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

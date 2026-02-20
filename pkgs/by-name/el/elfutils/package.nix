@@ -178,7 +178,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     homepage = "https://sourceware.org/elfutils/";
     description = "Set of utilities to handle ELF objects";
-    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
+    platforms = lib.platforms.linux;
     # https://lists.fedorahosted.org/pipermail/elfutils-devel/2014-November/004223.html
     badPlatforms = [ lib.systems.inspect.platformPatterns.isStatic ];
     # licenses are GPL2 or LGPL3+ for libraries, GPL3+ for bins,

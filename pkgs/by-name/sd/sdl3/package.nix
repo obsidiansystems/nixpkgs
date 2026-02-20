@@ -45,12 +45,12 @@
   sdl3-image,
   sdl3-ttf,
   alsaSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  dbusSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
+  dbusSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   drmSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   ibusSupport ? stdenv.hostPlatform.isUnix && !stdenv.hostPlatform.isDarwin,
   jackSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   libdecorSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  libudevSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
+  libudevSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   libusbSupport ? stdenv.hostPlatform.isLinux,
   openglSupport ? lib.meta.availableOn stdenv.hostPlatform libGL,
   pipewireSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
@@ -59,7 +59,7 @@
   sndioSupport ? false,
   traySupport ? true,
   vulkanSupport ? true,
-  waylandSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
+  waylandSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   x11Support ? !stdenv.hostPlatform.isAndroid && !stdenv.hostPlatform.isWindows,
 }:
 
