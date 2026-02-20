@@ -4,12 +4,14 @@
   fetchurl,
   fetchpatch,
   replaceVars,
+  buildPackages,
   meson,
   ninja,
   gettext,
   pkg-config,
   python3,
   gst-plugins-base,
+  freebsd,
   orc,
   gstreamer,
   gobject-introspection,
@@ -111,6 +113,7 @@
   guiSupport ? true,
   gst-plugins-bad,
   apple-sdk_gstreamer,
+  withIntrospection ? lib.meta.availableOn stdenv.hostPlatform gobject-introspection && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -142,6 +145,7 @@ stdenv.mkDerivation (finalAttrs: {
     python3
     gettext
     gstreamer # for gst-tester-1.0
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
   ]
   ++ lib.optionals enableDocumentation [
@@ -225,7 +229,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals ajaSupport [
     libajantv2
   ]
-  ++ lib.optionals (gst-plugins-base.waylandEnabled && stdenv.hostPlatform.isLinux) [
+  ++ lib.optionals (gst-plugins-base.waylandEnabled && !stdenv.hostPlatform.isDarwin) [
     libva # vaapi requires libva -> libdrm -> libpciaccess, which is Linux-only in nixpkgs
     wayland
     wayland-protocols
@@ -253,6 +257,9 @@ stdenv.mkDerivation (finalAttrs: {
     sratom
 
     libGL
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    freebsd.v4l-compat
   ]
   ++ lib.optionals guiSupport [
     gtk3
@@ -320,6 +327,7 @@ stdenv.mkDerivation (finalAttrs: {
     "-Dbluez=${if bluezSupport then "enabled" else "disabled"}"
     (lib.mesonEnable "openh264" openh264Support)
     (lib.mesonEnable "doc" enableDocumentation)
+    (lib.mesonEnable "introspection" withIntrospection)
     (lib.mesonEnable "directfb" false)
     (lib.mesonEnable "lcevcdecoder" lcevcdecSupport)
     (lib.mesonEnable "ldac" ldacbtSupport)
@@ -332,7 +340,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals (!stdenv.hostPlatform.isLinux || !stdenv.hostPlatform.isx86) [
     "-Dnvcodec=disabled" # Linux-only, broken on non-x86
   ]
-  ++ lib.optionals (!stdenv.hostPlatform.isLinux || !gst-plugins-base.waylandEnabled) [
+  ++ lib.optionals (stdenv.hostPlatform.isDarwin || !gst-plugins-base.waylandEnabled) [
     "-Dva=disabled" # see comment on `libva` in `buildInputs`
   ]
   ++ lib.optionals stdenv.hostPlatform.isDarwin [
@@ -349,6 +357,12 @@ stdenv.mkDerivation (finalAttrs: {
     "-Duvch264=disabled" # requires gudev
     "-Dv4l2codecs=disabled" # requires gudev
     "-Dladspa=disabled" # requires lrdf
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    "-Ddvb=disabled"
+    "-Dfbdev=disabled"
+    "-Duvch264=disabled" # theoretically usable
+    "-Duvcgadget=disabled" # theoretically usable
   ]
   ++
     lib.optionals
@@ -426,7 +440,7 @@ stdenv.mkDerivation (finalAttrs: {
       a real live maintainer, or some actual wide use.
     '';
     license = if enableGplPlugins then lib.licenses.gpl2Plus else lib.licenses.lgpl2Plus;
-    platforms = lib.platforms.linux ++ lib.platforms.darwin;
+    platforms = lib.platforms.unix;
     maintainers = [ ];
   };
 })

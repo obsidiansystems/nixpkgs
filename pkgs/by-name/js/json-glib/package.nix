@@ -64,7 +64,7 @@ stdenv.mkDerivation rec {
     gobject-introspection
     gi-docgen
   ]
-  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform && stdenv.hostPlatform.emulatorAvailable buildPackages) [
     mesonEmulatorHook
   ];
 

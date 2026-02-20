@@ -296,7 +296,7 @@ stdenv.mkDerivation (finalAttrs: {
       code, LGPL or LGPL-compatible for the supporting library).
     '';
     license = lib.licenses.lgpl2Plus;
-    platforms = lib.platforms.linux ++ lib.platforms.darwin;
+    platforms = lib.platforms.unix;
     maintainers = [ ];
   };
 })

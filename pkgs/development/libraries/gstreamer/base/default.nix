@@ -15,6 +15,7 @@
   libintl,
   libopus,
   isocodes,
+  libglvnd,
   libjpeg,
   libpng,
   tremor, # provides 'virbisidec'
@@ -24,12 +25,12 @@
     && stdenv.hostPlatform.emulatorAvailable buildPackages,
   buildPackages,
   gobject-introspection,
-  enableX11 ? stdenv.hostPlatform.isLinux,
+  enableX11 ? stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD,
   libxext,
   libxi,
   libxv,
   libdrm,
-  enableWayland ? stdenv.hostPlatform.isLinux,
+  enableWayland ? stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD,
   wayland-scanner,
   wayland,
   wayland-protocols,
@@ -103,6 +104,14 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals (!stdenv.hostPlatform.isDarwin) [
     libdrm
     libGL
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    # Package 'glesv2', required by 'gstreamer-gl-prototypes-1.0', not found
+    libglvnd
+  ]
+  ++ lib.optionals (enableWayland && stdenv.hostPlatform.isFreeBSD) [
+    # Package 'wayland-egl', required by 'gstreamer-gl-wayland-1.0', not found
+    wayland
   ]
   ++ lib.optionals stdenv.hostPlatform.isDarwin [
     apple-sdk_gstreamer
