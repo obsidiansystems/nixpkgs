@@ -93,7 +93,7 @@ stdenv.mkDerivation (finalAttrs: {
     itstool
     gperf
   ]
-  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform && stdenv.hostPlatform.emulatorAvailable buildPackages) [
     mesonEmulatorHook
   ]
   ++ lib.optionals (!lib.systems.equals stdenv.buildPlatform stdenv.hostPlatform) [

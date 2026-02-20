@@ -40,6 +40,6 @@ stdenv.mkDerivation (finalAttrs: {
     ];
     license = lib.licenses.isc;
     pkgConfigModules = [ "libudev" ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

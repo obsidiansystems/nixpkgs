@@ -15,6 +15,10 @@
   gtk4,
   gobject-introspection,
   vala,
+  buildPackages,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -45,14 +49,16 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
     gtk-doc
     docbook-xsl-nons
     docbook_xml_dtd_43
     vala
+  ] ++ [
     wayland-scanner
   ]
-  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [ mesonEmulatorHook ];
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform && stdenv.hostPlatform.emulatorAvailable buildPackages) [ mesonEmulatorHook ];
 
   buildInputs = [
     gtk4

@@ -242,7 +242,6 @@ stdenv.mkDerivation (finalAttrs: {
     flite
     libdrm
     libgudev
-    sbc
     spandsp
 
     # ladspa plug-in
@@ -257,6 +256,9 @@ stdenv.mkDerivation (finalAttrs: {
     sratom
 
     libGL
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    sbc
   ]
   ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
     freebsd.v4l-compat

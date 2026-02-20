@@ -68,7 +68,7 @@ stdenv.mkDerivation rec {
     '';
     homepage = "https://github.com/elementary/granite";
     license = lib.licenses.lgpl3Plus;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     teams = [ lib.teams.pantheon ];
     mainProgram = "granite-7-demo";
   };

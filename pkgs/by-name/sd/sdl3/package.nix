@@ -14,6 +14,7 @@
   libdrm,
   libjack2,
   libpulseaudio,
+  libudev-devd,
   libusb1,
   libxkbcommon,
   libgbm,
@@ -47,7 +48,7 @@
   alsaSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   dbusSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   drmSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  ibusSupport ? stdenv.hostPlatform.isUnix && !stdenv.hostPlatform.isDarwin,
+  ibusSupport ? stdenv.hostPlatform.isLinux,  # can be improved
   jackSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   libdecorSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   libudevSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
@@ -137,7 +138,8 @@ stdenv.mkDerivation (finalAttrs: {
     ]
     ++ lib.optional jackSupport libjack2
     ++ lib.optional libdecorSupport libdecor
-    ++ lib.optional libudevSupport systemdLibs
+    ++ lib.optional (libudevSupport && stdenv.hostPlatform.isLinux) systemdLibs
+    ++ lib.optional (libudevSupport && stdenv.hostPlatform.isFreeBSD) libudev-devd
     ++ lib.optional openglSupport libGL
     ++ lib.optional pipewireSupport pipewire
     ++ lib.optional pulseaudioSupport libpulseaudio
