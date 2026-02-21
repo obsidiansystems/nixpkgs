@@ -4,6 +4,7 @@
   withoutTargetLibc,
   libcCross,
   threadsCross,
+  pkgsTargetTarget,
 }:
 
 let
@@ -29,7 +30,8 @@ in
     in
     mkFlags libcCross
     ++ lib.optionals (!withoutTargetLibc) (mkFlags (threadsCross.package or null))
-    ++ mkFlags (libcCross.w32api or null);
+    ++ mkFlags (libcCross.w32api or null)
+    ++ lib.optionals targetPlatform.isFreeBSD (mkFlags pkgsTargetTarget.freebsd.libncurses-tinfo);
 
   EXTRA_LDFLAGS_FOR_TARGET =
     let
@@ -54,5 +56,6 @@ in
     in
     mkFlags libcCross
     ++ lib.optionals (!withoutTargetLibc) (mkFlags (threadsCross.package or null))
-    ++ mkFlags (libcCross.w32api or null);
+    ++ mkFlags (libcCross.w32api or null)
+    ++ lib.optionals targetPlatform.isFreeBSD (mkFlags pkgsTargetTarget.freebsd.libncurses-tinfo);
 }

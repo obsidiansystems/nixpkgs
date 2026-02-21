@@ -2,6 +2,7 @@
   lib,
   stdenv,
   targetPackages,
+  targetConfig',
 
   withoutTargetLibc,
   libcCross,
@@ -66,6 +67,9 @@ let
       "--with-as=${
         if targetPackages.stdenv.cc.bintools.isLLVM then binutils else targetPackages.stdenv.cc.bintools
       }/bin/${targetPlatform.config}-as"
+      "--with-ld=${
+        if targetPackages.stdenv.cc.bintools.isLLVM then binutils else targetPackages.stdenv.cc.bintools
+      }/bin/${targetPlatform.config}-ld"
     ]
     ++ (
       if withoutTargetLibc then
@@ -290,6 +294,9 @@ let
       # Workaround build failures like:
       #   cc1: error: fp software completion requires '-mtrap-precision=i' [-Werror]
       "--disable-werror"
+    ]
+    ++ lib.optionals stdenv.targetPlatform.isFreeBSD [
+      "--target=${targetConfig'}"
     ];
 
 in

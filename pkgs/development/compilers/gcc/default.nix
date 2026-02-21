@@ -19,7 +19,7 @@
   cargo,
   staticCompiler ? false,
   enableShared ? stdenv.targetPlatform.hasSharedLibraries,
-  enableDefaultPie ? stdenv.targetPlatform.hasSharedLibraries,
+  enableDefaultPie ? stdenv.targetPlatform.hasSharedLibraries && !stdenv.targetPlatform.isFreeBSD,
   enableLTO ? stdenv.hostPlatform.hasSharedLibraries,
   texinfo ? null,
   perl ? null, # optional, for texi2pod (then pod2man)
@@ -45,6 +45,7 @@
   gnused ? null,
   buildPackages,
   pkgsBuildTarget,
+  pkgsTargetTarget,
   libxcrypt,
   disableGdbPlugin ?
     !enablePlugin
@@ -98,8 +99,12 @@ let
   disableBootstrap = !stdenv.hostPlatform.isDarwin && !profiledCompiler;
 
   inherit (stdenv) buildPlatform hostPlatform targetPlatform;
-  targetConfig =
-    if (!lib.systems.equals targetPlatform hostPlatform) then targetPlatform.config else null;
+  targetConfig' =
+    targetPlatform.config
+    + lib.optionalString targetPlatform.isFreeBSD (
+      lib.versions.major targetPackages.stdenv.cc.libc.version
+    );
+  targetConfig = if (!lib.systems.equals targetPlatform hostPlatform) then targetConfig' else null;
 
   patches = callFile ./patches { };
 
@@ -124,6 +129,7 @@ let
       hostPlatform
       targetPlatform
       targetConfig
+      targetConfig'
       patches
       crossMingw
       stageNameAddon
@@ -174,6 +180,7 @@ let
       patchelf
       perl
       pkgsBuildTarget
+      pkgsTargetTarget
       profiledCompiler
       reproducibleBuild
       staticCompiler
@@ -438,6 +445,7 @@ pipe
         langCC
         langJit
         targetPlatform
+        targetConfig
         hostPlatform
         withoutTargetLibc
         enableShared
