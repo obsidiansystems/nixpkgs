@@ -116,7 +116,7 @@ stdenv.mkDerivation (finalAttrs: {
         '';
       })
       (fetchpatch {
-        url = "https://raw.githubusercontent.com/freebsd/freebsd-ports/42da4cdf2d9161fea8f7cdfc19aefda7707fadf4/audio/cdparanoia/files/patch-interface_scsi__interface.c";
+        url = "https://raw.githubusercontent.com/freebsd/freebsd-ports/c9b5763a8e183e65f126a92d0de94db29c3644d9/audio/cdparanoia/files/patch-interface_scsi__interface.c";
         hash = "sha256-dx6YCWW8J0e455phaYDUMiOCvp4DsfINjSEiEfnHaNI=";
         extraPrefix = "";
         postFetch = ''
@@ -133,6 +133,11 @@ stdenv.mkDerivation (finalAttrs: {
         '';
       })
     ];
+
+  # This is invalid when memcpy is a macro, like on freebsd
+  postPatch = ''
+    sed -E -i -e 's/(\(char ?\[\]\)\{.*\})/(\1)/g' interface/scsi_interface.c
+  '';
 
   nativeBuildInputs = [
     updateAutotoolsGnuConfigScriptsHook

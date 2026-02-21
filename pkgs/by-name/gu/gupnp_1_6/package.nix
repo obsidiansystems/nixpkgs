@@ -2,6 +2,7 @@
   stdenv,
   lib,
   fetchurl,
+  buildPackages,
   meson,
   ninja,
   pkg-config,
@@ -13,6 +14,9 @@
   libsoup_3,
   libxml2,
   gnome,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -22,6 +26,7 @@ stdenv.mkDerivation (finalAttrs: {
   outputs = [
     "out"
     "dev"
+  ] ++ lib.optionals withIntrospection [
     "devdoc"
   ];
 
@@ -35,9 +40,11 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   nativeBuildInputs = [
+    glib
     meson
     ninja
     pkg-config
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
     vala
     gi-docgen
@@ -51,13 +58,15 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=true"
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
+    (lib.mesonBool "gtk_doc" withIntrospection)
   ];
 
   # On Darwin: Failed to bind socket, Operation not permitted
   doCheck = !stdenv.hostPlatform.isDarwin;
 
-  postFixup = ''
+  postFixup = lib.optionalString withIntrospection ''
     # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
     moveToOutput "share/doc" "$devdoc"
   '';

@@ -4,6 +4,7 @@
   testers,
   buildPackages,
   fetchFromGitLab,
+  fetchpatch,
   python3,
   meson,
   ninja,
@@ -104,6 +105,11 @@ stdenv.mkDerivation (finalAttrs: {
     ./0060-libjack-path.patch
     # Move installed tests into their own output.
     ./0070-installed-tests-path.patch
+    # fix build on freebsd (can be removed >= 1.5.81
+    (fetchpatch {
+      url = "https://gitlab.freedesktop.org/pipewire/pipewire/-/commit/a6199c92a4d8e7ed2be9c602e5857d95f3aed012.patch";
+      hash = "sha256-x8xbTfSiwK/qdA2KVjglUpTbpnKTSDd0HdtqS8nIhL8=";
+    })
   ];
 
   strictDeps = true;

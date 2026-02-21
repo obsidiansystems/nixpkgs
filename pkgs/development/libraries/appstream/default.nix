@@ -73,6 +73,10 @@ stdenv.mkDerivation (finalAttrs: {
     })
   ];
 
+  postPatch = lib.optionalString (!lib.systems.equals stdenv.buildPlatform stdenv.hostPlatform) ''
+    sed -E -i -e '/override_find_program/d' tools/meson.build
+  '';
+
   strictDeps = true;
 
   depsBuildBuild = [
@@ -125,13 +129,11 @@ stdenv.mkDerivation (finalAttrs: {
     "-Dapidocs=false"
     "-Dc_args=-Wno-error=missing-include-dirs"
     "-Ddocs=false"
-    "-Dvapi=true"
     "-Dinstalled_test_prefix=${placeholder "installedTests"}"
     "-Dcompose=true"
     (lib.mesonBool "gir" withIntrospection)
-  ]
-  ++ lib.optionals (!withSystemd) [
-    "-Dsystemd=false"
+    (lib.mesonBool "vapi" withIntrospection)
+    (lib.mesonBool "systemd" withSystemd)
   ];
 
   passthru.tests = {
