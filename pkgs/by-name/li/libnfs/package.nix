@@ -32,7 +32,7 @@ stdenv.mkDerivation (finalAttrs: {
     })
   ];
 
-  configureFlags = [
+  configureFlags = lib.optionals (!stdenv.hostPlatform.isFreeBSD) [
     "--enable-pthread"
   ];
 
