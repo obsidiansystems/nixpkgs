@@ -45,8 +45,8 @@
   sassc,
   trackerSupport ? stdenv.hostPlatform.isLinux,
   tinysparql,
-  x11Support ? stdenv.hostPlatform.isLinux,
-  waylandSupport ? stdenv.hostPlatform.isLinux,
+  x11Support ? stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD,
+  waylandSupport ? stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD,
   libGL,
   vulkanSupport ? stdenv.hostPlatform.isLinux,
   shaderc,
@@ -56,7 +56,7 @@
   wayland,
   wayland-protocols,
   wayland-scanner,
-  xineramaSupport ? stdenv.hostPlatform.isLinux,
+  xineramaSupport ? stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD,
   cupsSupport ? stdenv.hostPlatform.isLinux,
   compileSchemas ? stdenv.hostPlatform.emulatorAvailable buildPackages,
   cups,
@@ -64,6 +64,9 @@
   broadwaySupport ? true,
   testers,
   darwinMinVersionHook,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 let
@@ -83,7 +86,7 @@ stdenv.mkDerivation (finalAttrs: {
     "out"
     "dev"
   ]
-  ++ lib.optionals x11Support [ "devdoc" ];
+  ++ lib.optionals (x11Support && withIntrospection) [ "devdoc" ];
   outputBin = "dev";
 
   setupHooks = [
@@ -100,24 +103,30 @@ stdenv.mkDerivation (finalAttrs: {
   patches = lib.optional stdenv.hostPlatform.is32bit (fetchpatch {
     url = "https://gitlab.gnome.org/GNOME/gtk/-/commit/3b7ed49f26700c65fa9c6f41cf40d4fd5f921756.diff";
     hash = "sha256-P6cE7fnR5W+H0EWQWJ3hYSu4MwMygPIfS6e0IiXlQv8=";
-  });
+  })
+  ++ [
+    #./freebsd-dmabuf.patch
+    #./freebsd-udma.patch
+  ];
 
   depsBuildBuild = [
     pkg-config
   ];
 
   nativeBuildInputs = [
+    glib
     docutils # for rst2man, rst2html5
     gettext
-    gobject-introspection
     makeWrapper
     meson
     ninja
     pkg-config
     python3
     sassc
-    gi-docgen
     libxml2 # for xmllint
+  ] ++ lib.optionals withIntrospection [
+    gi-docgen
+    gobject-introspection
   ]
   ++ lib.optionals (compileSchemas && !stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
     mesonEmulatorHook
@@ -197,13 +206,15 @@ stdenv.mkDerivation (finalAttrs: {
 
   mesonFlags = [
     # ../docs/tools/shooter.c:4:10: fatal error: 'cairo-xlib.h' file not found
-    (lib.mesonBool "documentation" x11Support)
+    (lib.mesonBool "documentation" (x11Support && withIntrospection))
     "-Dbuild-tests=false"
+    "-Dbuild-testsuite=false"
     (lib.mesonEnable "tracker" trackerSupport)
     (lib.mesonBool "broadway-backend" broadwaySupport)
     (lib.mesonEnable "vulkan" vulkanSupport)
     (lib.mesonEnable "print-cups" cupsSupport)
     (lib.mesonBool "x11-backend" x11Support)
+    (lib.mesonEnable "introspection" withIntrospection)
   ]
   ++ lib.optionals (stdenv.hostPlatform.isDarwin && !stdenv.hostPlatform.isAarch64) [
     "-Dmedia-gstreamer=disabled" # requires gstreamer-gl
@@ -216,7 +227,8 @@ stdenv.mkDerivation (finalAttrs: {
   # These are the defines that'd you'd get with --enable-debug=minimum (default).
   # See: https://developer.gnome.org/gtk3/stable/gtk-building.html#extra-configuration-options
   env = {
-    NIX_CFLAGS_COMPILE = "-DG_ENABLE_DEBUG -DG_DISABLE_CAST_CHECKS";
+    NIX_CFLAGS_COMPILE = "-DG_ENABLE_DEBUG -DG_DISABLE_CAST_CHECKS"
+      + lib.optionalString stdenv.hostPlatform.isFreeBSD " -D__BSD_VISIBLE";
   }
   // lib.optionalAttrs stdenv.hostPlatform.isMusl {
     NIX_LDFLAGS = "-lexecinfo";
@@ -240,6 +252,9 @@ stdenv.mkDerivation (finalAttrs: {
     chmod +x ''${files[@]}
     patchShebangs ''${files[@]}
 
+  ''
+  + lib.optionalString stdenv.hostPlatform.isFreeBSD ''
+    sed -E -i -e '/#include <byteswap.h>/a #include <sys/endian.h>' gtk/roaring/roaring.h
   '';
 
   preInstall = ''
@@ -276,7 +291,7 @@ stdenv.mkDerivation (finalAttrs: {
           --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH:$out/share/gsettings-schemas/${finalAttrs.pname}-${finalAttrs.version}"
       done
     ''
-    + lib.optionalString x11Support ''
+    + lib.optionalString (x11Support && withIntrospection) ''
       # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
       moveToOutput "share/doc" "$devdoc"
     '';
