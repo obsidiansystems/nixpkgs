@@ -151,7 +151,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals enableDocumentation [
     hotdoc
   ]
-  ++ lib.optionals (gst-plugins-base.waylandEnabled && stdenv.hostPlatform.isLinux) [
+  ++ lib.optionals (gst-plugins-base.waylandEnabled && !stdenv.hostPlatform.isDarwin) [
     wayland-scanner
   ];
 
@@ -365,6 +365,7 @@ stdenv.mkDerivation (finalAttrs: {
     "-Dfbdev=disabled"
     "-Duvch264=disabled" # theoretically usable
     "-Duvcgadget=disabled" # theoretically usable
+    "-Dsbc=disabled" # maybe usable
   ]
   ++
     lib.optionals
