@@ -49,14 +49,13 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
+    wayland-scanner
   ] ++ lib.optionals withIntrospection [
-    gobject-introspection
     gtk-doc
+    gobject-introspection
     docbook-xsl-nons
     docbook_xml_dtd_43
     vala
-  ] ++ [
-    wayland-scanner
   ]
   ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform && stdenv.hostPlatform.emulatorAvailable buildPackages) [ mesonEmulatorHook ];
 
@@ -67,7 +66,9 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Ddocs=true"
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
+    (lib.mesonBool "docs" withIntrospection)
     "-Dexamples=true"
   ];
 
