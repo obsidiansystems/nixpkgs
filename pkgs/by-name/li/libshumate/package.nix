@@ -3,6 +3,7 @@
   stdenv,
   fetchurl,
   fetchpatch,
+  buildPackages,
   gi-docgen,
   meson,
   ninja,
@@ -20,6 +21,9 @@
   protobufc,
   xvfb-run,
   gnome,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -54,13 +58,15 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   nativeBuildInputs = [
-    gi-docgen
     meson
     ninja
     pkg-config
-    vala
-    gobject-introspection
+    glib
     gperf
+  ] ++ lib.optionals withIntrospection [
+    vala
+    gi-docgen
+    gobject-introspection
   ];
 
   buildInputs = [
@@ -69,9 +75,10 @@ stdenv.mkDerivation (finalAttrs: {
     sqlite
     libsoup_3
     gtk4
-    libsysprof-capture
     json-glib
     protobufc
+  ] ++ lib.optionals stdenv.hostPlatform.isLinux [
+    libsysprof-capture
   ];
 
   nativeCheckInputs = [
@@ -79,6 +86,10 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
+    (lib.mesonBool "gir" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
+    (lib.mesonBool "gtk_doc" withIntrospection)
+    (lib.mesonEnable "sysprof" stdenv.hostPlatform.isLinux)
     "-Ddemos=true"
   ];
 
