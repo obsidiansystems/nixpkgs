@@ -64,6 +64,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   postPatch = ''
     patchShebangs test
+  '' + lib.optionalString stdenv.hostPlatform.isFreeBSD ''
+    substituteInPlace daemon/pty_open.c meson.build --replace-fail util.h libutil.h
   '';
 
   nativeBuildInputs = [

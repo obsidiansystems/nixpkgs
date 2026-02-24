@@ -5,6 +5,7 @@
   pkg-config,
   meson,
   ninja,
+  freebsd,
   scdoc,
   freetype,
   fontconfig,
@@ -57,7 +58,8 @@ stdenv.mkDerivation (finalAttrs: {
     tllist
   ]
   ++ lib.optionals (withShapingTypes != [ ]) [ harfbuzz ]
-  ++ lib.optionals (builtins.elem "run" withShapingTypes) [ utf8proc ];
+  ++ lib.optionals (builtins.elem "run" withShapingTypes) [ utf8proc ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [ freebsd.libstdthreads ];
   nativeCheckInputs = [ check ];
 
   mesonBuildType = "release";
@@ -91,6 +93,6 @@ stdenv.mkDerivation (finalAttrs: {
       mit
       zlib
     ];
-    platforms = with lib.platforms; linux ++ freebsd;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

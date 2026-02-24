@@ -48,6 +48,9 @@ buildPythonPackage rec {
 
   propagatedBuildInputs = [
     pycairo
+  ];
+
+  propagatedDepsHosthost = [
     gobject-introspection # e.g. try building: python3Packages.urwid python3Packages.pydbus
   ];
 

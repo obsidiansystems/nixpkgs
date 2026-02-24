@@ -26,6 +26,7 @@
   wayland-scanner,
   libxcb-wm,
   wlroots_0_19,
+  evdev-proto,
   testers,
   nixosTests,
   # Used by the NixOS module:
@@ -101,7 +102,10 @@ stdenv.mkDerivation (finalAttrs: {
     wayland-protocols
     (wlroots_0_19.override { inherit (finalAttrs) enableXWayland; })
   ]
-  ++ lib.optionals finalAttrs.enableXWayland [ libxcb-wm ];
+  ++ lib.optionals finalAttrs.enableXWayland [ libxcb-wm ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    evdev-proto
+  ];
 
   mesonFlags =
     let

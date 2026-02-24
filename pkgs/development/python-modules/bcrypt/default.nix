@@ -5,6 +5,7 @@
   rustPlatform,
   rustc,
   setuptools,
+  buildPackages,
   setuptools-rust,
   fetchFromGitHub,
   pytestCheckHook,
@@ -41,7 +42,7 @@ buildPythonPackage rec {
 
   build-system = [
     setuptools
-    setuptools-rust
+    buildPackages.python3Packages.setuptools-rust
   ];
 
   nativeBuildInputs = [

@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  buildPackages,
   nix-update-script,
   meson,
   ninja,
@@ -11,11 +12,15 @@
   libgee,
   libshumate,
   gtk4,
+  gtk-doc,
   glib,
   gettext,
   gsettings-desktop-schemas,
   gobject-introspection,
   wrapGAppsHook4,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation rec {
@@ -36,13 +41,15 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     gettext
-    gobject-introspection
     meson
     ninja
     pkg-config
     sassc
-    vala
     wrapGAppsHook4
+    vala
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
+    gtk-doc
   ];
 
   buildInputs = [
@@ -54,6 +61,12 @@ stdenv.mkDerivation rec {
     gsettings-desktop-schemas # is_clock_format_12h uses "org.gnome.desktop.interface clock-format"
     gtk4
     libgee
+  ];
+
+  mesonFlags = [
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "documentation" withIntrospection)
+    (lib.mesonBool "demo" withIntrospection)
   ];
 
   passthru = {

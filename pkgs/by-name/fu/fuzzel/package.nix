@@ -5,6 +5,9 @@
   pkg-config,
   meson,
   ninja,
+  freebsd,
+  epoll-shim,
+  evdev-proto,
   wayland-scanner,
   wayland,
   pixman,
@@ -60,7 +63,12 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional enableCairo cairo
   ++ lib.optional pngSupport libpng
   ++ lib.optional (svgSupport && svgBackend == "librsvg") librsvg
-  ++ lib.optional (svgSupport && svgBackend == "resvg") resvg;
+  ++ lib.optional (svgSupport && svgBackend == "resvg") resvg
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    epoll-shim
+    evdev-proto
+    freebsd.libstdthreads
+  ];
 
   mesonBuildType = "release";
 
@@ -83,6 +91,6 @@ stdenv.mkDerivation (finalAttrs: {
       fionera
       rodrgz
     ];
-    platforms = with lib.platforms; linux ++ freebsd;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

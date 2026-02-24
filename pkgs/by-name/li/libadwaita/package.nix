@@ -55,19 +55,16 @@ stdenv.mkDerivation (finalAttrs: {
     glib
     sassc
     desktop-file-utils # for validate-desktop-file
-  ] ++ lib.optionals withIntrospection [
     vala
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
     gi-docgen
   ];
 
   mesonFlags = [
     (lib.mesonEnable "introspection" withIntrospection)
-    (lib.mesonBool "vapi" withIntrospection)
     (lib.mesonBool "documentation" withIntrospection)
-  ]
-  ++ lib.optionals (!finalAttrs.finalPackage.doCheck) [
-    "-Dtests=false"
+    (lib.mesonBool "tests" finalAttrs.finalPackage.doCheck)
   ];
 
   buildInputs = [

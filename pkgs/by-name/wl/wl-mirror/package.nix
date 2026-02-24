@@ -3,6 +3,7 @@
   stdenv,
   fetchFromGitHub,
   cmake,
+  buildPackages,
   pkg-config,
   wayland,
   wayland-protocols,
@@ -17,7 +18,7 @@
   pipectl,
   slurp,
   rofi,
-  scdoc,
+  epoll-shim,
 }:
 
 let
@@ -41,12 +42,13 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   strictDeps = true;
-  depsBuildBuild = [ pkg-config ];
+  #depsBuildBuild = [ pkg-config ];
   nativeBuildInputs = [
+    pkg-config
     cmake
     pkg-config
-    wayland-scanner
-    scdoc
+    #wayland-scanner
+    #scdoc
     makeWrapper
     installShellFiles
   ];
@@ -56,7 +58,11 @@ stdenv.mkDerivation (finalAttrs: {
     wayland
     wayland-protocols
     wlr-protocols
+    buildPackages.wayland-scanner
+    buildPackages.scdoc
     bash
+  ] ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    epoll-shim
   ];
 
   postPatch = ''

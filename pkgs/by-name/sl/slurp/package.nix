@@ -3,6 +3,7 @@
   stdenv,
   fetchFromGitHub,
   cairo,
+  evdev-proto,
   libxkbcommon,
   meson,
   ninja,
@@ -40,6 +41,9 @@ stdenv.mkDerivation (finalAttrs: {
     libxkbcommon
     wayland
     wayland-protocols
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    evdev-proto
   ];
 
   strictDeps = true;

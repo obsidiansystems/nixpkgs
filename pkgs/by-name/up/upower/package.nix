@@ -32,6 +32,7 @@
   gobject-introspection,
   withSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
   systemd,
+  withInstalledTests ? withIntrospection && (!stdenv.hostPlatform.isFreeBSD)
 }:
 
 assert withDocs -> withIntrospection;
@@ -45,7 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
     "dev"
   ]
   ++ lib.optionals withDocs [ "devdoc" ]
-  ++ lib.optionals withIntrospection [ "installedTests" ];
+  ++ lib.optionals withInstalledTests [ "installedTests" ];
 
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
@@ -97,11 +98,7 @@ stdenv.mkDerivation (finalAttrs: {
     libusb1
     udev
   ]
-  ++ lib.optionals withIntrospection [
-    # Duplicate from nativeCheckInputs until https://github.com/NixOS/nixpkgs/issues/161570 is solved
-    umockdev
-
-    # For installed tests.
+  ++ lib.optionals withInstalledTests [
     (python3.withPackages (pp: [
       pp.dbus-python
       pp.python-dbusmock
@@ -119,7 +116,7 @@ stdenv.mkDerivation (finalAttrs: {
   nativeCheckInputs = [
     libeatmydata
   ]
-  ++ lib.optionals withIntrospection [
+  ++ lib.optionals withInstalledTests [
     python3.pkgs.dbus-python
     python3.pkgs.python-dbusmock
     python3.pkgs.pygobject3
@@ -136,12 +133,14 @@ stdenv.mkDerivation (finalAttrs: {
   mesonFlags = [
     "--localstatedir=/var"
     "--sysconfdir=/etc"
-    "-Dos_backend=linux"
+    "-Dos_backend=auto"
     "-Dsystemdsystemunitdir=${placeholder "out"}/etc/systemd/system"
     "-Dudevrulesdir=${placeholder "out"}/lib/udev/rules.d"
     "-Dudevhwdbdir=${placeholder "out"}/lib/udev/hwdb.d"
     (lib.mesonEnable "introspection" withIntrospection)
     (lib.mesonBool "gtk-doc" withDocs)
+    (lib.mesonBool "installed_tests" withInstalledTests)
+  ] ++ lib.optionals withInstalledTests [
     "-Dinstalled_test_prefix=${placeholder "installedTests"}"
   ];
 
@@ -204,7 +203,7 @@ stdenv.mkDerivation (finalAttrs: {
     ! test -e "$DESTDIR"
   '';
 
-  postFixup = lib.optionalString withIntrospection ''
+  postFixup = lib.optionalString withInstalledTests ''
     wrapProgram "$installedTests/libexec/upower/integration-test.py" \
       --prefix GI_TYPELIB_PATH : "${
         lib.makeSearchPath "lib/girepository-1.0" [

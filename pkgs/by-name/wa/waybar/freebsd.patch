@@ -1,0 +1,14 @@
+diff --git a/src/modules/battery.cpp b/src/modules/battery.cpp
+index 58a7f50e..5d33fa78 100644
+--- a/src/modules/battery.cpp
++++ b/src/modules/battery.cpp
+@@ -10,7 +10,9 @@
+ #include <libudev.h>
+ #include <poll.h>
+ #include <spdlog/spdlog.h>
++#if defined(__linux__)
+ #include <sys/signalfd.h>
++#endif
+ 
+ waybar::modules::Battery::Battery(const std::string& id, const Bar& bar, const Json::Value& config)
+     : ALabel(config, "battery", id, "{capacity}%", 60), last_event_(""), bar_(bar) {

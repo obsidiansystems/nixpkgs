@@ -387,6 +387,8 @@ let
               "${wine}/bin/wine"
             else if final.isLinux && pkgs.stdenv.hostPlatform.isLinux && final.qemuArch != null then
               "${pkgs.qemu-user}/bin/qemu-${final.qemuArch}"
+            else if final.isFreeBSD && pkgs.stdenv.hostPlatform.isLinux && final.qemuArch == "x86_64" then
+              "${pkgs.qemu-bsd-user-l4b}/bin/qemu-${final.qemuArch}"
             else if final.isWasi then
               "${pkgs.wasmtime}/bin/wasmtime"
             else if final.isGhcjs then

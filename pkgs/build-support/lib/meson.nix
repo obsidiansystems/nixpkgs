@@ -40,8 +40,15 @@ let
     cmake = 'cmake'
   '';
 
+  nativeFile = builtins.toFile "native-file.conf" ''
+    [properties]
+    needs_exe_wrapper = false
+  '';
+
+
   crossFlags = optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
     "--cross-file=${crossFile}"
+    #"--native-file=${nativeFile}"
   ];
 
   makeMesonFlags =

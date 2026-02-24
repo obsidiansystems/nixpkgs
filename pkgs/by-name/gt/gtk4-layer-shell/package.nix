@@ -28,9 +28,10 @@ stdenv.mkDerivation (finalAttrs: {
   outputs = [
     "out"
     "dev"
+  ] ++ lib.optionals withIntrospection [
     "devdoc"
   ];
-  outputBin = "devdoc";
+  outputBin = if withIntrospection then "devdoc" else "out";
 
   src = fetchFromGitHub {
     owner = "wmww";
@@ -52,10 +53,10 @@ stdenv.mkDerivation (finalAttrs: {
     wayland-scanner
   ] ++ lib.optionals withIntrospection [
     gtk-doc
+    vala
     gobject-introspection
     docbook-xsl-nons
     docbook_xml_dtd_43
-    vala
   ]
   ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform && stdenv.hostPlatform.emulatorAvailable buildPackages) [ mesonEmulatorHook ];
 
@@ -67,9 +68,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   mesonFlags = [
     (lib.mesonBool "introspection" withIntrospection)
-    (lib.mesonBool "vapi" withIntrospection)
+    (lib.mesonBool "examples" withIntrospection)
     (lib.mesonBool "docs" withIntrospection)
-    "-Dexamples=true"
   ];
 
   meta = {

@@ -1,5 +1,6 @@
 {
   lib,
+  stdenv,
   buildPythonPackage,
   fetchFromGitHub,
   pythonAtLeast,
@@ -105,6 +106,7 @@ let
     postInstall = ''
       installManPage docs/build/man/*
 
+    '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
       installShellCompletion --cmd pip \
         --bash <($out/bin/pip completion --bash --no-cache-dir) \
         --fish <($out/bin/pip completion --fish --no-cache-dir) \

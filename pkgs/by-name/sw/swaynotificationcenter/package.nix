@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  buildPackages,
   testers,
   wrapGAppsHook3,
   bash-completion,
@@ -32,6 +33,9 @@
   sassc,
   pantheon,
   nix-update-script,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -54,16 +58,17 @@ stdenv.mkDerivation (finalAttrs: {
     # cmake # currently conflicts with meson
     fish
     glib
-    gobject-introspection
     meson
     ninja
     pkg-config
     python3
     sassc
     scdoc
-    vala
     wayland-scanner
     wrapGAppsHook3
+    vala
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
   ];
 
   buildInputs = [
@@ -91,6 +96,9 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   strictDeps = true;
+
+  mesonFlags = [
+  ];
 
   passthru.tests.version = testers.testVersion {
     package = finalAttrs.finalPackage;

@@ -3,6 +3,7 @@
   stdenv,
   bash,
   fetchFromGitHub,
+  fetchpatch,
   SDL2,
   alsa-lib,
   catch2_3,
@@ -186,6 +187,14 @@ stdenv.mkDerivation (finalAttrs: {
   env = lib.optionalAttrs systemdSupport {
     PKG_CONFIG_SYSTEMD_SYSTEMDUSERUNITDIR = "${placeholder "out"}/lib/systemd/user";
   };
+
+  patches = [
+    ./freebsd.patch
+    (fetchpatch {
+      url = "https://raw.githubusercontent.com/AerynOS/recipes/4c8e3b45e4c82db10b1ae5d84ad7586e37113e01/w/waybar/pkg/0001-Fix-fmt-12.0-build.patch";
+      hash = "sha256-Vpa9XNrbmh/0wOC68cpLkgW2Y9U9N/VEzwqw//3qJM0=";
+    })
+  ];
 
   postPatch = ''
     substituteInPlace include/util/command.hpp \

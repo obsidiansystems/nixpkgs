@@ -45,7 +45,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   configureFlags =
     lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) "--enable-malloc0returnsnull"
-    ++ lib.optional (stdenv.targetPlatform.useLLVM or false) "ac_cv_path_RAWCPP=cpp";
+    ++ lib.optional (stdenv.hostPlatform.useLLVM or false) "ac_cv_path_RAWCPP=cpp";
 
   env = lib.optionalAttrs stdenv.hostPlatform.isDarwin { CPP = "clang -E -"; };
 

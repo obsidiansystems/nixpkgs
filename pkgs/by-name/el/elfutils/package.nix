@@ -149,7 +149,7 @@ stdenv.mkDerivation (finalAttrs: {
     # Versioned symbols are nice to have, but we can do without.
     (lib.enableFeature (!stdenv.hostPlatform.isMicroBlaze) "symbol-versioning")
   ]
-  ++ lib.optional (stdenv.targetPlatform.useLLVM or false) "--disable-demangler"
+  ++ lib.optional (stdenv.hostPlatform.useLLVM or false) "--disable-demangler"
   ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
     "--disable-stacktrace"
   ];

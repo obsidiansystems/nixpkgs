@@ -409,7 +409,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals withPasswordQuality [ libpwquality ]
   ++ lib.optionals withQrencode [ qrencode ]
   ++ lib.optionals withLibarchive [ libarchive ]
-  ++ lib.optional (withBootloader && stdenv.targetPlatform.useLLVM or false) (
+  ++ lib.optional (withBootloader && stdenv.hostPlatform.useLLVM or false) (
     llvmPackages.compiler-rt.override {
       doFakeLibgcc = true;
     }

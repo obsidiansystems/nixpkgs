@@ -1,8 +1,10 @@
 {
+  stdenv,
   lib,
   aiodns,
   buildPythonPackage,
   c-ares,
+  epoll-shim,
   cffi,
   fetchPypi,
   idna,
@@ -22,7 +24,12 @@ buildPythonPackage rec {
 
   build-system = [ setuptools ];
 
-  buildInputs = [ c-ares ];
+  buildInputs = [ c-ares ]
+   ++ lib.optionals stdenv.hostPlatform.isFreeBSD [ epoll-shim ];
+
+ env = lib.optionalAttrs stdenv.hostPlatform.isFreeBSD {
+   NIX_CFLAGS_COMPILE = "-I${lib.getDev epoll-shim}/include/libepoll-shim";
+ };
 
   dependencies = [
     cffi

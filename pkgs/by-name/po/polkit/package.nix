@@ -63,6 +63,11 @@ stdenv.mkDerivation rec {
     # Allow changing base for paths in pkg-config file as before.
     # https://gitlab.freedesktop.org/polkit/polkit/-/merge_requests/100
     ./0001-build-Use-datarootdir-in-Meson-generated-pkg-config-.patch
+    (fetchpatch {
+      url = "https://github.com/freebsd/freebsd-ports/raw/c9b5763a8e183e65f126a92d0de94db29c3644d9/sysutils/polkit/files/patch-src_polkitagent_polkitagenthelper-pam.c";
+      extraPrefix = "";
+      hash = "sha256-0SjLSy/GWNfCf9IvJW3wS0t3EAHODyF87p+CJjpz/vk=";
+    })
   ];
 
   depsBuildBuild = [
