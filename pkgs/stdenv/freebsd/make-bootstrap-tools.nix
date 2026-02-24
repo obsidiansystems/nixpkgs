@@ -46,6 +46,8 @@ let
   mkdir = runCommand "mkdir" { coreutils = coreutils-big; } ''
     mkdir -p $out/bin
     cp $coreutils/bin/mkdir $out/bin
+    cp $coreutils/bin/cp $out/bin
+    cp $coreutils/bin/mv $out/bin
   '';
 in
 rec {
@@ -84,14 +86,14 @@ rec {
       gzip
       bzip2
       bzip2.dev
-      curl
+      (curl.overrideAttrs (old: {
+        postFixup = "rm $bin/bin/wcurl";
+      }))
       expand-response-params
       binutils-unwrapped
       freebsd.libc
-      llvmPackages.libcxx
-      llvmPackages.libcxx.dev
-      llvmPackages.compiler-rt
-      llvmPackages.compiler-rt.dev
+      stdenv.cc.libcxx
+      stdenv.cc.libcxx.dev
       llvmPackages.clang-unwrapped
       (freebsd.locales.override { locales = [ "C.UTF-8" ]; })
     ]
