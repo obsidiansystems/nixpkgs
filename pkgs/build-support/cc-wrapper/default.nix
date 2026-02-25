@@ -128,10 +128,10 @@ let
   libc_lib = optionalString (libc != null) (getLib libc);
   cc_solib =
     optionalString (!nativeTools) (getLib cc)
-    + optionalString (targetPlatform != hostPlatform) "/${targetPlatform.config}";
+    + optionalString (targetPlatform != hostPlatform) "/${cc.targetConfig or targetPlatform.config}";
   cc_bin =
     optionalString (!nativeTools) (getBin cc)
-    + optionalString (targetPlatform != hostPlatform) "/${targetPlatform.config}";
+    + optionalString (targetPlatform != hostPlatform) "/${cc.targetConfig or targetPlatform.config}";
 
   # The wrapper scripts use 'cat' and 'grep', so we may need coreutils.
   coreutils_bin = optionalString (!nativeTools) (getBin coreutils);

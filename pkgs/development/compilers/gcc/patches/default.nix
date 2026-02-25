@@ -249,3 +249,12 @@ optionals noSysDirs (
     hash = "sha256-8I2G4430gkYoWgUued4unqhk8ZCajHf1dcivAeuLZ0E=";
   })
 ]
+++ optional targetPlatform.isFreeBSD (fetchpatch {
+  name = "gfortran-libgcc.patch";
+  url = "https://raw.githubusercontent.com/freebsd/freebsd-ports/87221e708f441aa845cd044140f38de5707e0737/lang/gcc15/files/patch-gfortran-libgcc";
+  extraPrefix = "";
+  postFetch = ''
+    substituteInPlace $out --replace ".orig" ""
+  '';
+  hash = "sha256-h7uGtaxEqNl5UKq3xeq7e+5+4ht5x/6h9DaM2Wh5Eb0=";
+})
