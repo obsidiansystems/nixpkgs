@@ -2,6 +2,7 @@
   stdenv,
   lib,
   fetchFromGitHub,
+  fetchpatch,
   autoreconfHook,
   autoconf-archive,
   pkg-config,
@@ -98,6 +99,13 @@ stdenv.mkDerivation (finalAttrs: {
     # See also
     # https://github.com/tpm2-software/tpm2-tss/blob/6c46325b466f35d40c2ed1043bfdfcfb8a367a34/Makefile.am#L880-L898
     ./no-shadow.patch
+
+  ] ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    # this can be made unconditional when we're ok with a mass rebuild
+    (fetchpatch {
+      url = "https://github.com/tpm2-software/tpm2-tss/commit/275bccc6a0dd46e123514b33c561f71c71c84eee.patch";
+      hash = "sha256-TTD9pbLXT7i9H73+1N/dVfvf3ejwedRrVIuuZJ+uIjQ=";
+    })
   ];
 
   postPatch = ''

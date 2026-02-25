@@ -83,6 +83,8 @@ stdenv.mkDerivation rec {
     doxygen
     graphviz
     sphinx-build
+  ] ++ lib.optionals eventGUISupport [
+    wayland-scanner
   ];
 
   buildInputs = [

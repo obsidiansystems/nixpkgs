@@ -19,6 +19,9 @@
   wayland-scanner,
   pkg-config,
   utf8proc,
+  evdev-proto,
+  epoll-shim,
+  freebsd,
   allowPgo ? !stdenv.hostPlatform.isMusl,
   python3, # for PGO
   # for clang stdenv check
@@ -134,7 +137,11 @@ stdenv.mkDerivation {
     libxkbcommon
     fcft
     utf8proc
-  ];
+    ] ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+        evdev-proto
+        epoll-shim
+        freebsd.libstdthreads
+    ];
 
   # recommended build flags for performance optimized foot builds
   # https://codeberg.org/dnkl/foot/src/branch/master/INSTALL.md#release-build
@@ -227,7 +234,7 @@ stdenv.mkDerivation {
       sternenseemann
       abbe
     ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     mainProgram = "foot";
   };
 }

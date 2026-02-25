@@ -111,7 +111,7 @@ stdenv.mkDerivation (finalAttrs: {
     mainProgram = "dino";
     homepage = "https://github.com/dino/dino";
     license = lib.licenses.gpl3Plus;
-    platforms = lib.platforms.linux ++ lib.platforms.darwin;
+    platforms = lib.platforms.linux ++ lib.platforms.darwin ++ lib.platforms.freebsd;
     maintainers = with lib.maintainers; [ qyliss ];
   };
 })

@@ -50,12 +50,13 @@ stdenvNoCC.mkDerivation rec {
 
   # Firmware blobs do not need fixing and should not be modified
   dontFixup = true;
+  dontConfigure = true;
 
   meta = {
     description = "Binary firmware collection packaged by kernel.org";
     homepage = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
     license = lib.licenses.unfreeRedistributableFirmware;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
     maintainers = with lib.maintainers; [ fpletz ];
     priority = 6; # give precedence to kernel firmware
     sourceProvenance = with lib.sourceTypes; [ binaryFirmware ];
