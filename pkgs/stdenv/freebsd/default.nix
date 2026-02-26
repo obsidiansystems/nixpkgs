@@ -99,7 +99,7 @@ let
           "lib/clang"
         ];
         # SYNCME: this version number must be synced with the one in make-bootstrap-tools.nix
-        version = "18";
+        version = "21";
       };
       libunwind = linkBootstrap {
         name = "libunwind";

@@ -66,7 +66,7 @@ rec {
     with pkgs;
     # SYNCME: this version number must be synced with the one in default.nix
     let
-      llvmPackages = llvmPackages_18;
+      llvmPackages = llvmPackages_21;
     in
     [
       (runCommand "bsdcp" { } "mkdir -p $out/bin; cp ${freebsd.cp}/bin/cp $out/bin/bsdcp")
