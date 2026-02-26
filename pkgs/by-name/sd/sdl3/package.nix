@@ -46,21 +46,24 @@
   sdl3-image,
   sdl3-ttf,
   alsaSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  dbusSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
+  dbusSupport ?
+    (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   drmSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  ibusSupport ? stdenv.hostPlatform.isLinux,  # can be improved
+  ibusSupport ? stdenv.hostPlatform.isLinux, # can be improved
   jackSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   libdecorSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
-  libudevSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
+  libudevSupport ?
+    (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   libusbSupport ? stdenv.hostPlatform.isLinux,
   openglSupport ? lib.meta.availableOn stdenv.hostPlatform libGL,
   pipewireSupport ? stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   pulseaudioSupport ?
     config.pulseaudio or stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isAndroid,
   sndioSupport ? false,
-  traySupport ? true,
+  traySupport ? !stdenv.hostPlatform.isFreeBSD,
   vulkanSupport ? true,
-  waylandSupport ? (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
+  waylandSupport ?
+    (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isFreeBSD) && !stdenv.hostPlatform.isAndroid,
   x11Support ? !stdenv.hostPlatform.isAndroid && !stdenv.hostPlatform.isWindows,
 }:
 
@@ -211,6 +214,10 @@ stdenv.mkDerivation (finalAttrs: {
   postInstall = ''
     moveToOutput "share/installed-tests" "$installedTests"
     moveToOutput "libexec/installed-tests" "$installedTests"
+  '';
+
+  postFixup = lib.optionalString stdenv.hostPlatform.isFreeBSD ''
+    mv $out/libdata $dev
   '';
 
   passthru = {
