@@ -9,6 +9,7 @@
   libxxf86vm,
   libGLX,
   libGLU,
+  freebsd,
   cmake,
   testers,
 }:
@@ -35,7 +36,14 @@ stdenv.mkDerivation (finalAttrs: {
     libxrandr
     libxxf86vm
     libGLU
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    freebsd.libusbhid
   ];
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isFreeBSD {
+    NIX_CFLAGS_LINK = "-lusbhid";
+  };
 
   cmakeFlags = lib.optionals stdenv.hostPlatform.isDarwin [
     "-DOPENGL_INCLUDE_DIR=${lib.getInclude libGLX}/include"
