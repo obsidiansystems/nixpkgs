@@ -31,7 +31,7 @@ let
   # This is declared here because it's used in the default value of elfhackSupport
   isElfhackPlatform =
     stdenv:
-    stdenv.hostPlatform.isElf
+    stdenv.hostPlatform.isLinux
     && (
       stdenv.hostPlatform.isi686
       || stdenv.hostPlatform.isx86_64
@@ -113,6 +113,10 @@ in
   cups,
   rsync, # used when preparing .app directory
 
+  # FreeBSD
+  evdev-proto,
+  freebsd,
+
   # optionals
 
   ## addon signing/sideloading
@@ -135,7 +139,7 @@ in
   libkrb5,
   jackSupport ? stdenv.hostPlatform.isLinux,
   libjack2,
-  jemallocSupport ? !stdenv.hostPlatform.isMusl,
+  jemallocSupport ? !stdenv.hostPlatform.isMusl && !stdenv.hostPlatform.isFreeBSD,
   jemalloc,
   ltoSupport ? (
     (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isDarwin)
@@ -168,10 +172,11 @@ in
     !privacySupport
     && !stdenv.hostPlatform.isLoongArch64
     && !stdenv.hostPlatform.isRiscV
-    && !stdenv.hostPlatform.isMusl,
+    && !stdenv.hostPlatform.isMusl
+    && !stdenv.hostPlatform.isFreeBSD,
   curl,
   geolocationSupport ? !privacySupport,
-  webrtcSupport ? !privacySupport,
+  webrtcSupport ? !privacySupport && !stdenv.hostPlatform.isFreeBSD,
 
   # digital rights management
 
@@ -513,7 +518,7 @@ buildStdenv.mkDerivation {
     (enableFeature pulseaudioSupport "pulseaudio")
     (enableFeature sndioSupport "sndio")
   ]
-  ++ lib.optionals (!buildStdenv.hostPlatform.isDarwin && lib.versionAtLeast version "141") [
+  ++ lib.optionals (buildStdenv.hostPlatform.isLinux && lib.versionAtLeast version "141") [
     "--with-onnx-runtime=${lib.getLib onnxruntime}/lib"
   ]
   ++ [
@@ -600,6 +605,10 @@ buildStdenv.mkDerivation {
       libdrm
     ]
   ))
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    freebsd.libstdthreads
+    evdev-proto
+  ]
   ++ lib.optional gssSupport libkrb5
   ++ lib.optional jemallocSupport jemalloc
   ++ extraBuildInputs;
