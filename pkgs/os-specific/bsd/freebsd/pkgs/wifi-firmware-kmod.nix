@@ -4,7 +4,7 @@
   buildPackages,
   fileGlobs ? [
     "intel/iwlwifi/iwlwifi-*.ucode"
-    "intel/iwlwifi/iwlwifi-*.pnwm"
+    "intel/iwlwifi/iwlwifi-*.pnvm"
   ],
 }:
 let
