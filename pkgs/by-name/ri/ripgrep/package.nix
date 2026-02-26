@@ -12,7 +12,9 @@
 }:
 
 let
-  canRunRg = stdenv.hostPlatform.emulatorAvailable buildPackages;
+  canRunRg =
+    stdenv.hostPlatform.emulatorAvailable buildPackages
+    && !(stdenv.hostPlatform.system != stdenv.buildPlatform.system && stdenv.hostPlatform.isFreeBSD);
   rg = "${stdenv.hostPlatform.emulator buildPackages} $out/bin/rg${stdenv.hostPlatform.extensions.executable}";
 in
 rustPlatform.buildRustPackage (finalAttrs: {
