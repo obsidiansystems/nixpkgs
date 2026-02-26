@@ -53,7 +53,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://hg.sr.ht/~scoopta/wofi";
     license = lib.licenses.gpl3Only;
     maintainers = with lib.maintainers; [ aleksana ];
-    platforms = with lib.platforms; linux;
+    platforms = lib.platforms.unix;
     mainProgram = "wofi";
   };
 })
