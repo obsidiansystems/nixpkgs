@@ -60,7 +60,7 @@ rec {
         gnutar
       ])
       ''
-        rm -rf include lib/*.a lib/i18n lib/bash share
+        rm -rf include lib/*.a lib/bash share
       '';
   bootstrap-tools = tar-all "bootstrap-tools.tar.xz" (
     with pkgs;
