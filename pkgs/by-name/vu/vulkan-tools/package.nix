@@ -20,6 +20,7 @@
   wayland-protocols,
   wayland-scanner,
   moltenvk,
+  evdev-proto,
 }:
 
 stdenv.mkDerivation rec {
@@ -61,7 +62,8 @@ stdenv.mkDerivation rec {
   ++ lib.optionals stdenv.hostPlatform.isDarwin [
     moltenvk
     moltenvk.dev
-  ];
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [ evdev-proto ];
 
   libraryPath = lib.strings.makeLibraryPath [ vulkan-loader ];
 
