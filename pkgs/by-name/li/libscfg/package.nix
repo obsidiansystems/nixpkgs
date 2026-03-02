@@ -34,6 +34,6 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Simple configuration file format";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ michaeladler ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })

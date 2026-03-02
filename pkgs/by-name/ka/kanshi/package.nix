@@ -10,6 +10,7 @@
   wayland-scanner,
   libvarlink,
   libscfg,
+  withIPC ? lib.meta.availableOn stdenv.hostPlatform libvarlink,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -40,8 +41,13 @@ stdenv.mkDerivation (finalAttrs: {
 
   buildInputs = [
     wayland
-    libvarlink
     libscfg
+  ] ++ lib.optionals withIPC [
+    libvarlink
+  ];
+
+  mesonFlags = [
+    (lib.mesonEnable "ipc" withIPC)
   ];
 
   meta = {
@@ -63,6 +69,6 @@ stdenv.mkDerivation (finalAttrs: {
       danielbarter
       aleksana
     ];
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.freebsd;
   };
 })
