@@ -26,6 +26,11 @@ mkDerivation {
         })
     ];
 
+    postInstall = ''
+        mkdir -p $out/etc
+        cp bsdfan.conf $out/etc
+    '';
+
     meta = {
         description = "A simple FreeBSD fan control utility for thinkpads";
         platforms = lib.platforms.freebsd;
