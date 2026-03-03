@@ -2,6 +2,7 @@
   stdenv,
   lib,
   fetchurl,
+  fetchpatch,
   glib,
   meson,
   ninja,
@@ -128,6 +129,10 @@ stdenv.mkDerivation (finalAttrs: {
     (lib.mesonBool "gtk_doc" withIntrospection)
     (lib.mesonBool "tpm2" withTpm2Tss)
     (lib.mesonOption "bashcompdir" "share/bash-completion/completions")
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+    # meson isn't setting this define by itself, hack taken from freebsd-ports
+    (lib.mesonOption "c_args" "-DHAVE_CMSGCRED")
   ];
 
   doCheck = stdenv.hostPlatform.isLinux && withIntrospection;
