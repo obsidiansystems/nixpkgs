@@ -46,9 +46,13 @@ stdenv.mkDerivation (finalAttrs: {
     removeReferencesTo
   ];
 
-  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
-    libiconv
-  ];
+  buildInputs =
+    lib.optionals stdenv.hostPlatform.isDarwin [
+      libiconv
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+      gettext
+    ];
 
   propagatedBuildInputs = [
     brotli
