@@ -52,6 +52,14 @@ stdenv.mkDerivation {
       patchShebangs --build src/engine/build.sh
     '';
 
+  env = lib.optionalAttrs stdenv.buildPlatform.isFreeBSD {
+    # The FreeBSD stdenv includes `llvm-windres` and sets it to the `WINDRES` environment variable.
+    # The boost-build build system assumes that if `WINDRES` is set then it can link a windres-generated
+    # coff build manifest into binaries, which fails because lld cannot link an elf with a coff.
+    # The `B2_DONT_EMBED_MANIFEST` variable force disables this behaviour.
+    B2_DONT_EMBED_MANIFEST = "true";
+  };
+
   nativeBuildInputs = [
     bison
   ];
