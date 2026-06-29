@@ -553,6 +553,15 @@ stdenv.mkDerivation (
 
     postPatch = ''
       patchShebangs --build .
+    ''
+    # Unlike every other architecture, libffi for LoongArch demands that its headers are used with a LoongArch compiler.
+    # ghc needs to include these headers from a host-targeting compiler to discover functions,
+    # so trick libffi.
+    # The exact float ABI isn't important, we can go with LP64D as used in "-gnu" compilers.
+    + lib.optionalString (stdenv.targetPlatform.isLoongArch64 && !stdenv.hostPlatform.isLoongArch64) ''
+      sed -i '1i#define __loongarch__ 1' libraries/ghci/GHCi/FFI.hsc
+      sed -i '2i#define __loongarch64 1' libraries/ghci/GHCi/FFI.hsc
+      sed -i '3i#define __loongarch_double_float 1' libraries/ghci/GHCi/FFI.hsc
     '';
 
     # GHC is a bit confused on its cross terminology.
