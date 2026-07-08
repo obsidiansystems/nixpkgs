@@ -703,6 +703,62 @@ let
             else
               null;
         };
+
+        dotnet = {
+          # Runtime Identifier (RID)
+          # Common documented at https://learn.microsoft.com/en-us/dotnet/core/rid-catalog
+          # All known at https://github.com/dotnet/runtime/blob/main/src/libraries/Microsoft.NETCore.Platforms/src/PortableRuntimeIdentifierGraph.json
+          rid =
+            let
+              os =
+                if final.isAndroid then
+                  "android"
+                else if (final.isLinux && final.isMusl) then
+                  "linux-musl"
+                else if final.isLinux then
+                  "linux"
+                else if final.isMacOS then
+                  "osx"
+                else if final.isiOS then
+                  "ios"
+                else if final.isWasi then
+                  "wasi"
+                else if final.isWindows then
+                  "win"
+                else if final.isFreeBSD then
+                  "freebsd"
+                else if final.isOpenBSD then
+                  "openbsd"
+                else if final.isNetBSD then
+                  "netbsd"
+                else
+                  null;
+              arch =
+                if (final.isPower64 && final.isLittleEndian) then
+                  "ppc64le"
+                else if final.isAarch32 then
+                  "arm"
+                else if final.isAarch64 then
+                  "arm64"
+                else if final.isLoongArch64 then
+                  "loongarch64"
+                else if final.isMips64 then
+                  "mips64"
+                else if final.isRiscV64 then
+                  "riscv64"
+                else if final.isS390x then
+                  "s390x"
+                else if final.isWasm then
+                  "wasm"
+                else if final.isx86_32 then
+                  "x86"
+                else if final.isx86_64 then
+                  "x64"
+                else
+                  null;
+            in
+            if (os != null && arch != null) then "${os}-${arch}" else null;
+        };
       };
     in
     # Platforms elaborated by pre-26.11 Nixpkgs will include the `linux-kernel` attr,
