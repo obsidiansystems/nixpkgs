@@ -19,6 +19,8 @@ let
       stdenvNoCC.mkDerivation (
         args
         // {
+          strictDeps = true;
+
           outputs = args.outputs or [ "out" ] ++ [ "man" ];
           postFixup = args.postFixup or "" + ''
             ln -s ${vmr.man} $man
@@ -49,6 +51,8 @@ let
 
       src = vmr;
       dontUnpack = true;
+
+      strictDeps = true;
 
       nativeBuildInputs = [
         xmlstarlet

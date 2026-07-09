@@ -104,10 +104,10 @@ mkWrapper type (
     # Some of these dependencies are `dlopen()`ed.
     nativeBuildInputs = [
       makeWrapper
+      xmlstarlet
     ]
     ++ lib.optional stdenv.hostPlatform.isLinux autoPatchelfHook
     ++ lib.optionals (type == "sdk" && stdenv.hostPlatform.isDarwin) [
-      xmlstarlet
       sigtool
     ];
 
@@ -117,9 +117,10 @@ mkWrapper type (
       icu
       libkrb5
       curl
-      xmlstarlet
     ]
     ++ lib.optional stdenv.hostPlatform.isLinux lttng-ust_2_12;
+
+    strictDeps = true;
 
     src = fetchurl (
       srcs.${hostRid} or (throw "Missing source (url and hash) for host RID: ${hostRid}")

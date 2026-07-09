@@ -49,6 +49,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     }
   );
 
+  strictDeps = true;
+
   propagatedSandboxProfile = toString unwrapped.__propagatedSandboxProfile;
 
   propagatedBuildInputs = lib.optional (type == "sdk") nugetPackageHook;

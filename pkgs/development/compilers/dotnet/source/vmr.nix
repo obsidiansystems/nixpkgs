@@ -79,6 +79,8 @@ stdenv.mkDerivation {
     hash = tarballHash;
   };
 
+  strictDeps = true;
+
   nativeBuildInputs = [
     ensureNewerSourcesForZipFilesHook
     jq
@@ -91,6 +93,8 @@ stdenv.mkDerivation {
     unzip
     yq
     installShellFiles
+    # the propagated build inputs in llvm.dev break swift compilation
+    llvmPackages.llvm.out
   ]
   ++ lib.optionals (lib.versionAtLeast version "9") [
     nodejs
@@ -103,13 +107,15 @@ stdenv.mkDerivation {
   ]
   ++ lib.optionals isDarwin [
     getconf
+    xcbuild
+    swift
+    krb5
+    sigtool
   ];
 
   buildInputs = [
     # this gets copied into the tree, but we still need the sandbox profile
     bootstrapSdk
-    # the propagated build inputs in llvm.dev break swift compilation
-    llvmPackages.llvm.out
     zlib
     _icu
     openssl
@@ -117,12 +123,6 @@ stdenv.mkDerivation {
   ++ lib.optionals isLinux [
     krb5
     lttng-ust_2_12
-  ]
-  ++ lib.optionals isDarwin [
-    xcbuild
-    swift
-    krb5
-    sigtool
   ];
 
   # This is required to fix the error:
