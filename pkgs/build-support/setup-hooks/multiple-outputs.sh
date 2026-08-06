@@ -46,6 +46,10 @@ _overrideFirst() {
 # The variables are global to be usable anywhere during the build.
 # Typical usage in package is defining outputBin = "dev";
 
+# builder-rpc builds submit their outputs over the daemon socket and
+# get no output path variables, so there is nothing to assign.
+if [[ " ${requiredSystemFeatures[*]:-} " != *" builder-rpc-v"* ]]; then
+
 _overrideFirst outputDev "dev" "out"
 _overrideFirst outputBin "bin" "out"
 
@@ -60,6 +64,8 @@ _overrideFirst outputDevdoc "devdoc" REMOVE # documentation for developers
 _overrideFirst outputMan "man" "$outputBin"
 _overrideFirst outputDevman "devman" "devdoc" "$outputMan"
 _overrideFirst outputInfo "info" "$outputBin"
+
+fi
 
 
 # Add standard flags to put files into the desired outputs.
@@ -98,8 +104,10 @@ _multioutConfig() {
 
 
 # Add rpath prefixes to library paths, and avoid stdenv doing it for $out.
-_addRpathPrefix "${!outputLib}"
-NIX_NO_SELF_RPATH=1
+if [[ " ${requiredSystemFeatures[*]:-} " != *" builder-rpc-v"* ]]; then
+    _addRpathPrefix "${!outputLib}"
+    NIX_NO_SELF_RPATH=1
+fi
 
 
 # Move subpaths that match pattern $1 from under any output/ to the $2 output/

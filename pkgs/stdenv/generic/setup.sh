@@ -953,7 +953,9 @@ unset pkgBuildHookVars pkgHostHookVars pkgTargetHookVars pkgHookVarVars
 unset propagatedDepFilesVars
 
 
-_addRpathPrefix "$out"
+if [ -n "${out:-}" ]; then
+    _addRpathPrefix "$out"
+fi
 
 
 # Set the TZ (timezone) environment variable, otherwise commands like
@@ -966,7 +968,7 @@ export TZ=UTC
 # for instance if we just want to perform a test build/install to a
 # temporary location and write a build report to $out.
 if [ -z "${prefix:-}" ]; then
-    prefix="$out";
+    prefix="${out:-}";
 fi
 
 if [ "${useTempPrefix:-}" = 1 ]; then
@@ -1806,6 +1808,11 @@ genericBuild() {
     if [ -n "${buildCommand:-}" ]; then
         eval "$buildCommand"
         return
+    fi
+
+    if [[ " ${requiredSystemFeatures[*]:-} " == *" builder-rpc-v"* ]]; then
+        echo "error: builder-rpc builds require buildCommand" >&2
+        exit 1
     fi
 
     definePhases
