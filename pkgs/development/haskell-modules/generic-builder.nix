@@ -82,6 +82,8 @@ let
     pkg-config
     coreutils
     emscripten
+    bash
+    lndir
     ;
 
 in
@@ -223,6 +225,10 @@ in
   # build products from that prior build as a starting point for accelerating
   # this build
   previousIntermediates ? null,
+  # Set this to a sandstone package to compile each module of this package as
+  # its own content-addressed derivation, via a builder-rpc-v0 plan derivation
+  # that emits the per-module graph as a dynamic derivation
+  buildViaSandstone ? null,
   # References to these store paths are forbidden in the produced output.
   disallowedRequisites ? [ ],
   # Whether to allow the produced output to refer to `ghc`.
@@ -583,6 +589,21 @@ let
 
   intermediatesDir = "share/haskell/${ghc.version}/${pname}-${version}/dist";
 
+  # Passing through the probes lets Setup configure record this as the
+  # compiler, so the later Setup build hands it the full module build
+  # flags, which are dumped for sandstone's per-module compiles. Failing
+  # loudly stops Setup right there, before a second way like profiling
+  # overwrites the dump.
+  sandstoneGhcShim = writeShellScriptBin ghcCommand' ''
+    for a in "$@"; do
+      if [ "$a" = --make ]; then
+        for b in "$@"; do printf '%s\0' "$b"; done > ghc-args.bin
+        exit 1
+      fi
+    done
+    exec ${ghc}/bin/${ghcCommand} "$@"
+  '';
+
   jsexe = rec {
     shouldAdd = stdenv.hostPlatform.isGhcjs && isExecutable;
     shouldCopy = shouldAdd && !doInstallIntermediates;
@@ -637,8 +658,8 @@ in
 lib.fix (
   drv:
 
-  stdenv.mkDerivation (
-    {
+  let
+    drvArgs = {
       inherit pname version;
 
       outputs = [
@@ -758,6 +779,10 @@ lib.fix (
           && !enableSeparateIntermediatesOutput
         )
         ''
+          # The plan derivation must not bake sandbox-local paths into the
+          # package confs its cells will read from the store.
+          if [[ " ''${requiredSystemFeatures[*]:-} " != *" builder-rpc-v"* ]]; then
+
           # Work around a limit in the macOS Sierra linker on the number of paths
           # referenced by any one dynamic library:
           #
@@ -783,6 +808,8 @@ lib.fix (
           for f in "$packageConfDir/"*.conf; do
             sed -i "s,dynamic-library-dirs: .*,dynamic-library-dirs: $dynamicLinksDir," "$f"
           done
+
+          fi
         ''
       )
       + ''
@@ -832,10 +859,10 @@ lib.fix (
       buildPhase = ''
         runHook preBuild
       ''
-      + lib.optionalString (previousIntermediates != null) ''
+      + lib.optionalString (effectivePreviousIntermediates != null) ''
         mkdir -p dist;
-        rm -r dist/build
-        cp -r ${previousIntermediates}/${intermediatesDir}/build dist/build
+        rm -rf dist/build
+        cp -r ${effectivePreviousIntermediates}/${intermediatesDir}/build dist/build
         find dist/build -exec chmod u+w {} +
         find dist/build -exec touch -d '1970-01-01T00:00:00Z' {} +
       ''
@@ -1136,6 +1163,69 @@ lib.fix (
     }
     // optionalAttrs (__darwinAllowLocalNetworking || args ? __darwinAllowLocalNetworking) {
       inherit __darwinAllowLocalNetworking;
-    }
-  )
+    };
+
+    effectivePreviousIntermediates =
+      if buildViaSandstone == null then
+        previousIntermediates
+      else
+        assert lib.assertMsg (previousIntermediates == null)
+          "buildViaSandstone already resumes from its own plan derivation and cannot be combined with previousIntermediates";
+        builtins.outputOf sandstonePlan.outPath "out";
+
+    sandstonePlan = stdenv.mkDerivation (
+      removeAttrs drvArgs [
+        "pname"
+        "version"
+        "outputs"
+        "passthru"
+        "meta"
+        "postPhases"
+        "installIntermediatesPhase"
+        "disallowedRequisites"
+      ]
+      // {
+        name = "${pname}-${version}-intermediates.drv";
+        outputs = [ "out" ];
+
+        requiredSystemFeatures = (drvArgs.requiredSystemFeatures or [ ]) ++ [ "builder-rpc-v0" ];
+        __contentAddressed = true;
+        outputHashMode = "text";
+        outputHashAlgo = "sha256";
+
+        doCheck = false;
+        dontInstall = true;
+        dontFixup = true;
+        haddockPhase = "true";
+
+        inherit buildTarget;
+
+        # builder-rpc-v0 builds get no output paths in their environment,
+        # which stdenv setup cannot cope with yet, so hand it scratch ones.
+        preHook = ''
+          for o in ${toString drvArgs.outputs}; do
+            eval "$o=$NIX_BUILD_TOP/scratch-$o"
+          done
+        '';
+
+        preConfigure = (drvArgs.preConfigure or "") + ''
+          appendToVar configureFlags "--with-ghc=${sandstoneGhcShim}/bin/${ghcCommand'}"
+          appendToVar configureFlags "--with-ghc-pkg=${ghc}/bin/${ghc.targetPrefix}ghc-pkg"
+        '';
+
+        buildPhase = ''
+          runHook preBuild
+          ${buildViaSandstone}/bin/cabal-dyn-drv
+          runHook postBuild
+        '';
+
+        ghc = ghc.outPath;
+        bash = "${builtins.unsafeDiscardOutputDependency bash.drvPath}!out";
+        coreutils = "${builtins.unsafeDiscardOutputDependency coreutils.drvPath}!out";
+        lndir = "${builtins.unsafeDiscardOutputDependency lndir.drvPath}!out";
+        intermediatesSubdir = intermediatesDir;
+      }
+    );
+  in
+  stdenv.mkDerivation drvArgs
 )
