@@ -6,18 +6,36 @@
   base,
   bytestring,
   containers,
+  deepseq,
   directory,
+  exceptions,
   filepath,
   ghc,
   ghc-boot,
+  ghc-prim,
+  ghci,
+  haskeline,
   lib,
   process,
+  time,
   transformers,
   unix,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    internal-interpreter = false;
+    threaded = true;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghc-bin";
   version = "9.15.20260322";
+  configureFlags = [
+    (if cabalFlags.internal-interpreter then "-finternal-interpreter" else "-f-internal-interpreter")
+    (if cabalFlags.threaded then "-fthreaded" else "-f-threaded")
+  ];
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
@@ -32,6 +50,14 @@ mkDerivation {
     process
     transformers
     unix
+  ]
+  ++ lib.optionals cabalFlags.internal-interpreter [
+    deepseq
+    exceptions
+    ghc-prim
+    ghci
+    haskeline
+    time
   ];
   homepage = "http://www.haskell.org/ghc/";
   description = "The Glorious Glasgow Haskell Compiler";

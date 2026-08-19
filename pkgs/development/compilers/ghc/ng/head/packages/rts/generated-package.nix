@@ -2,15 +2,73 @@
 
 {
   mkDerivation,
+  atomic,
+  bfd,
   c,
+  dw,
+  elf,
+  ffi,
+  iberty,
   lib,
   libffi-clib,
+  numa,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    debug = false;
+    dynamic = false;
+    libbfd = false;
+    libdw = false;
+    libffi-adjustors = false;
+    libnuma = false;
+    librt = false;
+    need-atomic = false;
+    profiling = false;
+    shared-libsan = false;
+    smp = true;
+    thread-sanitizer = false;
+    threaded = false;
+    ubsan = false;
+    use-system-libffi = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "rts";
   version = "1.0.3";
-  libraryHaskellDepends = [ libffi-clib ];
-  librarySystemDepends = [ c ];
+  configureFlags = [
+    (if cabalFlags.debug then "-fdebug" else "-f-debug")
+    (if cabalFlags.dynamic then "-fdynamic" else "-f-dynamic")
+    (if cabalFlags.libbfd then "-flibbfd" else "-f-libbfd")
+    (if cabalFlags.libdw then "-flibdw" else "-f-libdw")
+    (if cabalFlags.libffi-adjustors then "-flibffi-adjustors" else "-f-libffi-adjustors")
+    (if cabalFlags.libnuma then "-flibnuma" else "-f-libnuma")
+    (if cabalFlags.librt then "-flibrt" else "-f-librt")
+    (if cabalFlags.need-atomic then "-fneed-atomic" else "-f-need-atomic")
+    (if cabalFlags.profiling then "-fprofiling" else "-f-profiling")
+    (if cabalFlags.shared-libsan then "-fshared-libsan" else "-f-shared-libsan")
+    (if cabalFlags.smp then "-fsmp" else "-f-smp")
+    (if cabalFlags.thread-sanitizer then "-fthread-sanitizer" else "-f-thread-sanitizer")
+    (if cabalFlags.threaded then "-fthreaded" else "-f-threaded")
+    (if cabalFlags.ubsan then "-fubsan" else "-f-ubsan")
+    (if cabalFlags.use-system-libffi then "-fuse-system-libffi" else "-f-use-system-libffi")
+  ];
+  libraryHaskellDepends = [ ] ++ lib.optionals (!cabalFlags.use-system-libffi) [ libffi-clib ];
+  librarySystemDepends = [
+    c
+  ]
+  ++ lib.optionals cabalFlags.use-system-libffi [ ffi ]
+  ++ lib.optionals cabalFlags.need-atomic [ atomic ]
+  ++ lib.optionals cabalFlags.libbfd [
+    bfd
+    iberty
+  ]
+  ++ lib.optionals cabalFlags.libdw [
+    dw
+    elf
+  ]
+  ++ lib.optionals cabalFlags.libnuma [ numa ];
   doHaddock = false;
   description = "The GHC runtime system";
   license = lib.meta.getLicenseFromSpdxId "BSD-3-Clause";

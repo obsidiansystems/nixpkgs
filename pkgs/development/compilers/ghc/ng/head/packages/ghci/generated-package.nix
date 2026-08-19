@@ -11,6 +11,7 @@
   filepath,
   ghc-boot,
   ghc-boot-th,
+  ghc-boot-th-next,
   ghc-heap,
   ghc-internal,
   ghc-prim,
@@ -18,10 +19,22 @@
   rts,
   transformers,
   unix,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    bootstrap = false;
+    internal-interpreter = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghci";
   version = "9.15";
+  configureFlags = [
+    (if cabalFlags.bootstrap then "-fbootstrap" else "-f-bootstrap")
+    (if cabalFlags.internal-interpreter then "-finternal-interpreter" else "-f-internal-interpreter")
+  ];
   libraryHaskellDepends = [
     array
     base
@@ -31,14 +44,15 @@ mkDerivation {
     deepseq
     filepath
     ghc-boot
-    ghc-boot-th
     ghc-heap
     ghc-internal
     ghc-prim
     rts
     transformers
     unix
-  ];
+  ]
+  ++ lib.optionals cabalFlags.bootstrap [ ghc-boot-th-next ]
+  ++ lib.optionals (!cabalFlags.bootstrap) [ ghc-boot-th ];
   description = "The library supporting GHC's interactive interpreter";
   license = lib.licenses.bsd3;
 }

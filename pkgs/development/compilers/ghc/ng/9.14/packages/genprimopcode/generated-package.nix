@@ -7,20 +7,32 @@
   base,
   happy,
   lib,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    build-tool-depends = true;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "genprimopcode";
   version = "0.1";
+  configureFlags = [
+    (if cabalFlags.build-tool-depends then "-fbuild-tool-depends" else "-f-build-tool-depends")
+  ];
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
     array
     base
   ];
-  executableToolDepends = [
-    alex
-    happy
-  ];
+  executableToolDepends =
+    [ ]
+    ++ lib.optionals cabalFlags.build-tool-depends [
+      alex
+      happy
+    ];
   description = "Generates various files implementing GHC's primitive operations";
   license = lib.licenses.bsd3;
   mainProgram = "genprimopcode";

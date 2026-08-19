@@ -23,10 +23,20 @@
   transformers,
   unix,
   xhtml,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    in-ghc-tree = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "haddock-api";
   version = "2.33.0";
+  configureFlags = [
+    (if cabalFlags.in-ghc-tree then "-fin-ghc-tree" else "-f-in-ghc-tree")
+  ];
   enableSeparateDataOutput = true;
   libraryHaskellDepends = [
     array
@@ -39,14 +49,14 @@ mkDerivation {
     filepath
     ghc
     ghc-boot
-    ghc-paths
     haddock-library
     mtl
     parsec
     transformers
     unix
     xhtml
-  ];
+  ]
+  ++ lib.optionals (!cabalFlags.in-ghc-tree) [ ghc-paths ];
   testHaskellDepends = [
     array
     base

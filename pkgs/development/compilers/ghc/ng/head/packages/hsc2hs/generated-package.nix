@@ -10,12 +10,22 @@
   process,
   tasty,
   tasty-hunit,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    in-ghc-tree = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "hsc2hs";
   version = "0.68.10";
   revision = "3";
   editedCabalFile = "1br4hfz6xdd5sw8rbir55r10mgl2yqj7g8kzjh1xsyf1yp0dlirc";
+  configureFlags = [
+    (if cabalFlags.in-ghc-tree then "-fin-ghc-tree" else "-f-in-ghc-tree")
+  ];
   isLibrary = false;
   isExecutable = true;
   enableSeparateDataOutput = true;

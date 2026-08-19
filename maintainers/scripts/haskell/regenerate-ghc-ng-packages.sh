@@ -15,6 +15,11 @@
 # ran. `src` and `postUnpack` come from the overlay in `common/overlay.nix`
 # instead, along with the patches sitting beside the generated file.
 #
+# One file per package, not one per cabal flag assignment: `--flag-conditionals`
+# emits the flags as function arguments and keeps the dependency conditionals
+# that mention them, so `bootstrap` and `internal-interpreter` are supplied by
+# the overlay through `callPackage` rather than selected between here.
+#
 # `generated-package.nix` should never be hand-edited. If a package needs a
 # change, make it in the overlay or add a patch beside it -- that keeps
 # regeneration a clean diff.
@@ -25,6 +30,11 @@
 # e.g. `... 9.14`. Defaults to 9.14.
 
 set -euo pipefail
+
+# The generated expressions keep their cabal flag conditionals, which needs
+# `--flag-conditionals` -- see the note above `select` in `common/overlay.nix`.
+# Point this at a build of cabal2nix that has it if the one on PATH does not.
+CABAL2NIX="${CABAL2NIX:-cabal2nix}"
 
 VERSION="${1:-9.14}"
 ROOT="$(git rev-parse --show-toplevel)"
@@ -153,7 +163,7 @@ for entry in "${PACKAGES[@]}"; do
     pkgdir="$work"
   fi
 
-  if ! out=$(cabal2nix "${baseFlags[@]}" "$pkgdir" 2>/dev/null); then
+  if ! out=$("$CABAL2NIX" --flag-conditionals "${baseFlags[@]}" "$pkgdir" 2>/dev/null); then
     echo "  FAIL $name" >&2
     continue
   fi
@@ -161,31 +171,6 @@ for entry in "${PACKAGES[@]}"; do
   printf '%s\n' "$out" | writeGenerated "$OUT/$name/generated-package.nix"
   echo "  ok   $name" >&2
 
-  # Some packages are generated more than once, under different cabal flags,
-  # because the flag changes the dependency list and so cannot be expressed as
-  # a configure flag alone:
-  #
-  #   -bootstrap    stage1, compiling against the *old* base. `ghc-boot` then
-  #                 depends on `ghc-boot-th-next` rather than `ghc-boot-th`.
-  #   -interpreter  stage2, with GHCi's evaluator compiled into the compiler.
-  #                 `ghc-bin` then gains `ghci` and `haskeline`; without it
-  #                 Template Haskell does not work.
-  case "$name" in
-    ghc-boot|ghci|ghc|ghc-boot-th-next)
-      if v=$(cabal2nix "${baseFlags[@]}" --flag=bootstrap "$pkgdir" 2>/dev/null); then
-        printf '%s\n' "$v" | writeGenerated "$OUT/$name/generated-package-bootstrap.nix"
-        echo "  ok   $name (bootstrap)" >&2
-      fi
-      ;;
-  esac
-  case "$name" in
-    ghc|ghc-bin|ghci)
-      if v=$(cabal2nix "${baseFlags[@]}" --flag=internal-interpreter "$pkgdir" 2>/dev/null); then
-        printf '%s\n' "$v" | writeGenerated "$OUT/$name/generated-package-interpreter.nix"
-        echo "  ok   $name (interpreter)" >&2
-      fi
-      ;;
-  esac
   # The patched copy, if we made one.
   if [ "$pkgdir" != "$SRC/$dir" ]; then rm -rf "$pkgdir"; fi
 done
@@ -196,7 +181,7 @@ done
 # without this CI reformats these files and the next regeneration reverts them,
 # which would also make the "do not edit" header untrue.
 echo "Formatting..." >&2
-nixfmt "$OUT"/*/generated-package*.nix
+nixfmt "$OUT"/*/generated-package.nix
 
 echo "Wrote $OUT" >&2
 

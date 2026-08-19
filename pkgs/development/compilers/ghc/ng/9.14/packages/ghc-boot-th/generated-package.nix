@@ -4,17 +4,29 @@
   mkDerivation,
   base,
   ghc-internal,
+  ghc-prim,
   lib,
   pretty,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    bootstrap = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghc-boot-th";
   version = "9.14.1";
+  configureFlags = [
+    (if cabalFlags.bootstrap then "-fbootstrap" else "-f-bootstrap")
+  ];
   libraryHaskellDepends = [
     base
-    ghc-internal
     pretty
-  ];
+  ]
+  ++ lib.optionals cabalFlags.bootstrap [ ghc-prim ]
+  ++ lib.optionals (!cabalFlags.bootstrap) [ ghc-internal ];
   description = "Shared functionality between GHC and the template-haskell library";
   license = lib.licenses.bsd3;
 }

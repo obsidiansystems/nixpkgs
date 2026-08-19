@@ -2,16 +2,34 @@
 
 {
   mkDerivation,
+  atomic,
   c,
   lib,
   rts,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    bignum-check = false;
+    bignum-ffi = false;
+    bignum-gmp = false;
+    bignum-native = true;
+    need-atomic = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghc-internal";
   version = "9.1500.0";
-  configureFlags = [ "-fbignum-native" ];
+  configureFlags = [
+    (if cabalFlags.bignum-check then "-fbignum-check" else "-f-bignum-check")
+    (if cabalFlags.bignum-ffi then "-fbignum-ffi" else "-f-bignum-ffi")
+    (if cabalFlags.bignum-gmp then "-fbignum-gmp" else "-f-bignum-gmp")
+    (if cabalFlags.bignum-native then "-fbignum-native" else "-f-bignum-native")
+    (if cabalFlags.need-atomic then "-fneed-atomic" else "-f-need-atomic")
+  ];
   libraryHaskellDepends = [ rts ];
-  librarySystemDepends = [ c ];
+  librarySystemDepends = [ c ] ++ lib.optionals cabalFlags.need-atomic [ atomic ];
   description = "Basic libraries";
   license = lib.meta.getLicenseFromSpdxId "BSD-3-Clause";
 }

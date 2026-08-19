@@ -7,10 +7,20 @@
   haddock-api,
   haddock-test,
   lib,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    threaded = true;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "haddock";
   version = "2.33.0";
+  configureFlags = [
+    (if cabalFlags.threaded then "-fthreaded" else "-f-threaded")
+  ];
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [

@@ -11,13 +11,24 @@
   directory,
   filepath,
   ghc-boot-th,
+  ghc-boot-th-next,
   ghc-platform,
   lib,
   unix,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    bootstrap = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghc-boot";
   version = "9.14.1";
+  configureFlags = [
+    (if cabalFlags.bootstrap then "-fbootstrap" else "-f-bootstrap")
+  ];
   setupHaskellDepends = [
     base
     Cabal
@@ -32,10 +43,11 @@ mkDerivation {
     deepseq
     directory
     filepath
-    ghc-boot-th
     ghc-platform
     unix
-  ];
+  ]
+  ++ lib.optionals cabalFlags.bootstrap [ ghc-boot-th-next ]
+  ++ lib.optionals (!cabalFlags.bootstrap) [ ghc-boot-th ];
   description = "Shared functionality between GHC and its boot libraries";
   license = lib.meta.getLicenseFromSpdxId "BSD-3-Clause";
 }

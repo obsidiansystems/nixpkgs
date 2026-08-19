@@ -175,6 +175,71 @@ let
     else
       throw "ghc/ng: no GHC OS spelling for ${p.system}";
 
+  # The RTS's cabal flags. Hoisted out of the fixup because they are now also
+  # the `flags` argument of its generated expression -- see `packageFlags`.
+  rtsCabalFlags = {
+    libm = stdenv.hostPlatform.isUnix;
+    libbfd = false;
+    libdw = false;
+    libnuma = false;
+    libzstd = false;
+    static-libzstd = false;
+    leading-underscore = stdenv.hostPlatform.isDarwin || stdenv.hostPlatform.isWindows;
+    unregisterised = false;
+    tables-next-to-code = true;
+    # nixpkgs has libffi; use it rather than the bundled copy, which
+    # `rts.cabal` would otherwise expect as `extra-bundled-libraries:
+    # Cffi` from the separate `libffi-clib` package. With the flag on,
+    # the .cabal just adds `extra-libraries: ffi`, so the library and
+    # its headers have to come from the build inputs.
+    use-system-libffi = true;
+
+    # GHC ships hand-written adjustor code for exactly two architectures
+    # (`rts.cabal`: `if arch(i386)` / `if arch(x86_64)`); everywhere else
+    # the libffi implementation is the only one there is. hadrian decides
+    # the same way, in `Settings.Packages`.
+    #
+    # Getting this wrong is invisible until link time, and then only in a
+    # package that actually uses a `foreign import "wrapper"` -- the RTS
+    # itself builds fine, and `haskeline` (via `terminfo`) is simply the
+    # first thing in the boot set to want `createAdjustor`.
+    libffi-adjustors = !(stdenv.hostPlatform.isx86_64 || stdenv.hostPlatform.isx86_32);
+
+    # A GHC "way". Ways are not separate packages: `rts.cabal` declares
+    #
+    #     if flag(threaded)
+    #       extra-library-flavours: _thr
+    #
+    # so a single build emits `libHSrts-<ver>-<uid>.a` *and*
+    # `libHSrts-<ver>-<uid>_thr.a` under the same unit-id -- which is what
+    # GHC looks for, since it selects a way by suffixing the library name.
+    #
+    # Turning this on is NOT sufficient on its own: Cabal then tries to
+    # *install* `libHSrts-<ver>-<uid>_thr.a` without ever having built it
+    #
+    #     dist/build/libHSrts-1.0.3-B4plc..._thr.a: copyFile: does not exist
+    #
+    # so how Cabal decides to build a flavour needs working out before this
+    # can be flipped. Left off so the RTS builds; `-threaded` does not
+    # link until it is on. `profiling`, `debug` and `dynamic` compose the
+    # same way.
+    threaded = false;
+  };
+
+  # Cabal flags belonging to one package regardless of stage, as opposed to the
+  # stage flags (`bootstrap`, `internal-interpreter`) that `select` supplies.
+  #
+  # These used to be `-f` entries in the package's `configureFlags`. They have to
+  # move here now: the generated expression emits its own `-f`/`-f-` from `flags`
+  # and its dependency lists follow the same values, so setting them in two
+  # places would let the two disagree.
+  packageFlags = {
+    rts = rtsCabalFlags;
+    # `ghc-internal.cabal` is `buildable: False` unless a bignum backend is
+    # chosen, and all three default to off.
+    ghc-internal.bignum-native = true;
+  };
+
   # Per-package corrections to what cabal2nix produced, as `overrideCabal`
   # functions. Kept here rather than in the generated files, which are never
   # hand-edited.
@@ -303,54 +368,7 @@ let
         # Cabal spells the variables with `-` replaced by `_`. These must agree
         # with the `-f` flags passed to Cabal below, or the .cabal conditionals
         # and the generated headers will disagree with each other.
-        rtsFlags = {
-          libm = stdenv.hostPlatform.isUnix;
-          libbfd = false;
-          libdw = false;
-          libnuma = false;
-          libzstd = false;
-          static-libzstd = false;
-          leading-underscore = stdenv.hostPlatform.isDarwin || stdenv.hostPlatform.isWindows;
-          unregisterised = false;
-          tables-next-to-code = true;
-          # nixpkgs has libffi; use it rather than the bundled copy, which
-          # `rts.cabal` would otherwise expect as `extra-bundled-libraries:
-          # Cffi` from the separate `libffi-clib` package. With the flag on,
-          # the .cabal just adds `extra-libraries: ffi`, so the library and
-          # its headers have to come from the build inputs.
-          use-system-libffi = true;
-
-          # GHC ships hand-written adjustor code for exactly two architectures
-          # (`rts.cabal`: `if arch(i386)` / `if arch(x86_64)`); everywhere else
-          # the libffi implementation is the only one there is. hadrian decides
-          # the same way, in `Settings.Packages`.
-          #
-          # Getting this wrong is invisible until link time, and then only in a
-          # package that actually uses a `foreign import "wrapper"` -- the RTS
-          # itself builds fine, and `haskeline` (via `terminfo`) is simply the
-          # first thing in the boot set to want `createAdjustor`.
-          libffi-adjustors = !(stdenv.hostPlatform.isx86_64 || stdenv.hostPlatform.isx86_32);
-
-          # A GHC "way". Ways are not separate packages: `rts.cabal` declares
-          #
-          #     if flag(threaded)
-          #       extra-library-flavours: _thr
-          #
-          # so a single build emits `libHSrts-<ver>-<uid>.a` *and*
-          # `libHSrts-<ver>-<uid>_thr.a` under the same unit-id -- which is what
-          # GHC looks for, since it selects a way by suffixing the library name.
-          #
-          # Turning this on is NOT sufficient on its own: Cabal then tries to
-          # *install* `libHSrts-<ver>-<uid>_thr.a` without ever having built it
-          #
-          #     dist/build/libHSrts-1.0.3-B4plc..._thr.a: copyFile: does not exist
-          #
-          # so how Cabal decides to build a flavour needs working out before this
-          # can be flipped. Left off so the RTS builds; `-threaded` does not
-          # link until it is on. `profiling`, `debug` and `dynamic` compose the
-          # same way.
-          threaded = false;
-        };
+        rtsFlags = rtsCabalFlags;
         cabalFlagVar = name: "CABAL_FLAG_${lib.replaceStrings [ "-" ] [ "_" ] name}";
         boolToFlag = b: if b then "1" else "0";
       in
@@ -449,9 +467,13 @@ let
         # `gen_event_types.py` and, indirectly, `deriveConstants`.
         libraryToolDepends = [ python3 ];
         configureFlags =
-          # Must agree with `rtsFlags` above.
-          lib.mapAttrsToList (n: v: if v then "-f${n}" else "-f-${n}") rtsFlags
-          ++ [
+          # NB: no `-f` flags here. The generated expression takes the cabal flags
+          # as its `flags` argument and emits the matching `-f`/`-f-` itself, so
+          # adding them here too would say one thing in the dependency lists and
+          # another on the command line. `rtsFlags` reaches it through
+          # `packageFlags` below; the `CABAL_FLAG_*` exports above are a separate
+          # matter, read by `rts/configure`, which we run ourselves.
+          [
             # Defines hadrian passes in `Settings.Packages.rtsPackageArgs` and the
             # .cabal does not. `RtsUtils.c:printRtsInfo` reads `RtsWay` directly,
             # so without it the RTS does not compile at all -- the other macros it
@@ -518,6 +540,9 @@ let
     # argument. That is libc; the stdenv supplies it and there is no such
     # attribute to pass.
     rts.c = null;
+    # `extra-libraries: ffi` under `use-system-libffi`, which we set. cabal2nix
+    # names it `ffi`; nixpkgs calls the package `libffi`.
+    rts.ffi = libffi;
     # Likewise: `ghc-internal.cabal` also has `extra-libraries: c`.
     ghc-internal.c = null;
 
@@ -624,7 +649,7 @@ let
   };
 
   mkPackage =
-    final: name: subdir: exprOverride: extraAttrs:
+    final: name: subdir: flagArgs: extraAttrs:
     haskellLib.overrideCabal
       (
         drv:
@@ -680,9 +705,9 @@ let
         }
       )
       (
-        final.callPackage (
-          if exprOverride != null then exprOverride else packagesDir + "/${name}/generated-package.nix"
-        ) ((callArgs final).${name} or { })
+        final.callPackage (packagesDir + "/${name}/generated-package.nix") (
+          ((callArgs final).${name} or { }) // flagArgs
+        )
       );
 
   # Which rung a package belongs to.
@@ -773,55 +798,97 @@ let
     "ghc-pkg"
   ];
 
-  # A package built for stage1 uses its `+bootstrap` expression where one exists.
-  # cabal2nix emits a different dependency list under that flag -- `ghc-boot`
-  # depends on `ghc-boot-th-next` rather than `ghc-boot-th`, for instance -- so
-  # the two cannot share a generated file.
-  variantFile =
-    suffix: name:
-    let
-      f = packagesDir + "/${name}/generated-package-${suffix}.nix";
-    in
-    if builtins.pathExists f then f else null;
-
-  bootstrapVariant = variantFile "bootstrap";
-
-  # `+internal-interpreter` compiles GHCi's evaluator into the compiler itself.
-  # Without it Template Haskell fails at
+  # Cabal flags that change a package's *dependency list*, and so cannot be
+  # expressed as a configure flag alone:
   #
-  #     Couldn't find a target code interpreter. Try with -fexternal-interpreter
+  #   bootstrap             stage1, compiling against the old `base`. `ghc-boot`
+  #                         then depends on `ghc-boot-th-next` rather than
+  #                         `ghc-boot-th`.
+  #   internal-interpreter  stage2, with GHCi's evaluator compiled into the
+  #                         compiler. `ghc-bin` gains `ghci` and `haskeline`;
+  #                         without it Template Haskell fails at
+  #                         `Couldn't find a target code interpreter`.
   #
-  # It changes the dependency list -- `ghc-bin` gains `ghci` and `haskeline` --
-  # so it needs its own generated expression rather than just a flag.
-  # stable-haskell sets it in `cabal.project.stage2.common` for `ghc`, `ghc-bin`
-  # and `ghci`.
-  interpreterVariant = variantFile "interpreter";
-
+  # These used to need a generated file each. The expressions are now generated
+  # with cabal2nix's `--flag-conditionals`, which emits the flags as function
+  # arguments and keeps the conditionals that mention them:
+  #
+  #   { ..., ghc-boot-th, ghc-boot-th-next, bootstrap ? false }:
+  #   libraryHaskellDepends = [ ... ]
+  #     ++ lib.optionals bootstrap [ ghc-boot-th-next ]
+  #     ++ lib.optionals (!bootstrap) [ ghc-boot-th ];
+  #
+  # so a stage is now a set of `callPackage` arguments rather than a different
+  # file. A flag a package does not have is simply not one of its arguments,
+  # which is why `flags` is intersected with what the expression accepts.
   select =
     {
       pred,
-      bootstrap ? false,
-      interpreter ? false,
+      flags ? { },
+      nullArgs ? [ ],
       explicitCompiler ? false,
     }:
     final: prev:
     lib.mapAttrs (
       name: subdir:
       mkPackage final name subdir (
-        if bootstrap then
-          bootstrapVariant name
-        else if interpreter then
-          interpreterVariant name
-        else
-          null
+        flagsFor name (flags // (packageFlags.${name} or { })) // nullArgsFor name nullArgs
       ) (if explicitCompiler then withExplicitCompiler final else { })
     ) (lib.filterAttrs (name: _: hasGenerated name && pred name) subdirs);
+
+  # Arguments a generated expression takes only for a flag branch we do not take,
+  # supplied as `null` so the formal parameter is satisfied without building
+  # anything. The reference sits inside `lib.optionals cabalFlags.<f> [ ... ]`,
+  # which Nix never forces when the flag is false -- and if one day it is taken,
+  # the null is a loud failure rather than a silent wrong answer.
+  #
+  # Two kinds end up here:
+  #
+  #   o `ghc-boot-th-next`, which exists solely so stage1 can compile against the
+  #     old `base` without colliding with `ghc-boot-th`. stage2 never sets
+  #     `bootstrap`.
+  #   o system libraries a flag would add -- `atomic` under `ghc-internal`'s
+  #     `need-atomic`. These are not Haskell packages and have no attribute in
+  #     the set at all.
+  #
+  # This is the cost of one expression serving every flag assignment: the union of
+  # arguments has to be satisfiable, including the branches not taken.
+  untakenBranchArgs = [
+    "ghc-boot-th-next"
+    # System libraries the RTS would link under a flag we leave off.
+    "atomic"
+    "bfd"
+    "dw"
+    "elf"
+    "iberty"
+    "numa"
+    "zstd"
+  ];
+  nullArgsFor =
+    name: names:
+    let
+      accepted = lib.functionArgs (import (packagesDir + "/${name}/generated-package.nix"));
+    in
+    lib.genAttrs (lib.filter (n: accepted ? ${n}) names) (_: null);
+
+  # Only the flags this package's generated expression actually takes. Passing
+  # one it does not accept is an error from `callPackage`, and which flags a
+  # package has varies by package and by GHC release.
+  flagsFor =
+    name: flags:
+    let
+      accepted = lib.functionArgs (import (packagesDir + "/${name}/generated-package.nix"));
+    in
+    lib.optionalAttrs (accepted ? flags && flags != { }) { inherit flags; };
 in
 {
-  tools = select { pred = name: lib.elem name toolNames; };
+  tools = select {
+    pred = name: lib.elem name toolNames;
+    nullArgs = untakenBranchArgs;
+  };
   stage1 = select {
     pred = name: lib.elem name stage1Names;
-    bootstrap = true;
+    flags.bootstrap = true;
   };
   # Note this is NOT the complement of stage1: `ghc`, `ghci`, `ghc-boot`,
   # `ghc-pkg` and `ghc-bin` are built twice. Stage1 builds them with the
@@ -853,7 +920,8 @@ in
         "ghc-boot-th-next"
       ]);
     explicitCompiler = true;
-    interpreter = true;
+    flags.internal-interpreter = true;
+    nullArgs = untakenBranchArgs;
   };
 
   # The Hackage-released core libraries, compiled by the stage1 compiler like
@@ -938,7 +1006,9 @@ in
     final: prev:
     lib.genAttrs (lib.filter hasGenerated hackageNames) (
       name:
-      mkPackage final name null null (
+      # No flags: these are ordinary Hackage releases, not GHC-tree packages
+      # built under a stage flag.
+      mkPackage final name null { } (
         withExplicitCompiler final
         // {
           # These are released against whatever `base` was current, and we are

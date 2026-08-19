@@ -17,10 +17,22 @@
   tasty-hunit,
   text,
   utf8-string,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    build-tool-depends = true;
+    ci-build = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "hpc-bin";
   version = "0.69";
+  configureFlags = [
+    (if cabalFlags.build-tool-depends then "-fbuild-tool-depends" else "-f-build-tool-depends")
+    (if cabalFlags.ci-build then "-fci-build" else "-f-ci-build")
+  ];
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
@@ -33,7 +45,7 @@ mkDerivation {
     hpc
     text
   ];
-  executableToolDepends = [ happy ];
+  executableToolDepends = [ ] ++ lib.optionals cabalFlags.build-tool-depends [ happy ];
   testHaskellDepends = [
     base
     directory

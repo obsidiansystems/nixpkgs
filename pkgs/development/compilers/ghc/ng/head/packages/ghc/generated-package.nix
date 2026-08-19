@@ -17,6 +17,7 @@
   genprimopcode,
   ghc-boot,
   ghc-boot-th,
+  ghc-boot-th-next,
   ghc-heap,
   ghc-internal,
   ghc-toolchain,
@@ -33,10 +34,28 @@
   time,
   transformers,
   unix,
+  flags ? { },
 }:
+let
+  cabalFlags = {
+    bootstrap = false;
+    build-tool-depends = true;
+    dynamic-system-linker = true;
+    hadrian-stage0 = false;
+    internal-interpreter = false;
+  }
+  // flags;
+in
 mkDerivation {
   pname = "ghc";
   version = "9.15";
+  configureFlags = [
+    (if cabalFlags.bootstrap then "-fbootstrap" else "-f-bootstrap")
+    (if cabalFlags.build-tool-depends then "-fbuild-tool-depends" else "-f-build-tool-depends")
+    (if cabalFlags.dynamic-system-linker then "-fdynamic-system-linker" else "-f-dynamic-system-linker")
+    (if cabalFlags.hadrian-stage0 then "-fhadrian-stage0" else "-f-hadrian-stage0")
+    (if cabalFlags.internal-interpreter then "-finternal-interpreter" else "-f-internal-interpreter")
+  ];
   setupHaskellDepends = [
     base
     Cabal
@@ -56,9 +75,7 @@ mkDerivation {
     exceptions
     filepath
     ghc-boot
-    ghc-boot-th
     ghc-heap
-    ghc-internal
     ghc-toolchain
     ghci
     hpc
@@ -71,13 +88,20 @@ mkDerivation {
     time
     transformers
     unix
+  ]
+  ++ lib.optionals cabalFlags.bootstrap [ ghc-boot-th-next ]
+  ++ lib.optionals (!cabalFlags.bootstrap) [
+    ghc-boot-th
+    ghc-internal
   ];
-  libraryToolDepends = [
-    alex
-    deriveConstants
-    genprimopcode
-    happy
-  ];
+  libraryToolDepends =
+    [ ]
+    ++ lib.optionals cabalFlags.build-tool-depends [
+      alex
+      deriveConstants
+      genprimopcode
+      happy
+    ];
   homepage = "http://www.haskell.org/ghc/";
   description = "The GHC API";
   license = lib.meta.getLicenseFromSpdxId "BSD-3-Clause";
