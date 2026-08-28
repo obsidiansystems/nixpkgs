@@ -1,35 +1,19 @@
+# Every Boost release Nixpkgs carries, one scope apiece, keyed by version.
+#
+# `generic.nix` builds one release out of the data file generated for it in
+# `versions/`, so adding a release is `./update.py 1.92.0` and nothing else --
+# the attribute appears from the file being there.
+#
+# Naming the versions is all-packages.nix's job, as it is for LLVM: this set is
+# the equivalent of `llvmPackagesSet`.
 {
   lib,
   callPackage,
-  boost-build,
-  fetchurl,
 }:
 
 let
-  makeBoost =
-    file:
-    lib.fix (
-      self:
-      callPackage file {
-        boost-build = boost-build.override {
-          # useBoost allows us passing in src and version from
-          # the derivation we are building to get a matching b2 version.
-          useBoost = self;
-        };
-      }
-    );
+  generic = callPackage ./generic.nix { };
 in
-{
-  boost178 = makeBoost ./1.78.nix;
-  boost179 = makeBoost ./1.79.nix;
-  boost180 = makeBoost ./1.80.nix;
-  boost181 = makeBoost ./1.81.nix;
-  boost182 = makeBoost ./1.82.nix;
-  boost183 = makeBoost ./1.83.nix;
-  boost186 = makeBoost ./1.86.nix;
-  boost187 = makeBoost ./1.87.nix;
-  boost188 = makeBoost ./1.88.nix;
-  boost189 = makeBoost ./1.89.nix;
-  boost190 = makeBoost ./1.90.nix;
-  boost191 = makeBoost ./1.91.nix;
-}
+lib.mapAttrs' (
+  file: _: lib.nameValuePair (lib.removeSuffix ".json" file) (generic (./versions + "/${file}"))
+) (lib.filterAttrs (file: _: lib.hasSuffix ".json" file) (builtins.readDir ./versions))

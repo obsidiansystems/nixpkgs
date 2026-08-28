@@ -1,0 +1,3080 @@
+{
+  "version": "1.89.0",
+  "cmakeHash": "sha256-GRuAJF129tgKQNYXsR2z6+pgSLG5MwTam3LINgd8yR8=",
+  "installHash": "sha256-EEzeYzTdHjAaGUZRBWQDzXUPt0yXoIYS3ldBT17ocrU=",
+  "libraries": {
+    "accumulators": {
+      "repo": "accumulators",
+      "hash": "sha256-/Ly5Jy0rsSqjR2u3MEBRwpX13b5HYSzne68jSX1KSw4=",
+      "provides": [
+        "accumulators"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "circular_buffer",
+        "concept_check",
+        "config",
+        "core",
+        "fusion",
+        "iterator",
+        "mpl",
+        "numeric_conversion",
+        "numeric_ublas",
+        "parameter",
+        "preprocessor",
+        "range",
+        "serialization",
+        "static_assert",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "typeof"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "algorithm": {
+      "repo": "algorithm",
+      "hash": "sha256-+rnClgwIlt25oJ0MVzjaJn3N7eD3QXi0rf0v+cZDgvw=",
+      "provides": [
+        "algorithm"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "bind",
+        "concept_check",
+        "config",
+        "core",
+        "exception",
+        "function",
+        "iterator",
+        "mpl",
+        "range",
+        "regex",
+        "static_assert",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "unordered"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "align": {
+      "repo": "align",
+      "hash": "sha256-pmYhhmJk69bAemvm2RNW9wSzUnaSMYNZz5QHZmRO7YY=",
+      "provides": [
+        "align"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "static_assert"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "any": {
+      "repo": "any",
+      "hash": "sha256-BSDvDYphP60T8s3IdtOiA3iyQSz+W+E0QlsZReHtoG8=",
+      "provides": [
+        "any"
+      ],
+      "deps": [
+        "config",
+        "throw_exception",
+        "type_index"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "array": {
+      "repo": "array",
+      "hash": "sha256-P7pFHRtIkmDxWv3Oq5xul5l2eh2zX6rAr6/24pk/daY=",
+      "provides": [
+        "array"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "static_assert",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "asio": {
+      "repo": "asio",
+      "hash": "sha256-+pAHrRdzO5gHElLaQCOu+lTqOVO7vfhzTPKmMw9zyPk=",
+      "provides": [
+        "asio",
+        "asio_core",
+        "asio_deadline_timer",
+        "asio_spawn"
+      ],
+      "deps": [
+        "align",
+        "assert",
+        "config",
+        "context",
+        "date_time",
+        "system",
+        "throw_exception"
+      ],
+      "selfInstalls": true,
+      "headerOnly": true
+    },
+    "assert": {
+      "repo": "assert",
+      "hash": "sha256-sBQQ8efXevprZVGNOVnyiNGcYDL72BWBQe5KqHCQ8+U=",
+      "provides": [
+        "assert"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "assign": {
+      "repo": "assign",
+      "hash": "sha256-HgcpUeiTD86Jhor9UkL2xaFFpExMIMJmFk1XVX07eTw=",
+      "provides": [
+        "assign"
+      ],
+      "deps": [
+        "array",
+        "config",
+        "core",
+        "move",
+        "mpl",
+        "preprocessor",
+        "ptr_container",
+        "range",
+        "static_assert",
+        "throw_exception",
+        "tuple",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "atomic": {
+      "repo": "atomic",
+      "hash": "sha256-3OjP8NRc6Y7tDbxUC0jupZPAY2+r1SL3nIoNaJP09FA=",
+      "provides": [
+        "atomic"
+      ],
+      "deps": [
+        "align",
+        "assert",
+        "config",
+        "predef",
+        "preprocessor",
+        "type_traits",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "beast": {
+      "repo": "beast",
+      "hash": "sha256-G4Bjrh4ENn841dI8drOZDPhr9hMRTO+ySo9oXDNYxzU=",
+      "provides": [
+        "beast"
+      ],
+      "deps": [
+        "asio",
+        "assert",
+        "bind",
+        "config",
+        "container",
+        "container_hash",
+        "core",
+        "endian",
+        "headers",
+        "intrusive",
+        "logic",
+        "mp11",
+        "optional",
+        "preprocessor",
+        "smart_ptr",
+        "static_assert",
+        "static_string",
+        "system",
+        "throw_exception",
+        "type_index",
+        "type_traits",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "bimap": {
+      "repo": "bimap",
+      "hash": "sha256-ZZn2oSdmSy8iygrZq3+RMOkSY0zVaODcgZbAN/w80Cc=",
+      "provides": [
+        "bimap"
+      ],
+      "deps": [
+        "concept_check",
+        "config",
+        "container_hash",
+        "core",
+        "iterator",
+        "lambda",
+        "mpl",
+        "multi_index",
+        "preprocessor",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "bind": {
+      "repo": "bind",
+      "hash": "sha256-xdT8F7JuinEWbY5EOey21oUTjvF/7cPsu1tD31oEVus=",
+      "provides": [
+        "bind"
+      ],
+      "deps": [
+        "config",
+        "core"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "bloom": {
+      "repo": "bloom",
+      "hash": "sha256-stdMQPcC0ejfAtak5bQyOtKJRjsz8597+Cy1kXKkZJ8=",
+      "provides": [
+        "bloom"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "core",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "callable_traits": {
+      "repo": "callable_traits",
+      "hash": "sha256-XbO+SB5QhKAJigL/SBl9OIIQl49u6pUuqAMguU8SftQ=",
+      "provides": [
+        "callable_traits"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "charconv": {
+      "repo": "charconv",
+      "hash": "sha256-/2gydYQoeCVqoy21f4hgUZ6YqgSVDuyEW8qKyYJrN0M=",
+      "provides": [
+        "charconv"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "chrono": {
+      "repo": "chrono",
+      "hash": "sha256-AK5kbnidHvzGpUd/VU4RPrsJsbQ2rB8obyJOa4ZrWMc=",
+      "provides": [
+        "chrono"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "integer",
+        "move",
+        "mpl",
+        "predef",
+        "ratio",
+        "static_assert",
+        "system",
+        "throw_exception",
+        "type_traits",
+        "typeof",
+        "utility",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "circular_buffer": {
+      "repo": "circular_buffer",
+      "hash": "sha256-t5fSfuQFGNb1cQUkcdxu4i8FbEQAfddhtYAEen6bCGE=",
+      "provides": [
+        "circular_buffer"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "move",
+        "static_assert",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "cobalt": {
+      "repo": "cobalt",
+      "hash": "sha256-iLRwuZ9aWKewDwhrTyDw1ZLcwy43fpbtf4Nevxs3zZ0=",
+      "provides": [
+        "cobalt"
+      ],
+      "deps": [
+        "asio",
+        "callable_traits",
+        "circular_buffer",
+        "config",
+        "container",
+        "core",
+        "endian",
+        "intrusive",
+        "mp11",
+        "preprocessor",
+        "smart_ptr",
+        "static_string",
+        "system",
+        "throw_exception",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "compat": {
+      "repo": "compat",
+      "hash": "sha256-kDUftNaOE2Zcjo9LQDCdsjuwuctLpFxW9iwC1KPtRf0=",
+      "provides": [
+        "compat"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "compute": {
+      "repo": "compute",
+      "hash": "sha256-OwoB+PLiDp5QdKy77qDFfBMJ6e8WzLjAC8OBWTiIB+Q=",
+      "provides": [
+        "compute"
+      ],
+      "deps": [
+        "algorithm",
+        "array",
+        "assert",
+        "atomic",
+        "chrono",
+        "config",
+        "core",
+        "filesystem",
+        "function",
+        "function_types",
+        "fusion",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "optional",
+        "preprocessor",
+        "property_tree",
+        "proto",
+        "range",
+        "smart_ptr",
+        "static_assert",
+        "thread",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "typeof",
+        "utility",
+        "uuid"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "concept_check": {
+      "repo": "concept_check",
+      "hash": "sha256-nsf7frCia0fgBpfimW+IqznnVfMSmar9KEKB5sccPPI=",
+      "provides": [
+        "concept_check"
+      ],
+      "deps": [
+        "config",
+        "preprocessor",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "config": {
+      "repo": "config",
+      "hash": "sha256-aPvWkk6F0boHvhQsNRn/Dafkvq5CUuL+xW4diiG/HWU=",
+      "provides": [
+        "config"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "container": {
+      "repo": "container",
+      "hash": "sha256-i2eaT1vx2xgmqXw2sEXJH9Mmo+QLy8NNTHUsAfKKyYc=",
+      "provides": [
+        "container"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "intrusive",
+        "move"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "container_hash": {
+      "repo": "container_hash",
+      "hash": "sha256-lKxh8nwQSIFX+lFAWJlUmUwxt2xM9678PFbkolkg2SE=",
+      "provides": [
+        "container_hash"
+      ],
+      "deps": [
+        "config",
+        "describe",
+        "mp11"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "context": {
+      "repo": "context",
+      "hash": "sha256-f8+ECYXwDBF9/cyLdsuqeGe7LVycj6shHyAhhhl8uYQ=",
+      "provides": [
+        "context"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "mp11",
+        "pool",
+        "predef",
+        "smart_ptr"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "contract": {
+      "repo": "contract",
+      "hash": "sha256-hbGlBRWEqkBsym8oeylKPI0gTV+8YV+Q9gQ4I6T68ao=",
+      "provides": [
+        "contract"
+      ],
+      "deps": [
+        "any",
+        "assert",
+        "config",
+        "core",
+        "exception",
+        "function",
+        "function_types",
+        "mpl",
+        "optional",
+        "preprocessor",
+        "smart_ptr",
+        "static_assert",
+        "thread",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "conversion": {
+      "repo": "conversion",
+      "hash": "sha256-95L3qltl5redVxlqe7oYcWUsDlpN6U2lZdi2YJpTgnQ=",
+      "provides": [
+        "conversion"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "smart_ptr",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "convert": {
+      "repo": "convert",
+      "hash": "sha256-SHEQGDHNhBtcNbCX9hVYXxo8yN3Eg6i8fxgY095zWPw=",
+      "provides": [
+        "convert"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "function_types",
+        "lexical_cast",
+        "math",
+        "mpl",
+        "optional",
+        "parameter",
+        "range",
+        "spirit",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "core": {
+      "repo": "core",
+      "hash": "sha256-VMu7/fPXlGWxkasp7MmBEW/Jya6nUpGjZbp3KYUZ/5U=",
+      "provides": [
+        "core"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "static_assert",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "coroutine": {
+      "repo": "coroutine",
+      "hash": "sha256-wPHezql6B5Ewe2KVQsVHXf0cBsVVp6Xre20KoUjbN14=",
+      "provides": [
+        "coroutine"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "context",
+        "core",
+        "exception",
+        "move",
+        "system",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "coroutine2": {
+      "repo": "coroutine2",
+      "hash": "sha256-MSOtRWoByGod3i49owJApiCjw9pu165OqIp4bSis6Vs=",
+      "provides": [
+        "coroutine2"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "context"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "crc": {
+      "repo": "crc",
+      "hash": "sha256-lmVm65cHe43RoidOJJ2g13I3SJAf4Lmg2skcRq41zYE=",
+      "provides": [
+        "crc"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "date_time": {
+      "repo": "date_time",
+      "hash": "sha256-I1Oo/3MyHnsBSEjQ7OieCVn3B0ImSYDaPqoMMW0kPjg=",
+      "provides": [
+        "date_time"
+      ],
+      "deps": [
+        "algorithm",
+        "assert",
+        "config",
+        "core",
+        "io",
+        "lexical_cast",
+        "numeric_conversion",
+        "range",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "tokenizer",
+        "type_traits",
+        "utility",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "describe": {
+      "repo": "describe",
+      "hash": "sha256-nZohSKFU6tQfBQa8GTd0jLe1qgqFoJlMUaISrmPP4Ng=",
+      "provides": [
+        "describe"
+      ],
+      "deps": [
+        "mp11"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "detail": {
+      "repo": "detail",
+      "hash": "sha256-CNJh3zHJQdlmJUTkRxZ/QF14aLsrKivrRF1u7s927FY=",
+      "provides": [
+        "detail"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "preprocessor",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "dll": {
+      "repo": "dll",
+      "hash": "sha256-nluvzCwxFDsM/sueovqxL23KCKXw8jnSRocYMKn7gZw=",
+      "provides": [
+        "dll"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "filesystem",
+        "predef",
+        "system",
+        "throw_exception",
+        "type_index",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "dynamic_bitset": {
+      "repo": "dynamic_bitset",
+      "hash": "sha256-EYyMQEQZvs2vp25O1xZTBmnGR819xHVQsZ/MVx1CWv8=",
+      "provides": [
+        "dynamic_bitset"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "core",
+        "integer",
+        "move",
+        "static_assert",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "endian": {
+      "repo": "endian",
+      "hash": "sha256-fpG5BghLPZAKJuDqFHHaYjWrQ5bXveQMMQv/oFlhjbA=",
+      "provides": [
+        "endian"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "exception": {
+      "repo": "exception",
+      "hash": "sha256-oziBPE66j9nntT4eLj3lh8+xL3hjWu0B4UGhjuUoqI8=",
+      "provides": [
+        "exception"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "smart_ptr",
+        "throw_exception",
+        "tuple",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "fiber": {
+      "repo": "fiber",
+      "hash": "sha256-JpyVVA2528nfCsYSl0r58E6uw+V7OrXSHb3UBwLRoE8=",
+      "provides": [
+        "fiber",
+        "fiber_numa"
+      ],
+      "deps": [
+        "algorithm",
+        "assert",
+        "config",
+        "context",
+        "core",
+        "filesystem",
+        "format",
+        "intrusive",
+        "predef",
+        "smart_ptr"
+      ],
+      "selfInstalls": true,
+      "headerOnly": false
+    },
+    "filesystem": {
+      "repo": "filesystem",
+      "hash": "sha256-knhjAm7vz2gEIpIX7uxboIqIy6/2O/tXsxXD8uwR6yI=",
+      "provides": [
+        "filesystem"
+      ],
+      "deps": [
+        "assert",
+        "atomic",
+        "config",
+        "container_hash",
+        "core",
+        "detail",
+        "io",
+        "iterator",
+        "predef",
+        "scope",
+        "smart_ptr",
+        "system",
+        "type_traits",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "flyweight": {
+      "repo": "flyweight",
+      "hash": "sha256-ivWGqIk9yLcgB0vhkpwe64ddFoz7+LyuH5gmE/HSEJo=",
+      "provides": [
+        "flyweight"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "core",
+        "detail",
+        "interprocess",
+        "mpl",
+        "multi_index",
+        "parameter",
+        "preprocessor",
+        "smart_ptr",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "foreach": {
+      "repo": "foreach",
+      "hash": "sha256-y0KM60OZtxt0ZsKLWVcD708BGVHjtbEpq4X+WdDAuXY=",
+      "provides": [
+        "foreach"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "iterator",
+        "mpl",
+        "range",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "format": {
+      "repo": "format",
+      "hash": "sha256-S46TJZNFw3sDw8D5Sa6zVTt5dkfvjGahLHJ5OC5dHXs=",
+      "provides": [
+        "format"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "optional",
+        "smart_ptr",
+        "throw_exception",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "function": {
+      "repo": "function",
+      "hash": "sha256-ZfEd50J1Lq1W2X90QYLgkudvofmNHlwgVmIgpQWqdtE=",
+      "provides": [
+        "function"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "config",
+        "core",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "function_types": {
+      "repo": "function_types",
+      "hash": "sha256-GOyxfIPqyCTHm7Snm0UcTHQaR8bNA5QlNbX+0J1fwSI=",
+      "provides": [
+        "function_types"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "detail",
+        "mpl",
+        "preprocessor",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "functional": {
+      "repo": "functional",
+      "hash": "sha256-U2tk/oxz+TTO/8Cz0ruSnG9QqjXBXAXLaXiedIuzQLI=",
+      "provides": [
+        "functional"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "function",
+        "function_types",
+        "mpl",
+        "preprocessor",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "fusion": {
+      "repo": "fusion",
+      "hash": "sha256-oTJ2laEBpjx3MMS9QKFg9aW6LlfLH7JWcx9LABBmrgI=",
+      "provides": [
+        "fusion"
+      ],
+      "deps": [
+        "config",
+        "container_hash",
+        "core",
+        "describe",
+        "function_types",
+        "functional",
+        "mp11",
+        "mpl",
+        "preprocessor",
+        "static_assert",
+        "tuple",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "geometry": {
+      "repo": "geometry",
+      "hash": "sha256-7uUDfD8snoyatiA6YKF/i8cpyRfiST2ZwlmKiF6B25A=",
+      "provides": [
+        "geometry"
+      ],
+      "deps": [
+        "algorithm",
+        "any",
+        "array",
+        "assert",
+        "concept_check",
+        "config",
+        "container",
+        "core",
+        "crc",
+        "endian",
+        "function_types",
+        "fusion",
+        "graph",
+        "headers",
+        "integer",
+        "iterator",
+        "lexical_cast",
+        "math",
+        "move",
+        "mpl",
+        "multiprecision",
+        "numeric_conversion",
+        "polygon",
+        "predef",
+        "program_options",
+        "qvm",
+        "range",
+        "rational",
+        "serialization",
+        "static_assert",
+        "thread",
+        "throw_exception",
+        "tokenizer",
+        "tuple",
+        "type_traits",
+        "utility",
+        "variant",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "gil": {
+      "repo": "gil",
+      "hash": "sha256-kpSFVBEjAmTB1p06tXO8gVc28SxDR9aw8QapQbBhscU=",
+      "provides": [
+        "gil"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "container_hash",
+        "core",
+        "filesystem",
+        "headers",
+        "integer",
+        "iterator",
+        "mp11",
+        "preprocessor",
+        "type_traits",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "graph": {
+      "repo": "graph",
+      "hash": "sha256-djo7DIA49MXStNzp9fJPyBj+L1nuTVu6Z5Sf1Cf2ZtY=",
+      "provides": [
+        "graph"
+      ],
+      "deps": [
+        "algorithm",
+        "any",
+        "array",
+        "assert",
+        "bimap",
+        "bind",
+        "concept_check",
+        "config",
+        "container_hash",
+        "conversion",
+        "core",
+        "detail",
+        "foreach",
+        "function",
+        "integer",
+        "iterator",
+        "lexical_cast",
+        "math",
+        "move",
+        "mpl",
+        "multi_index",
+        "optional",
+        "parameter",
+        "preprocessor",
+        "property_map",
+        "property_tree",
+        "random",
+        "range",
+        "regex",
+        "serialization",
+        "smart_ptr",
+        "spirit",
+        "static_assert",
+        "throw_exception",
+        "tti",
+        "tuple",
+        "type_traits",
+        "typeof",
+        "unordered",
+        "utility",
+        "xpressive"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "graph_parallel": {
+      "repo": "graph_parallel",
+      "hash": "sha256-9gv96h3AACmkMjmZFs1pw7X++KkwbGMuepzosaS9EDA=",
+      "provides": [
+        "graph_parallel"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "container_hash",
+        "core",
+        "detail",
+        "dynamic_bitset",
+        "filesystem",
+        "foreach",
+        "function",
+        "graph",
+        "iterator",
+        "lexical_cast",
+        "mpi",
+        "mpl",
+        "optional",
+        "property_map",
+        "property_map_parallel",
+        "random",
+        "serialization",
+        "smart_ptr",
+        "static_assert",
+        "tuple",
+        "type_traits",
+        "variant"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "hana": {
+      "repo": "hana",
+      "hash": "sha256-lFaH6qPEDtYEKAjZhFyvqtfQR3GENkE/15zkGNgAy7A=",
+      "provides": [
+        "hana"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "fusion",
+        "mpl",
+        "tuple"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "hash2": {
+      "repo": "hash2",
+      "hash": "sha256-7WvV9zbMApgBlcefO13tF1P0UJ3RRZj+Dmr9T9j7KqI=",
+      "provides": [
+        "hash2"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "describe",
+        "mp11"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "headers": {
+      "repo": "headers",
+      "hash": "sha256-916ER2qT7i3z8Jy1sn/fS78UQcqcx2gF3wtqowBXFZE=",
+      "provides": [
+        "headers"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "heap": {
+      "repo": "heap",
+      "hash": "sha256-q0vQ89rJaAY/SGN5cqe/4hvY6YWZc2pXaBPCQIzoc2E=",
+      "provides": [
+        "heap"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "intrusive",
+        "iterator",
+        "parameter",
+        "static_assert",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "histogram": {
+      "repo": "histogram",
+      "hash": "sha256-bBJOCD4pFq4I0cUAQDOfPfJQmCADFYiQln85m6yzbLk=",
+      "provides": [
+        "histogram"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "mp11",
+        "throw_exception",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "hof": {
+      "repo": "hof",
+      "hash": "sha256-KWRf8rfn8pPZsuXWTPkv2rhkAF0RqjxN8OMZL9Hy0/g=",
+      "provides": [
+        "hof"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "icl": {
+      "repo": "icl",
+      "hash": "sha256-KNgAvevg1P0+qaE2eUtvfV/YCwEcXfUoZDTT6O5P0jU=",
+      "provides": [
+        "icl"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "container",
+        "core",
+        "date_time",
+        "detail",
+        "iterator",
+        "move",
+        "mpl",
+        "range",
+        "rational",
+        "static_assert",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "integer": {
+      "repo": "integer",
+      "hash": "sha256-lr90bVhBJIWjYAVTPLrqZI8NpQQnRbWTmJ9sS+yJvbI=",
+      "provides": [
+        "integer"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "static_assert",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "interprocess": {
+      "repo": "interprocess",
+      "hash": "sha256-nZChnwvQ5e1V5bQKClwuObAuHOOor5pE5EDmdVzugyY=",
+      "provides": [
+        "interprocess"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container",
+        "intrusive",
+        "move",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "intrusive": {
+      "repo": "intrusive",
+      "hash": "sha256-PmMRJH3nDe3umDPH8gHe3se1xryk8buMqnIO+1VYuzg=",
+      "provides": [
+        "intrusive"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "move"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "io": {
+      "repo": "io",
+      "hash": "sha256-7O2qCHTybyhzqkJUftJ/7W06EhAOzKbX5ulYh5d0Es8=",
+      "provides": [
+        "io"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "iostreams": {
+      "repo": "iostreams",
+      "hash": "sha256-06nyC2gTshoIj4DFy0SPdND0FyKmhdYxjlRAdFJ15Ug=",
+      "provides": [
+        "iostreams"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "detail",
+        "function",
+        "integer",
+        "iterator",
+        "mpl",
+        "numeric_conversion",
+        "preprocessor",
+        "random",
+        "range",
+        "regex",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "iterator": {
+      "repo": "iterator",
+      "hash": "sha256-ljEisWLtU3EFZAHZXZSr7DgqPzC2o81AP0/p1H7BG/o=",
+      "provides": [
+        "iterator"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "detail",
+        "fusion",
+        "mpl",
+        "optional",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "json": {
+      "repo": "json",
+      "hash": "sha256-kPWXw928GPY3MlVYuQ3uO3FYPeMq9Qq6l337SmNv2zU=",
+      "provides": [
+        "json"
+      ],
+      "deps": [
+        "align",
+        "assert",
+        "config",
+        "container",
+        "container_hash",
+        "core",
+        "describe",
+        "endian",
+        "mp11",
+        "system",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "lambda": {
+      "repo": "lambda",
+      "hash": "sha256-IbsR0TS+6FOsG6EBIsd4qTA25voKFCAZQK7qYVvgJeQ=",
+      "provides": [
+        "lambda"
+      ],
+      "deps": [
+        "bind",
+        "config",
+        "core",
+        "detail",
+        "iterator",
+        "mpl",
+        "preprocessor",
+        "tuple",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "lambda2": {
+      "repo": "lambda2",
+      "hash": "sha256-n6DzeoSPHv1eHa1nzYMmIuqHCPMYF0d0dmcAMTcR3pQ=",
+      "provides": [
+        "lambda2"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "leaf": {
+      "repo": "leaf",
+      "hash": "sha256-/6LlkfWzYPWANpCKwlbLzjBzExBwg3wBMIcpFYRvODc=",
+      "provides": [
+        "leaf"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "lexical_cast": {
+      "repo": "lexical_cast",
+      "hash": "sha256-EVw+1e43ZAA8J2QUHkwkR5Z3pUCKnMZkxKBs5XltRbo=",
+      "provides": [
+        "lexical_cast"
+      ],
+      "deps": [
+        "config",
+        "container",
+        "core",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "local_function": {
+      "repo": "local_function",
+      "hash": "sha256-LlbxpEQCUkPKlCg10mJGtD6BEa6s2wUInj16UXXmUtA=",
+      "provides": [
+        "local_function"
+      ],
+      "deps": [
+        "config",
+        "mpl",
+        "preprocessor",
+        "scope_exit",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "locale": {
+      "repo": "locale",
+      "hash": "sha256-zAMYVfR1CL5mCgTYV9ujW0Fl+8tVndX/OK/ZVJImdQo=",
+      "provides": [
+        "locale"
+      ],
+      "deps": [
+        "assert",
+        "charconv",
+        "config",
+        "core",
+        "iterator",
+        "predef",
+        "thread"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "lockfree": {
+      "repo": "lockfree",
+      "hash": "sha256-wOXDFx0XxlAm9/CRilQiUe+E5pbVF6c9NBIswdGQb1o=",
+      "provides": [
+        "lockfree"
+      ],
+      "deps": [
+        "align",
+        "assert",
+        "atomic",
+        "config",
+        "core",
+        "parameter",
+        "predef",
+        "static_assert",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "log": {
+      "repo": "log",
+      "hash": "sha256-lLeNpaFDnv6SzEUnZj8RC2PkbbZVVryfkWeE82GoYgI=",
+      "provides": [
+        "log",
+        "log_setup",
+        "log_with_support"
+      ],
+      "deps": [
+        "align",
+        "asio_core",
+        "assert",
+        "atomic",
+        "bind",
+        "config",
+        "core",
+        "date_time",
+        "exception",
+        "filesystem",
+        "function_types",
+        "fusion",
+        "interprocess",
+        "intrusive",
+        "io",
+        "iterator",
+        "move",
+        "mpl",
+        "optional",
+        "parameter",
+        "phoenix",
+        "predef",
+        "preprocessor",
+        "property_tree",
+        "proto",
+        "range",
+        "regex",
+        "smart_ptr",
+        "spirit",
+        "system",
+        "thread",
+        "throw_exception",
+        "type_index",
+        "type_traits",
+        "utility",
+        "winapi",
+        "xpressive"
+      ],
+      "selfInstalls": true,
+      "headerOnly": false
+    },
+    "logic": {
+      "repo": "logic",
+      "hash": "sha256-GUoHIzTeYn0eL4gN9qjFSJu9nnl8dLT2PGvc7w1egg8=",
+      "provides": [
+        "logic"
+      ],
+      "deps": [
+        "config",
+        "core"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "math": {
+      "repo": "math",
+      "hash": "sha256-hrpMduFTOu9xqajj6duHVNieWOHDu3Zl2uZbYBTKCSA=",
+      "provides": [
+        "math"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "integer",
+        "lexical_cast",
+        "predef",
+        "random",
+        "static_assert",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "metaparse": {
+      "repo": "metaparse",
+      "hash": "sha256-cIzGbkyobACAjZtxoMwn3sR+Hzc7o5EUh59h1RQqzFA=",
+      "provides": [
+        "metaparse"
+      ],
+      "deps": [
+        "config",
+        "mpl",
+        "predef",
+        "preprocessor",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "move": {
+      "repo": "move",
+      "hash": "sha256-eXS9ooLEzzItTcfTH0lzoyjDykr+dCGzJcTj/v9V8k4=",
+      "provides": [
+        "move"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "mp11": {
+      "repo": "mp11",
+      "hash": "sha256-HcQJ/PXBQdWVjGZy28X2LxVRfjV2nkeLTusNjT9ssXI=",
+      "provides": [
+        "mp11"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "mpi": {
+      "repo": "mpi",
+      "hash": "sha256-O8ld+f7ZPHP0pgd8EVxevHSFk8fw/a9vHotgHVpesto=",
+      "provides": [
+        "mpi"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "foreach",
+        "function",
+        "graph",
+        "integer",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "optional",
+        "serialization",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "mpl": {
+      "repo": "mpl",
+      "hash": "sha256-UvgPOuVibz9GEpzDOOGgTvSunYDvErQfqsb9xvj+xic=",
+      "provides": [
+        "mpl"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "predef",
+        "preprocessor",
+        "static_assert",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "mqtt5": {
+      "repo": "mqtt5",
+      "hash": "sha256-DuEpqLS5ROD7aiwXHU3RKttgEnSXFe9VkC1DSt6il/4=",
+      "provides": [
+        "mqtt5"
+      ],
+      "deps": [
+        "asio",
+        "assert",
+        "beast",
+        "container",
+        "core",
+        "endian",
+        "fusion",
+        "headers",
+        "optional",
+        "random",
+        "range",
+        "smart_ptr",
+        "spirit",
+        "system",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "msm": {
+      "repo": "msm",
+      "hash": "sha256-18lw2/ob5HIXfBInG32NhdnbHKE3tvGilvhb2QelHv8=",
+      "provides": [
+        "msm"
+      ],
+      "deps": [
+        "any",
+        "assert",
+        "bind",
+        "circular_buffer",
+        "config",
+        "core",
+        "function",
+        "fusion",
+        "mpl",
+        "parameter",
+        "phoenix",
+        "preprocessor",
+        "proto",
+        "serialization",
+        "tuple",
+        "type_traits",
+        "typeof"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "multi_array": {
+      "repo": "multi_array",
+      "hash": "sha256-oG70CtBohtcka45hXehFHlpoThZiYlbKJtDtkB1p0O4=",
+      "provides": [
+        "multi_array"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "functional",
+        "iterator",
+        "mpl",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "multi_index": {
+      "repo": "multi_index",
+      "hash": "sha256-DoLjlX6/SlMaoahtriwjeARHxMTx4uS68wBVRPw6JZU=",
+      "provides": [
+        "multi_index"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "config",
+        "container_hash",
+        "core",
+        "integer",
+        "iterator",
+        "move",
+        "mpl",
+        "preprocessor",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "multiprecision": {
+      "repo": "multiprecision",
+      "hash": "sha256-IQQt/4MZfqSU32UAQDPxN1rfuUDAyIMTGp8WjKqmpkk=",
+      "provides": [
+        "multiprecision"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "integer",
+        "lexical_cast",
+        "math",
+        "random"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "mysql": {
+      "repo": "mysql",
+      "hash": "sha256-GBegkDfMMlM58bo8Oc3MiU33fH4JEdk/YVPzc1qZt2o=",
+      "provides": [
+        "mysql"
+      ],
+      "deps": [
+        "asio",
+        "assert",
+        "charconv",
+        "compat",
+        "config",
+        "container",
+        "core",
+        "describe",
+        "endian",
+        "intrusive",
+        "mp11",
+        "optional",
+        "pfr",
+        "system",
+        "throw_exception",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "nowide": {
+      "repo": "nowide",
+      "hash": "sha256-wiK0l1clnja6eJSQPXiMXVNLMPa5xtbC5PNN7W6RjuE=",
+      "provides": [
+        "nowide"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "numeric_conversion": {
+      "repo": "numeric_conversion",
+      "hash": "sha256-u9v7e7yLKsfiV8Btz4+hKNR9eI7BTFK7AWte8oGvreg=",
+      "provides": [
+        "numeric_conversion"
+      ],
+      "deps": [
+        "config",
+        "conversion",
+        "core",
+        "mpl",
+        "preprocessor",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "numeric_interval": {
+      "repo": "interval",
+      "hash": "sha256-Bgh6+BEgsjRc5eiDpGmEpJAyMBf+DpoiCh2xAzQRlBg=",
+      "provides": [
+        "numeric_interval"
+      ],
+      "deps": [
+        "config",
+        "detail",
+        "logic"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "numeric_odeint": {
+      "repo": "odeint",
+      "hash": "sha256-bidGeOEtd2+AVZ4Si7Zje3LiLvSLQLq29bYbW/NolOk=",
+      "provides": [
+        "numeric_odeint"
+      ],
+      "deps": [
+        "assert",
+        "compute",
+        "config",
+        "core",
+        "fusion",
+        "iterator",
+        "math",
+        "mpi",
+        "mpl",
+        "multi_array",
+        "numeric_ublas",
+        "preprocessor",
+        "range",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "units",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "numeric_ublas": {
+      "repo": "ublas",
+      "hash": "sha256-6klr9JqynTk/OMoVWZQM0x2EAgXh3+55VjE1Gl1MYI4=",
+      "provides": [
+        "numeric_ublas"
+      ],
+      "deps": [
+        "compute",
+        "concept_check",
+        "config",
+        "core",
+        "iterator",
+        "mpl",
+        "numeric_interval",
+        "range",
+        "serialization",
+        "smart_ptr",
+        "static_assert",
+        "type_traits",
+        "typeof"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "optional": {
+      "repo": "optional",
+      "hash": "sha256-RRHnzA5K/8NTC/gghxX0bWE2+MyZfAWWFOaZDyfcAns=",
+      "provides": [
+        "optional"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "outcome": {
+      "repo": "outcome",
+      "hash": "sha256-Zky1TYJqq/wfeDaaYAxzjnl454R0+y+GfRwsVj+Ys80=",
+      "provides": [
+        "outcome"
+      ],
+      "deps": [
+        "config",
+        "exception",
+        "headers",
+        "system",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "parameter": {
+      "repo": "parameter",
+      "hash": "sha256-WSExKYojn5swQ1Zxuwggav+LfwC10kwpMdpkeDEpD18=",
+      "provides": [
+        "parameter"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "function",
+        "fusion",
+        "mp11",
+        "mpl",
+        "optional",
+        "preprocessor",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "parameter_python": {
+      "repo": "parameter_python",
+      "hash": "sha256-Olm3HKDnLkaxMqbDEEY+vncLUji7dFrQtNHA0ZngW7E=",
+      "provides": [
+        "parameter_python"
+      ],
+      "deps": [
+        "mpl",
+        "parameter",
+        "preprocessor",
+        "python"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "parser": {
+      "repo": "parser",
+      "hash": "sha256-KIU54qfBmAPy/38+z+kjjlb4xNAJNNGluDMgFLxAFkI=",
+      "provides": [
+        "parser"
+      ],
+      "deps": [
+        "assert",
+        "hana",
+        "type_index"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "pfr": {
+      "repo": "pfr",
+      "hash": "sha256-SaY3NHQSgSo7l8ZdZs35cvucdgMJHoqese8OV/+n8gk=",
+      "provides": [
+        "pfr"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "phoenix": {
+      "repo": "phoenix",
+      "hash": "sha256-szO8RfKawPe1XhjRdWpHm9nii8dglpFQKlnQUGSwa4o=",
+      "provides": [
+        "phoenix"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "config",
+        "core",
+        "function",
+        "fusion",
+        "mpl",
+        "predef",
+        "preprocessor",
+        "proto",
+        "range",
+        "smart_ptr",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "poly_collection": {
+      "repo": "poly_collection",
+      "hash": "sha256-XkEHtMvZliYAt7x9P8SwutUbKdjfdaT/Tsp6m4HhlBM=",
+      "provides": [
+        "poly_collection"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "iterator",
+        "mp11",
+        "mpl",
+        "type_erasure",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "polygon": {
+      "repo": "polygon",
+      "hash": "sha256-m7unjr8cz+TQrziFiDCd4NdznZnGkXYvMKPBhTTXVwo=",
+      "provides": [
+        "polygon"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "pool": {
+      "repo": "pool",
+      "hash": "sha256-JurFimHIzn1P4VHnyiHdCusHKuBINyn019bLXpBbN/M=",
+      "provides": [
+        "pool"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "integer",
+        "throw_exception",
+        "type_traits",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "predef": {
+      "repo": "predef",
+      "hash": "sha256-C1aMk1RkLMqSBIv8oTlfkZhlp1kzWqXoAn3Cyev9Jtc=",
+      "provides": [
+        "predef"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "preprocessor": {
+      "repo": "preprocessor",
+      "hash": "sha256-4GTIVg58rx21Sqpj5fQH8VXVdHCGI9reauZ64ZlDhfA=",
+      "provides": [
+        "preprocessor"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "process": {
+      "repo": "process",
+      "hash": "sha256-3YCG9PotrEBkXAEvrwAVyHBZDrNtPsTK12nY2pq4biw=",
+      "provides": [
+        "process"
+      ],
+      "deps": [
+        "algorithm",
+        "asio",
+        "config",
+        "core",
+        "filesystem",
+        "fusion",
+        "iterator",
+        "move",
+        "optional",
+        "system",
+        "tokenizer",
+        "type_index",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "program_options": {
+      "repo": "program_options",
+      "hash": "sha256-wMCxqqR0y36KQAWyUa0LBEtWGGEkXt7o683a3ZPbnH0=",
+      "provides": [
+        "program_options"
+      ],
+      "deps": [
+        "any",
+        "bind",
+        "config",
+        "core",
+        "detail",
+        "function",
+        "iterator",
+        "lexical_cast",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "tokenizer",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "property_map": {
+      "repo": "property_map",
+      "hash": "sha256-sdI/2biFn2yVAE8h0REyUYnMttfllLcQc7OUBPqk5Qk=",
+      "provides": [
+        "property_map"
+      ],
+      "deps": [
+        "any",
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "function",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "property_map_parallel": {
+      "repo": "property_map_parallel",
+      "hash": "sha256-GjmbkLEk4G+Gj+NhkSM51FJWBSRJsiUVk8/Gj+rvLTE=",
+      "provides": [
+        "property_map_parallel"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "concept_check",
+        "config",
+        "function",
+        "mpi",
+        "mpl",
+        "multi_index",
+        "optional",
+        "property_map",
+        "serialization",
+        "smart_ptr",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "property_tree": {
+      "repo": "property_tree",
+      "hash": "sha256-1OIOkO9Zild0rOEHN0XR3XuoIB7GiVc9AhMtWPfhMiI=",
+      "provides": [
+        "property_tree"
+      ],
+      "deps": [
+        "any",
+        "assert",
+        "bind",
+        "config",
+        "core",
+        "iterator",
+        "mpl",
+        "multi_index",
+        "optional",
+        "range",
+        "serialization",
+        "static_assert",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "proto": {
+      "repo": "proto",
+      "hash": "sha256-RZ3BYAtDIrOpag96S1HeTDfOxAMkba8/KuxswX/mZpI=",
+      "provides": [
+        "proto"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "fusion",
+        "mpl",
+        "preprocessor",
+        "range",
+        "static_assert",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "ptr_container": {
+      "repo": "ptr_container",
+      "hash": "sha256-XFunWMnHTgDHy/MFO9rISv5b2EbSSj/4/hj/JZ0gZL8=",
+      "provides": [
+        "ptr_container"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "circular_buffer",
+        "config",
+        "core",
+        "iterator",
+        "mpl",
+        "range",
+        "smart_ptr",
+        "static_assert",
+        "type_traits",
+        "unordered",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "python": {
+      "repo": "python",
+      "hash": "sha256-7N0JhSghU3521kWayPbiFMGYRT1YBH1dms6NzcdHwYo=",
+      "provides": [
+        "numpy",
+        "python"
+      ],
+      "deps": [
+        "align",
+        "bind",
+        "config",
+        "conversion",
+        "core",
+        "detail",
+        "foreach",
+        "function",
+        "graph",
+        "integer",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "numeric_conversion",
+        "preprocessor",
+        "property_map",
+        "smart_ptr",
+        "static_assert",
+        "tuple",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": true,
+      "headerOnly": true
+    },
+    "qvm": {
+      "repo": "qvm",
+      "hash": "sha256-zMIH1Fv8tNM7tnEX9eZjCyzCHdwCcLsdG/+6hatPOP4=",
+      "provides": [
+        "qvm"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "random": {
+      "repo": "random",
+      "hash": "sha256-pdUF6U8hI1+FTmIev9rsLYkQXfTBMfM3g7oKik9Uxxc=",
+      "provides": [
+        "random"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "dynamic_bitset",
+        "integer",
+        "io",
+        "static_assert",
+        "system",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "range": {
+      "repo": "range",
+      "hash": "sha256-iZIY0/29bMuOlXd4YzC0qQ1mnSaPH0Gi24dVo1+i5H0=",
+      "provides": [
+        "range"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "concept_check",
+        "config",
+        "container_hash",
+        "conversion",
+        "core",
+        "detail",
+        "iterator",
+        "mpl",
+        "optional",
+        "preprocessor",
+        "regex",
+        "static_assert",
+        "tuple",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "ratio": {
+      "repo": "ratio",
+      "hash": "sha256-I99O0iGVqMnVjcV2MdmS1Q91UR6OJyV7WX+DbrCUT70=",
+      "provides": [
+        "ratio"
+      ],
+      "deps": [],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "rational": {
+      "repo": "rational",
+      "hash": "sha256-Ps443rMBsVBfh6DS4olwuR/fAmlgKVMjNO9H+fWO0Mw=",
+      "provides": [
+        "rational"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "integer",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "redis": {
+      "repo": "redis",
+      "hash": "sha256-snh57WH3qK41Z999/E1fR6QD1AJ7r9evssSet9cDdt8=",
+      "provides": [
+        "redis"
+      ],
+      "deps": [
+        "asio",
+        "assert",
+        "core",
+        "mp11",
+        "system",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "regex": {
+      "repo": "regex",
+      "hash": "sha256-sovIecm5wZw1ZiX2KiBE643MROAHC1f+SbthxpGW09Q=",
+      "provides": [
+        "regex",
+        "regex_icu"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "predef",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "safe_numerics": {
+      "repo": "safe_numerics",
+      "hash": "sha256-qrbkdV9BAVlIunMOuRTbLQ4odfYpLWCDNZj23ytcUEs=",
+      "provides": [
+        "safe_numerics"
+      ],
+      "deps": [
+        "concept_check",
+        "config",
+        "core",
+        "integer",
+        "logic",
+        "mp11"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "scope": {
+      "repo": "scope",
+      "hash": "sha256-5j6Y+7v2scCRXuqWg7bC9unPFEGwQ/F9Dre2y/uNAus=",
+      "provides": [
+        "scope"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "scope_exit": {
+      "repo": "scope_exit",
+      "hash": "sha256-Ik90kLERwb/PrCiFwpRxiQGa1dbEpwlAYRHkA5rD8LM=",
+      "provides": [
+        "scope_exit"
+      ],
+      "deps": [
+        "config",
+        "function",
+        "preprocessor",
+        "type_traits",
+        "typeof"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "serialization": {
+      "repo": "serialization",
+      "hash": "sha256-JaYkZ4ACmmaiUkNzdPSZWzWRzb9KCZYgZtgLjpiektM=",
+      "provides": [
+        "serialization",
+        "wserialization"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "config",
+        "core",
+        "detail",
+        "function",
+        "integer",
+        "io",
+        "iterator",
+        "move",
+        "mpl",
+        "optional",
+        "predef",
+        "preprocessor",
+        "smart_ptr",
+        "spirit",
+        "static_assert",
+        "type_traits",
+        "unordered",
+        "utility",
+        "variant"
+      ],
+      "selfInstalls": true,
+      "headerOnly": false
+    },
+    "signals2": {
+      "repo": "signals2",
+      "hash": "sha256-chDpBP7qcOZR7c7er5lH9KjjMN94MLAlVO+sI1PjdQs=",
+      "provides": [
+        "signals2"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "config",
+        "core",
+        "function",
+        "iterator",
+        "move",
+        "mpl",
+        "optional",
+        "parameter",
+        "preprocessor",
+        "smart_ptr",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "variant"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "smart_ptr": {
+      "repo": "smart_ptr",
+      "hash": "sha256-AdzrB7sIIBJ7VL4MC7b2ks9iihaHwKdEFDYFxutKni4=",
+      "provides": [
+        "smart_ptr"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "sort": {
+      "repo": "sort",
+      "hash": "sha256-7zIp9pv+gRCFKEEBNUvLzvQ6gadyBARzOvYAHj7tNQY=",
+      "provides": [
+        "sort"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "range",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "spirit": {
+      "repo": "spirit",
+      "hash": "sha256-JQqWG6AEuU5FO3jbdwYtmLYwzPFZzdFz3yBkkc/a628=",
+      "provides": [
+        "spirit"
+      ],
+      "deps": [
+        "array",
+        "assert",
+        "config",
+        "core",
+        "endian",
+        "function",
+        "function_types",
+        "fusion",
+        "integer",
+        "io",
+        "iterator",
+        "move",
+        "mpl",
+        "optional",
+        "phoenix",
+        "pool",
+        "preprocessor",
+        "proto",
+        "range",
+        "smart_ptr",
+        "static_assert",
+        "thread",
+        "throw_exception",
+        "type_traits",
+        "typeof",
+        "unordered",
+        "utility",
+        "variant"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "stacktrace": {
+      "repo": "stacktrace",
+      "hash": "sha256-7Kqwd7CwhPMXND/EQ+zvjHoDZ51BYXFzhv+kiEYzrUU=",
+      "provides": [
+        "stacktrace"
+      ],
+      "deps": [
+        "config",
+        "container_hash",
+        "core",
+        "predef",
+        "winapi"
+      ],
+      "selfInstalls": true,
+      "headerOnly": false
+    },
+    "statechart": {
+      "repo": "statechart",
+      "hash": "sha256-aX0ligc/0qoqG4o00VllNq/c8uRxPjnrmhbjt4PFHAc=",
+      "provides": [
+        "statechart"
+      ],
+      "deps": [
+        "assert",
+        "bind",
+        "config",
+        "conversion",
+        "core",
+        "detail",
+        "function",
+        "mpl",
+        "smart_ptr",
+        "static_assert",
+        "thread",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "static_assert": {
+      "repo": "static_assert",
+      "hash": "sha256-J5OUm8Ou74N5cOnaOSinmGk+YPpolWpfWCnaGlvUZUY=",
+      "provides": [
+        "static_assert"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "static_string": {
+      "repo": "static_string",
+      "hash": "sha256-btJAuuXl2FsWEvG41bSGoH0HIgoGfBhKW3a5eszlJnY=",
+      "provides": [
+        "static_string"
+      ],
+      "deps": [
+        "assert",
+        "container_hash",
+        "core",
+        "headers",
+        "static_assert",
+        "throw_exception",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "stl_interfaces": {
+      "repo": "stl_interfaces",
+      "hash": "sha256-UlqeGqA2iozjypyh2EnNKJ7w+tpMrr/i66EYXrB2sFU=",
+      "provides": [
+        "stl_interfaces"
+      ],
+      "deps": [
+        "assert",
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "system": {
+      "repo": "system",
+      "hash": "sha256-XRXaDEbnDSgbaTzlHb4Rf42mU37ODAuBKnpjiwlpP7E=",
+      "provides": [
+        "system"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "throw_exception",
+        "variant2",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "test": {
+      "repo": "test",
+      "hash": "sha256-9tXXOzHqiOmb92051iaCm7EBJoGKQ0CLCiz2LyoZC94=",
+      "provides": [
+        "test"
+      ],
+      "deps": [
+        "algorithm",
+        "assert",
+        "bind",
+        "config",
+        "core",
+        "describe",
+        "detail",
+        "exception",
+        "function",
+        "io",
+        "iterator",
+        "mpl",
+        "numeric_conversion",
+        "optional",
+        "preprocessor",
+        "smart_ptr",
+        "static_assert",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": true,
+      "headerOnly": false
+    },
+    "thread": {
+      "repo": "thread",
+      "hash": "sha256-vkLjfL6x4jwnBDIpcRA9ZOIz9058Tx0Z7u7kw67wihY=",
+      "provides": [
+        "thread"
+      ],
+      "deps": [
+        "assert",
+        "atomic",
+        "bind",
+        "chrono",
+        "concept_check",
+        "config",
+        "container",
+        "container_hash",
+        "core",
+        "date_time",
+        "exception",
+        "function",
+        "io",
+        "move",
+        "optional",
+        "predef",
+        "preprocessor",
+        "smart_ptr",
+        "static_assert",
+        "system",
+        "throw_exception",
+        "tuple",
+        "type_traits",
+        "utility",
+        "winapi"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "throw_exception": {
+      "repo": "throw_exception",
+      "hash": "sha256-kX0kizEaDbcmpGmm/DWN6kZieyWe0HtnXHdmN+mKYjE=",
+      "provides": [
+        "throw_exception"
+      ],
+      "deps": [
+        "assert",
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "timer": {
+      "repo": "timer",
+      "hash": "sha256-2i79rJBIkOhZuzM+pivcmyM6XdwBuaiQ0G80iNbKVVI=",
+      "provides": [
+        "timer"
+      ],
+      "deps": [
+        "config",
+        "io",
+        "predef"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "tokenizer": {
+      "repo": "tokenizer",
+      "hash": "sha256-xjnAXQ+c7G6CMB1RggAERkCdh0+2rKMAIv28dDScEfk=",
+      "provides": [
+        "tokenizer"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "iterator",
+        "mpl",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "tti": {
+      "repo": "tti",
+      "hash": "sha256-o2kdpe1nEs6/GZhL8eRN+/Ec74fu6/MkH6I3Cy+Mpck=",
+      "provides": [
+        "tti"
+      ],
+      "deps": [
+        "config",
+        "function_types",
+        "mpl",
+        "preprocessor",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "tuple": {
+      "repo": "tuple",
+      "hash": "sha256-2PTGblaitDEhy/XvThETYyeAz2A2lDFvWfQ/atT8mn0=",
+      "provides": [
+        "tuple"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "static_assert",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "type_erasure": {
+      "repo": "type_erasure",
+      "hash": "sha256-XDj8X0A92d3Fy+zCfJl71T2/GNGn4OVDybwx30RJVns=",
+      "provides": [
+        "type_erasure"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "fusion",
+        "iterator",
+        "mp11",
+        "mpl",
+        "preprocessor",
+        "smart_ptr",
+        "thread",
+        "throw_exception",
+        "type_traits",
+        "typeof",
+        "vmd"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "type_index": {
+      "repo": "type_index",
+      "hash": "sha256-3njyTPlLV79AAeFoHXSBVFy98k3DFTZpfnIfnWOI4to=",
+      "provides": [
+        "type_index"
+      ],
+      "deps": [
+        "config",
+        "container_hash",
+        "core",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "type_traits": {
+      "repo": "type_traits",
+      "hash": "sha256-OH9x0V8WzASXYFwIPs3RAA4O1JD4dEm5wEjndpAM0T4=",
+      "provides": [
+        "type_traits"
+      ],
+      "deps": [
+        "config",
+        "static_assert"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "typeof": {
+      "repo": "typeof",
+      "hash": "sha256-4dxXZiFD8EYspB6Cdm+qEAhnenhgx9Hs0cC/Rwy+DQc=",
+      "provides": [
+        "typeof"
+      ],
+      "deps": [
+        "config"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "units": {
+      "repo": "units",
+      "hash": "sha256-fjiO9rnljUqM0LZtKbILxvj+UHL0eNGmLQeCn6yk/bo=",
+      "provides": [
+        "units"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "core",
+        "integer",
+        "io",
+        "lambda",
+        "math",
+        "mpl",
+        "preprocessor",
+        "static_assert",
+        "type_traits",
+        "typeof"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "unordered": {
+      "repo": "unordered",
+      "hash": "sha256-SwbBN3WojEitxGfXVkHFAFVEFmmeFm8abnJw5hsPqd4=",
+      "provides": [
+        "unordered"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "core",
+        "mp11",
+        "predef",
+        "throw_exception"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "url": {
+      "repo": "url",
+      "hash": "sha256-lTxGqPwaVP4G+d2lEoolzbVYZI9Ahfy/zb6EGNd6Atw=",
+      "provides": [
+        "url"
+      ],
+      "deps": [
+        "align",
+        "assert",
+        "config",
+        "core",
+        "headers",
+        "mp11",
+        "optional",
+        "static_assert",
+        "system",
+        "throw_exception",
+        "type_traits",
+        "variant2"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "utility": {
+      "repo": "utility",
+      "hash": "sha256-jCO+VDInIIV0gPePl6zambgmjflD/uuJvdetqSVGTE4=",
+      "provides": [
+        "utility"
+      ],
+      "deps": [
+        "config",
+        "core",
+        "io",
+        "preprocessor",
+        "static_assert",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "uuid": {
+      "repo": "uuid",
+      "hash": "sha256-50AGx3jqGodZcVyAcpMWSmXjwFoUEE9b5DYZEWNZgJc=",
+      "provides": [
+        "uuid"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "variant": {
+      "repo": "variant",
+      "hash": "sha256-ttj+UUHWtRaDucaR7XxBbelg4fLzOUpL5qyQdIPBH7E=",
+      "provides": [
+        "variant"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "container_hash",
+        "core",
+        "detail",
+        "integer",
+        "mpl",
+        "preprocessor",
+        "static_assert",
+        "throw_exception",
+        "type_index",
+        "type_traits",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "variant2": {
+      "repo": "variant2",
+      "hash": "sha256-CdsNTYYqhZEEoZ/LAPlOxDr9YPG3VQy9Iz4VJ71STl4=",
+      "provides": [
+        "variant2"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "mp11"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "vmd": {
+      "repo": "vmd",
+      "hash": "sha256-ARLK07xXr7qFDys+rl9r7x14uSKK5n6cCDXE6UzZttg=",
+      "provides": [
+        "vmd"
+      ],
+      "deps": [
+        "preprocessor"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "wave": {
+      "repo": "wave",
+      "hash": "sha256-ZzFZ0NApJk/cXie9pSJTU5iea8pnkYp3zos6KueceUo=",
+      "provides": [
+        "wave"
+      ],
+      "deps": [
+        "assert",
+        "concept_check",
+        "config",
+        "core",
+        "filesystem",
+        "format",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "multi_index",
+        "optional",
+        "pool",
+        "preprocessor",
+        "serialization",
+        "smart_ptr",
+        "spirit",
+        "static_assert",
+        "throw_exception",
+        "type_traits"
+      ],
+      "selfInstalls": false,
+      "headerOnly": false
+    },
+    "winapi": {
+      "repo": "winapi",
+      "hash": "sha256-bqgQoKsXrXj3GeHdE0TM34VCXPkydLrUlXEhWb1lwiw=",
+      "provides": [
+        "winapi"
+      ],
+      "deps": [
+        "config",
+        "predef"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "xpressive": {
+      "repo": "xpressive",
+      "hash": "sha256-w9iw5hFB0m1GifDU7bGQ710UwvBfDXYaFDF3REH/ghI=",
+      "provides": [
+        "xpressive"
+      ],
+      "deps": [
+        "assert",
+        "config",
+        "conversion",
+        "core",
+        "exception",
+        "fusion",
+        "integer",
+        "iterator",
+        "lexical_cast",
+        "mpl",
+        "numeric_conversion",
+        "optional",
+        "preprocessor",
+        "proto",
+        "range",
+        "smart_ptr",
+        "static_assert",
+        "throw_exception",
+        "type_traits",
+        "typeof",
+        "utility"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    },
+    "yap": {
+      "repo": "yap",
+      "hash": "sha256-WAU/etdn1rHwBj832BTVTnhGhRfoyNxZWrOEKSvFpko=",
+      "provides": [
+        "yap"
+      ],
+      "deps": [
+        "hana",
+        "preprocessor",
+        "type_index"
+      ],
+      "selfInstalls": false,
+      "headerOnly": true
+    }
+  }
+}

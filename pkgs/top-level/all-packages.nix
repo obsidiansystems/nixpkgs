@@ -5413,7 +5413,54 @@ with pkgs;
     else
       callPackage ../os-specific/linux/bionic-prebuilt { };
 
-  inherit (callPackage ../development/libraries/boost { inherit (buildPackages) boost-build; })
+  # Boost, as one package per Boost library, built from the individual boostorg
+  # repositories. See pkgs/development/libraries/boost.
+  inherit
+    (rec {
+      boostPackagesSet = recurseIntoAttrs (callPackage ../development/libraries/boost { });
+
+      boostPackages_1_78 = boostPackagesSet."1.78.0";
+      boostPackages_1_79 = boostPackagesSet."1.79.0";
+      boostPackages_1_80 = boostPackagesSet."1.80.0";
+      boostPackages_1_81 = boostPackagesSet."1.81.0";
+      boostPackages_1_82 = boostPackagesSet."1.82.0";
+      boostPackages_1_83 = boostPackagesSet."1.83.0";
+      boostPackages_1_86 = boostPackagesSet."1.86.0";
+      boostPackages_1_87 = boostPackagesSet."1.87.0";
+      boostPackages_1_88 = boostPackagesSet."1.88.0";
+      boostPackages_1_89 = boostPackagesSet."1.89.0";
+      boostPackages_1_90 = boostPackagesSet."1.90.0";
+      boostPackages_1_91 = boostPackagesSet."1.91.0";
+
+      # The whole of a release symlinked into one tree, laid out the way the old
+      # single-derivation Boost was. Depend on the individual libraries in
+      # `boostPackages_1_NN` to get a smaller closure.
+      boost178 = boostPackages_1_78.everything;
+      boost179 = boostPackages_1_79.everything;
+      boost180 = boostPackages_1_80.everything;
+      boost181 = boostPackages_1_81.everything;
+      boost182 = boostPackages_1_82.everything;
+      boost183 = boostPackages_1_83.everything;
+      boost186 = boostPackages_1_86.everything;
+      boost187 = boostPackages_1_87.everything;
+      boost188 = boostPackages_1_88.everything;
+      boost189 = boostPackages_1_89.everything;
+      boost190 = boostPackages_1_90.everything;
+      boost191 = boostPackages_1_91.everything;
+    })
+    boostPackagesSet
+    boostPackages_1_78
+    boostPackages_1_79
+    boostPackages_1_80
+    boostPackages_1_81
+    boostPackages_1_82
+    boostPackages_1_83
+    boostPackages_1_86
+    boostPackages_1_87
+    boostPackages_1_88
+    boostPackages_1_89
+    boostPackages_1_90
+    boostPackages_1_91
     boost178
     boost179
     boost180
@@ -5428,6 +5475,12 @@ with pkgs;
     boost191
     ;
 
+  # Recursed so that the individual libraries -- the ones a dependant is meant
+  # to depend on -- are discoverable, as llvmPackages_N are. Only the default
+  # release: doing it for all twelve would multiply the attribute set by an
+  # order of magnitude for no benefit, and they are built either way as
+  # dependencies of `boost`.
+  boostPackages = recurseIntoAttrs boostPackages_1_89;
   boost = boost189;
 
   botanEsdm = botan3.override { withEsdm = true; };
