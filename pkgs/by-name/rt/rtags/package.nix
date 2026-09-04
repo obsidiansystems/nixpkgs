@@ -45,8 +45,8 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   preConfigure = ''
-    export LIBCLANG_CXXFLAGS="-isystem ${llvmPackages.clang.cc}/include $(llvm-config --cxxflags) -fexceptions" \
-           LIBCLANG_LIBDIR="${llvmPackages.clang.cc}/lib"
+    export LIBCLANG_CXXFLAGS="-isystem ${llvmPackages.clang-unwrapped}/include $(llvm-config --cxxflags) -fexceptions" \
+           LIBCLANG_LIBDIR="${llvmPackages.clang-unwrapped}/lib"
   '';
 
   passthru.updateScript = nix-update-script { };

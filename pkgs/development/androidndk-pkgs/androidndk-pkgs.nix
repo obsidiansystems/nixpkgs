@@ -104,7 +104,7 @@ else
       passthru = {
         inherit targetPrefix;
         isClang = true; # clang based cc, but bintools ld
-        inherit (llvmPackages.clang.cc) hardeningUnsupportedFlagsByTargetPlatform;
+        inherit (llvmPackages.clang-unwrapped) hardeningUnsupportedFlagsByTargetPlatform;
       };
       dontUnpack = true;
       dontBuild = true;

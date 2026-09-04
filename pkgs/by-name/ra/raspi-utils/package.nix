@@ -22,7 +22,7 @@
   util-linux,
   which,
   zstd,
-  cc ? targetPackages.stdenv.cc,
+  cc ? (targetPackages._tools.cc or stdenv.cc),
 }:
 
 let

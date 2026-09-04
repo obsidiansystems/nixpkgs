@@ -44,7 +44,7 @@
     "$debugdir"
     "$datadir/auto-load"
     # targetPackages so we get the right libc when cross-compiling and using buildPackages.gdb
-    (lib.getLib targetPackages.stdenv.cc.cc)
+    (lib.getLib (targetPackages._tools.cc or stdenv.cc).cc)
   ],
   writeScript,
   versionCheckHook,

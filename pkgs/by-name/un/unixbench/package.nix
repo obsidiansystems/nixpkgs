@@ -65,7 +65,7 @@ stdenv.mkDerivation (finalAttrs: {
     coreutils
     unixtools.net-tools
     unixtools.locale
-    targetPackages.stdenv.cc
+    (targetPackages._tools.cc or stdenv.cc)
     gnugrep
     gawk
   ]

@@ -461,7 +461,7 @@ let
       if targetPlatform.isGhcjs then
         pkgsBuildTarget.emscripten
       else
-        pkgsBuildTarget.targetPackages.stdenv.cc
+        (pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc)
     )
   ]
   ++ lib.optional useLLVM buildTargetLlvmPackages.llvm;
@@ -472,7 +472,7 @@ let
     if targetPlatform.isGhcjs then
       pkgsHostTarget.emscripten
     else
-      pkgsHostTarget.targetPackages.stdenv.cc;
+      (pkgsHostTarget.targetPackages._tools.cc or pkgsHostTarget.stdenv.cc);
 
   # toolPath calculates the absolute path to the name tool associated with a
   # given `stdenv.cc` derivation, i.e. it picks the correct derivation to take

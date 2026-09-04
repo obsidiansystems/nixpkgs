@@ -145,8 +145,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   postInstall = ''
     wrapProgram $out/bin/ldc2 \
-      --prefix PATH : ${targetPackages.stdenv.cc}/bin \
-      --set-default CC ${targetPackages.stdenv.cc}/bin/cc
+      --prefix PATH : ${(targetPackages._tools.cc or stdenv.cc)}/bin \
+      --set-default CC ${(targetPackages._tools.cc or stdenv.cc)}/bin/cc
   '';
 
   preFixup = ''

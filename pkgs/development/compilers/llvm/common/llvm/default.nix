@@ -536,7 +536,7 @@ stdenv.mkDerivation (
             (lib.cmakeBool "CMAKE_CROSSCOMPILING" true)
             (
               let
-                nativeCC = pkgsBuildBuild.targetPackages.stdenv.cc;
+                nativeCC = (pkgsBuildBuild.targetPackages._tools.cc or pkgsBuildBuild.stdenv.cc);
                 nativeBintools = nativeCC.bintools.bintools;
                 nativeToolchainFlags = [
                   (lib.cmakeFeature "CMAKE_C_COMPILER" "${nativeCC}/bin/${nativeCC.targetPrefix}cc")

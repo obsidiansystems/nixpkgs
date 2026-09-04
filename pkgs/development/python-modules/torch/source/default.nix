@@ -385,7 +385,7 @@ buildPythonPackage.override { inherit stdenv; } (finalAttrs: {
   + ''
     substituteInPlace torch/_inductor/config.py \
       --replace-fail '"clang++" if sys.platform == "darwin" else "g++"' \
-      '"${lib.getExe' targetPackages.stdenv.cc "${targetPackages.stdenv.cc.targetPrefix}c++"}"'
+      '"${lib.getExe' (targetPackages._tools.cc or stdenv.cc) "${(targetPackages._tools.cc or stdenv.cc).targetPrefix}c++"}"'
   ''
   # Doesn't pick up the environment variable?
   + lib.optionalString rocmSupport ''

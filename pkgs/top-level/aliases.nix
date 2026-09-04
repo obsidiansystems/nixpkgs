@@ -2664,6 +2664,7 @@ mapAliases {
   worldengine-cli = throw "'worldengine-cli' has been removed because it has been marked as broken since at least November 2024."; # Added 2025-10-04
   wpa_supplicant_ro_ssids = throw "'wpa_supplicant_ro_ssids' has been renamed to/replaced by 'wpa_supplicant'"; # Converted to throw 2025-10-27
   wrangler_1 = throw "'wrangler_1' has been removed as it has been abandoned upstream and has known vulnerabilities, consider using 'wrangler' instead."; # Added 2026-02-01
+
   wrapGAppsHook = throw "'wrapGAppsHook' has been renamed to/replaced by 'wrapGAppsHook3'"; # Converted to throw 2025-10-27
   wrapGradle = throw "'wrapGradle' has been removed; use `gradle-packages.wrapGradle` or `(gradle-packages.mkGradle { ... }).wrapped` instead"; # Added 2025-11-02
   wring = throw "'wring' has been removed since it has been abandoned upstream"; # Added 2025-11-07
@@ -3088,5 +3089,64 @@ mapAliases {
   zulu24 = throw "Zulu OpenJDK 24 was removed as it has reached its end of life"; # Added 2025-11-14
   zyn-fusion = throw "'zyn-fusion' has been renamed to/replaced by 'zynaddsubfx'"; # Converted to throw 2025-10-27
   # keep-sorted end
+}
+# The deprecated wrapped-compiler names only exist where there is a successor
+# stage to take them from (`targetPackages._tools`); the last stage of a cross
+# bootstrap has none and skips them. `stage.nix` decides this and passes it
+# in through `super`, since deciding which names exist must not read `self`.
+// lib.optionalAttrs (super.__targetPackagesHaveTools or true) {
+  # Deprecated: the wrapping now happens in the stage that consumes the
+  # compiler, not the stage that built it, so a stage's own wrappers are
+  # `_tools.wrapCCWith` and friends. These forward-facing names are what a
+  # stage used to hand to its successor, which is exactly that successor's
+  # `_tools`. Added 2026-09-03
+  clang = llvmPackages.clang;
+  gcc = targetPackages._tools.${"gcc${toString default-gcc-version}"};
+  gcc_latest = targetPackages._tools.gcc16;
+  gccgo = targetPackages._tools.gccgo;
+  gfortran = targetPackages._tools.gfortran;
+  gcc_debug = targetPackages._tools.gcc_debug;
+  gcc_multi = targetPackages._tools.gcc_multi;
+  clang_multi = targetPackages._tools.clang_multi;
+  wrapClangMulti = targetPackages._tools.wrapClangMulti;
+  gccWithoutTargetLibc = targetPackages._tools.gccWithoutTargetLibc;
+  distccWrapper = targetPackages._tools.distccWrapper;
+  wrapCCMulti = targetPackages._tools.wrapCCMulti;
+  mold = targetPackages._tools.mold;
+  wild = targetPackages._tools.wild;
+  gnat = targetPackages._tools.${"gnat${toString default-gcc-version}"};
+  gnat-bootstrap = targetPackages._tools.${"gnat-bootstrap${toString default-gcc-version}"};
+
+  inherit (targetPackages._tools)
+    bintools
+    bintoolsNoLibc
+    bintools-unwrapped
+    binutils
+    binutils_nogold
+    binutilsNoLibc
+    wrapCCWith
+    wrapCC
+    wrapBintoolsWith
+    gcc13
+    gcc14
+    gcc15
+    gcc16
+    gccgo13
+    gccgo14
+    gccgo15
+    gccgo16
+    gfortran13
+    gfortran14
+    gfortran15
+    gfortran16
+    gnat13
+    gnat14
+    gnat15
+    gnat16
+    gnat-bootstrap13
+    gnat-bootstrap14
+    gnat-bootstrap15
+    gnat-bootstrap16
+    ;
 }
 // plasma5Throws

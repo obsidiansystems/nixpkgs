@@ -7,7 +7,7 @@
   withCompiler ? true,
 }:
 let
-  inherit (targetPackages.stdenv.cc) targetPrefix;
+  inherit ((targetPackages._tools.cc or stdenv.cc)) targetPrefix;
 
   crossCompiling = stdenv.hostPlatform != stdenv.targetPlatform;
   targetOpentxl = if !crossCompiling then opentxl-unwrapped else targetPackages.opentxl-unwrapped;
@@ -36,7 +36,7 @@ stdenv.mkDerivation (finalAttrs: {
         --set TXLLIB ${opentxl-unwrapped}/lib \
         --set BUILD_TXLLIB ${opentxl-unwrapped}/lib \
         --set TARGET_TXLLIB ${targetOpentxl}/lib \
-        --set CC ${targetPackages.stdenv.cc}/bin/${targetPrefix}cc \
+        --set CC ${(targetPackages._tools.cc or stdenv.cc)}/bin/${targetPrefix}cc \
         --set OS ${opentxl-unwrapped.osOption stdenv.targetPlatform}
       ${
         # For convenience, if there is a target prefix, create a symlink named txlc

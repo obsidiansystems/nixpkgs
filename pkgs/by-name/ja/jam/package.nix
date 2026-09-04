@@ -64,7 +64,7 @@ stdenv.mkDerivation (finalAttrs: {
        #undef OSMINOR
        #undef OSPLAT
        $(
-         ${pkgsBuildTarget.targetPackages.stdenv.cc}/bin/${pkgsBuildTarget.targetPackages.stdenv.cc.targetPrefix}cc -E -dM jam.h | grep -E '^#define (OSMAJOR|OSMINOR|OSPLAT) '
+         ${(pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc)}/bin/${(pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc).targetPrefix}cc -E -dM jam.h | grep -E '^#define (OSMAJOR|OSMINOR|OSPLAT) '
         )
       EOF
     '';

@@ -1,5 +1,6 @@
 {
   lib,
+  buildPackages,
   stdenv,
   fetchFromCodeberg,
   cmake,
@@ -13,8 +14,8 @@
   version,
   hash,
   overrideCC,
-  wrapCCWith,
-  wrapBintoolsWith,
+  pkgs,
+  targetPackages,
   ...
 }@args:
 
@@ -126,10 +127,12 @@ stdenv.mkDerivation (finalAttrs: {
 
   passthru = import ./passthru.nix {
     inherit
+      lib
       stdenv
+      pkgs
+      buildPackages
+      targetPackages
       callPackage
-      wrapCCWith
-      wrapBintoolsWith
       overrideCC
       ;
     zig = finalAttrs.finalPackage;

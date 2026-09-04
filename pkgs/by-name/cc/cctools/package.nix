@@ -87,7 +87,7 @@ stdenv.mkDerivation (finalAttrs: {
 
     # Make sure as’s clang driver uses clang from nixpkgs and finds the drivers in the store.
     substituteInPlace as/driver.c \
-      --subst-var-by clang-unwrapped '${lib.getBin buildPackages.clang.cc}' \
+      --subst-var-by clang-unwrapped '${lib.getBin buildPackages.llvmPackages.clang-unwrapped}' \
       --subst-var-by gas '${placeholder "gas"}'
 
     # Need to set the path to make sure cctools can find ld64 in the store.

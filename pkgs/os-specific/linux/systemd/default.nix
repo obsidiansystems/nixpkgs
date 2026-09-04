@@ -263,7 +263,7 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace src/ukify/ukify.py \
       --replace-fail \
       "'readelf'" \
-      "'${targetPackages.stdenv.cc.bintools.targetPrefix}readelf'" \
+      "'${(targetPackages._tools.cc or stdenv.cc).bintools.targetPrefix}readelf'" \
       --replace-fail \
       "/usr/lib/systemd/boot/efi" \
       "$out/lib/systemd/boot/efi"
@@ -684,7 +684,7 @@ stdenv.mkDerivation (finalAttrs: {
       # ukify with the correct binutils. When wrapping, no splicing happens so we
       # have to explicitly pull binutils from targetPackages.
       wrapProgram $out/bin/ukify --prefix PATH : ${
-        lib.makeBinPath [ targetPackages.stdenv.cc.bintools ]
+        lib.makeBinPath [ (targetPackages._tools.cc or stdenv.cc).bintools ]
       }:${placeholder "out"}/lib/systemd
     '';
 

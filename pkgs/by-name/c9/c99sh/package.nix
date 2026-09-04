@@ -7,8 +7,9 @@
   pkg-config,
   gcc,
   gsl,
+  stdenv,
   targetPackages,
-  cc ? targetPackages.stdenv.cc,
+  cc ? (targetPackages._tools.cc or stdenv.cc),
   nix-update-script,
 }:
 

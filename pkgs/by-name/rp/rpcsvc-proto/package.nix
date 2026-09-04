@@ -42,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
     # replace fallback cpp with the target prefixed cpp
     substituteInPlace rpcgen/rpc_main.c \
       --replace 'CPP = "cpp"' \
-                'CPP = "${targetPackages.stdenv.cc.targetPrefix}cpp"'
+                'CPP = "${(targetPackages._tools.cc or stdenv.cc).targetPrefix}cpp"'
   ''
   + lib.optionalString (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     substituteInPlace rpcsvc/Makefile.am \

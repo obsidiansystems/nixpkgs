@@ -123,8 +123,8 @@ let
     )).nixPackage;
 
   runtimeDeps = [
-    targetPackages.stdenv.cc
-    targetPackages.stdenv.cc.bintools
+    (targetPackages._tools.cc or stdenv.cc)
+    (targetPackages._tools.cc or stdenv.cc).bintools
     coreutils # for cat
   ]
   # GHC 9.6 has no NCG for riscv64, it uses LLVM.

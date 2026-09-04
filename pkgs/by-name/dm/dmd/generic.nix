@@ -33,7 +33,7 @@ let
       lib.generators.toINI { } {
         Environment = {
           DFLAGS = "-I@out@/include/dmd -L-L@out@/lib -fPIC ${
-            lib.optionalString (!targetPackages.stdenv.cc.isClang) "-L--export-dynamic"
+            lib.optionalString (!(targetPackages._tools.cc or stdenv.cc).isClang) "-L--export-dynamic"
           }";
         };
       }
@@ -200,8 +200,8 @@ stdenv.mkDerivation (finalAttrs: {
     cp phobos/generated/${osname}/release/${bits}/libphobos2.* $out/lib/
 
     wrapProgram $out/bin/dmd \
-      --prefix PATH : "${targetPackages.stdenv.cc}/bin" \
-      --set-default CC "${targetPackages.stdenv.cc}/bin/cc"
+      --prefix PATH : "${(targetPackages._tools.cc or stdenv.cc)}/bin" \
+      --set-default CC "${(targetPackages._tools.cc or stdenv.cc)}/bin/cc"
 
     substitute ${dmdConfFile} "$out/bin/dmd.conf" --subst-var out
 

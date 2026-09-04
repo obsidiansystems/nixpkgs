@@ -14,7 +14,6 @@ in
   preLibcHeaders,
   stdenv,
   targetPackages,
-  wrapBintoolsWith,
   config,
 }:
 
@@ -58,16 +57,9 @@ makeScopeWithSplicing' {
       # Removes propagated packages from the stdenv, so those packages can be built without depending upon themselves.
       bootstrapStdenv = mkBootstrapStdenv stdenv;
 
-      # Note: Not in `package.nix` because it messes up the overrides.
-      binutils = wrapBintoolsWith {
-        libc = targetPackages.libc or libc;
-        bintools = self.binutils-unwrapped;
-      };
-
-      binutilsNoLibc = wrapBintoolsWith {
-        libc = targetPackages.preLibcHeaders or preLibcHeaders;
-        bintools = self.binutils-unwrapped;
-      };
+      # `binutils` and `binutilsNoLibc`, the wrapped forms, are now aliases in
+      # `darwin-aliases.nix`: the wrapping happens in `_tools`, in the stage
+      # that consumes the tools, and these are the forward-facing names.
 
       sourceRelease = self.callPackage ../os-specific/darwin/sourceRelease { };
 

@@ -187,12 +187,12 @@ stdenv.mkDerivation (finalAttrs: {
           # commands to the name of the compiler ("clang" for Darwin and
           # "gcc" for Linux)
           "$CC"
-          "${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}$CC"
+          "${(targetPackages._tools.cc or stdenv.cc)}/bin/${(targetPackages._tools.cc or stdenv.cc).targetPrefix}$CC"
         ];
         "c++" = [
           # Same as with $CC
           "$CXX"
-          "${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}$CXX"
+          "${(targetPackages._tools.cc or stdenv.cc)}/bin/${(targetPackages._tools.cc or stdenv.cc).targetPrefix}$CXX"
         ];
       }
       // lib.optionalAttrs fortranSupport {

@@ -97,18 +97,24 @@ let
     }:
 
     let
-      cc = if prevStage.clang == null then null else prevStage.clang;
+      # The compiler this stage was handed.
+      # `prevStage.clang` was the alias for exactly this; read the thing itself.
+      thisCC = prevStage.llvmPackages._tools.cc or null;
 
       bashNonInteractive = prevStage.bashNonInteractive or bootstrapTools;
 
+      # `stdenv` is derived from this and `_tools` in `stage.nix`: the name is
+      # the exact inverse of how `stage.nix` would form it from a passed
+      # `stdenv`, and the SDK it drops there comes back from `_tools.sdk`, so
+      # the derivations are unchanged.
       thisStdenv = genericStdenv {
-        name = "${name}-stdenv-darwin";
+        name = "${name}-stdenv-darwin-no-cc";
 
         buildPlatform = localSystem;
         hostPlatform = localSystem;
         targetPlatform = localSystem;
 
-        extraBuildInputs = [ prevStage.apple-sdk ];
+        extraBuildInputs = [ ];
         inherit extraNativeBuildInputs;
 
         preHook =
@@ -134,12 +140,17 @@ let
 
         fetchurlBoot = import ../../build-support/fetchurl {
           inherit lib;
-          stdenvNoCC = prevStage.ccWrapperStdenv or thisStdenv;
+          # Only stage 0 lacks `ccWrapperStdenv`. It used to fall back to this
+          # stage's full `stdenv`, and `fetchurl`'s derivation --- hence
+          # `apple-sdk`'s, hence everything's --- is sensitive to which stdenv
+          # that is, so give it the same full one `stage.nix` derives.
+          stdenvNoCC = prevStage.ccWrapperStdenv or fullStdenv;
           curl = bootstrapTools;
           inherit (config) hashedMirrors rewriteURL;
         };
 
-        inherit cc;
+        cc = null;
+        hasCC = false;
 
         # The stdenvs themselves don't use mkDerivation, so I need to specify this here
         __stdenvImpureHostDeps = commonImpureHostDeps;
@@ -158,10 +169,33 @@ let
           };
       };
 
+      # What `stage.nix` derives from `thisStdenv` and `_tools`; needed here
+      # only for stage 0's `fetchurlBoot` above.
+      fullStdenv = thisStdenv.override {
+        name = "${name}-stdenv-darwin";
+        cc = thisCC;
+        hasCC = thisCC != null;
+        extraBuildInputs = [ prevStage.apple-sdk ];
+      };
+
     in
     {
       inherit config overlays;
-      stdenv = thisStdenv;
+      stdenvNoCC = thisStdenv;
+      # The toolchain this stage was handed. On Darwin that includes the SDK.
+      # Stage-private, so it does not ride along into re-bootstrapped sets.
+      bootstrapOverlays = [
+        (self: super: {
+          _tools = super._tools // {
+            cc = thisCC;
+            sdk = prevStage.apple-sdk;
+          };
+          # Only the compiler and the SDK. The bintools stay the stage's own
+          # default selection: that is what every wrapper built in the stage
+          # (LLVM's rungs included) has always taken by default, and the
+          # compiler handed over carries its own bintools regardless.
+        })
+      ];
     };
 
   # Dependencies - these are packages that are rebuilt together in groups. Defining them here ensures they are
@@ -240,8 +274,10 @@ let
 
   darwinPackages = prevStage: { inherit (prevStage.darwin) sigtool; };
   darwinPackagesNoCC = prevStage: {
+    # Only some stages define `darwin.binutils` themselves (rewrapping it
+    # against a new libSystem); in the others it is the stage's own `_tools`.
+    binutils = prevStage.darwin.binutils or prevStage._tools.bintools;
     inherit (prevStage.darwin)
-      binutils
       binutils-unwrapped
       libSystem
       locale
@@ -533,7 +569,9 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
     assert allDeps isFromNixpkgs [
       (sdkPackagesNoCC prevStage)
       {
-        inherit (prevStage.darwin) binutils libSystem;
+        # Stage 0 does not define `darwin.binutils`; what the alias resolved to.
+        binutils = prevStage._tools.bintools;
+        inherit (prevStage.darwin) libSystem;
         inherit (prevStage) libc;
       }
     ];
@@ -616,7 +654,7 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
             signingUtils = prevStage.darwin.signingUtils.override { inherit (selfDarwin) sigtool; };
 
             # Rewrap binutils with the real libSystem
-            binutils = superDarwin.binutils.override {
+            binutils = self._tools.bintools.override {
               inherit (self) coreutils libc;
               bintools = selfDarwin.binutils-unwrapped;
             };
@@ -771,7 +809,7 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
               // {
                 inherit (prevStage.darwin) binutils-unwrapped;
                 # Rewrap binutils so it uses the rebuilt Libsystem.
-                binutils = superDarwin.binutils.override {
+                binutils = self._tools.bintools.override {
                   inherit (prevStage) expand-response-params;
                   inherit (self) libc;
                 };
@@ -966,12 +1004,26 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
     ];
 
     let
-      cc = prevStage."llvmPackages_${llvmVersion}".clang;
+      cc = prevStage."llvmPackages_${llvmVersion}"._tools.cc;
     in
     {
       inherit config overlays;
-      stdenv = genericStdenv {
-        name = "stdenv-darwin";
+
+      # The toolchain this stage was handed; `stdenv` is derived from it and
+      # `stdenvNoCC` in `stage.nix`. Stage-private.
+      bootstrapOverlays = [
+        (self: super: {
+          _tools = super._tools // {
+            inherit cc;
+            cc-unwrapped = cc.cc;
+            inherit (cc) bintools;
+            sdk = prevStage.apple-sdk;
+          };
+        })
+      ];
+
+      stdenvNoCC = genericStdenv {
+        name = "stdenv-darwin-no-cc";
 
         buildPlatform = localSystem;
         hostPlatform = localSystem;
@@ -989,9 +1041,10 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
           prevStage.updateAutotoolsGnuConfigScriptsHook
         ];
 
-        extraBuildInputs = [ prevStage.apple-sdk ];
+        extraBuildInputs = [ ];
 
-        inherit cc;
+        cc = null;
+        hasCC = false;
 
         shell = cc.shell;
 
@@ -1055,9 +1108,13 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
             prevStage.updateAutotoolsGnuConfigScriptsHook
             prevStage.updateAutotoolsGnuConfigScriptsHook.gnu_config
           ]
+          # The bintools this stage was handed (what `prevStage.darwin.binutils`
+          # resolved to, spelled without the alias).
+          ++ [
+            cc.bintools
+            cc.bintools.bintools
+          ]
           ++ (with prevStage.darwin; [
-            binutils
-            binutils.bintools
             libcxx
             libiconv.out
             libresolv.out
@@ -1123,7 +1180,7 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
             })
             {
               "llvmPackages_${llvmVersion}" = overrideLlvmPackagesScope super."llvmPackages_${llvmVersion}" (
-                finalLLVM: _:
+                finalLLVM: prevLLVM:
                 # These are defined explicitly to make sure that overriding their dependencies using `overrideScope`
                 # still works. `llvmPackages.libcxx` is not included because it’s not part of the Darwin stdenv.
                 {
@@ -1139,17 +1196,29 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
                 // {
                   inherit (super."llvmPackages_${llvmVersion}") llvm-manpages;
                 }
-                // lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) {
-                  # Make sure the following are all the same in the local == target case:
-                  # - clang
-                  # - llvmPackages.stdenv.cc
-                  # - llvmPackages.systemLibcxxClang.
-                  # - llvmPackages.clang
-                  # - stdenv.cc
-                  systemLibcxxClang = prevStage."llvmPackages_${llvmVersion}".systemLibcxxClang.override {
-                    cc = finalLLVM.clang-unwrapped;
-                  };
-                }
+                // lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) (
+                  let
+                    # Make sure the following are all the same in the local == target case:
+                    # - clang
+                    # - llvmPackages.stdenv.cc
+                    # - llvmPackages.systemLibcxxClang.
+                    # - llvmPackages.clang
+                    # - stdenv.cc
+                    clang = prevStage."llvmPackages_${llvmVersion}"._tools.systemLibcxxClang.override {
+                      cc = finalLLVM.clang-unwrapped;
+                    };
+                  in
+                  {
+                    # The wrapping lives in `_tools` now, so the re-injected compiler
+                    # goes there and the deprecated names resolve through it. Wrapping
+                    # afresh in this stage would link against this stage's own
+                    # `compiler-rt`, whose build closure comes back around to `clang`.
+                    _tools = prevLLVM._tools // {
+                      cc = clang;
+                      systemLibcxxClang = clang;
+                    };
+                  }
+                )
               );
             }
           ];
@@ -1179,7 +1248,12 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
     assert isBuiltByNixpkgsCompiler prevStage.curl;
 
     {
-      inherit (prevStage) config overlays stdenv;
+      inherit (prevStage)
+        config
+        overlays
+        stdenvNoCC
+        bootstrapOverlays
+        ;
     }
   )
 ]

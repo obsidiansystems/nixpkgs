@@ -53,7 +53,7 @@ let
   useLLVM = stdenv.targetPlatform.useLLVM or false;
 in
 stdenv.mkDerivation (finalAttrs: {
-  pname = "${targetPackages.stdenv.cc.targetPrefix}rustc";
+  pname = "${(targetPackages._tools.cc or stdenv.cc).targetPrefix}rustc";
   inherit version;
 
   src = fetchurl {
@@ -253,16 +253,16 @@ stdenv.mkDerivation (finalAttrs: {
       "--set=target.bpfeb-unknown-none.profiler=false"
     ]
     ++ optionals stdenv.buildPlatform.isMusl [
-      "${setBuild}.musl-root=${pkgsBuildBuild.targetPackages.stdenv.cc.libc}"
+      "${setBuild}.musl-root=${(pkgsBuildBuild.targetPackages._tools.cc or pkgsBuildBuild.stdenv.cc).libc}"
     ]
     ++ optionals stdenv.hostPlatform.isMusl [
-      "${setHost}.musl-root=${pkgsBuildHost.targetPackages.stdenv.cc.libc}"
+      "${setHost}.musl-root=${(pkgsBuildHost.targetPackages._tools.cc or pkgsBuildHost.stdenv.cc).libc}"
     ]
     ++ optionals stdenv.targetPlatform.isMusl [
-      "${setTarget}.musl-root=${pkgsBuildTarget.targetPackages.stdenv.cc.libc}"
+      "${setTarget}.musl-root=${(pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc).libc}"
     ]
     ++ optionals stdenv.targetPlatform.isWasi [
-      "${setTarget}.wasi-root=${pkgsBuildTarget.targetPackages.stdenv.cc.libc}"
+      "${setTarget}.wasi-root=${(pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc).libc}"
     ]
     ++ optionals stdenv.targetPlatform.rust.isNoStdTarget [
       "--disable-docs"

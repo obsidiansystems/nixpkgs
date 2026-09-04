@@ -25,11 +25,27 @@ lib.init bootStages
   (vanillaPackages: {
     inherit config overlays;
     selfBuild = false;
-    stdenv =
-      assert vanillaPackages.stdenv.buildPlatform == localSystem;
-      assert vanillaPackages.stdenv.hostPlatform == localSystem;
-      assert vanillaPackages.stdenv.targetPlatform == localSystem;
-      vanillaPackages.stdenv.override { targetPlatform = crossSystem; };
+    # The native stage's `stdenvNoCC`, retargeted; `stdenv` is derived from it
+    # and `_tools` in `stage.nix`. The compiler is the native stage's own.
+    stdenvNoCC =
+      assert vanillaPackages.stdenvNoCC.buildPlatform == localSystem;
+      assert vanillaPackages.stdenvNoCC.hostPlatform == localSystem;
+      assert vanillaPackages.stdenvNoCC.targetPlatform == localSystem;
+      vanillaPackages.stdenvNoCC.override { targetPlatform = crossSystem; };
+    bootstrapOverlays = [
+      (
+        self: super: {
+          _tools =
+            super._tools
+            // {
+              inherit (vanillaPackages._tools) cc bintools;
+            }
+            // lib.optionalAttrs (vanillaPackages._tools ? sdk) {
+              inherit (vanillaPackages._tools) sdk;
+            };
+        }
+      )
+    ];
     # It's OK to change the built-time dependencies
     allowCustomOverrides = true;
   })
@@ -83,49 +99,34 @@ lib.init bootStages
       overlays = overlays ++ crossOverlays;
       selfBuild = false;
       inherit stdenvNoCC;
+      # The compiler is whatever `stage-tools.nix` selects for this host
+      # platform --- that selection used to live here --- so `_tools` only has
+      # to add what the selection cannot know: on Darwin the SDK is part of
+      # the toolchain, and `stdenv` needs it alongside the compiler.
+      bootstrapOverlays = [
+        (
+          self: super: {
+            _tools = super._tools // lib.optionalAttrs crossSystem.isDarwin { sdk = self.apple-sdk; };
+          }
+        )
+      ];
+    }
+    // lib.optionalAttrs (config ? replaceCrossStdenv) {
+      # `replaceCrossStdenv` takes and returns a whole stdenv, so it cannot be
+      # expressed as a toolchain; it stays on the deprecated `stdenv` argument,
+      # with the base built the way it used to be.
       stdenv =
         let
           inherit (stdenvNoCC) hostPlatform targetPlatform;
           baseStdenv = stdenvNoCC.override {
-            # Old ones run on wrong platform
             extraBuildInputs = lib.optionals hostPlatform.isDarwin [
               buildPackages.targetPackages.apple-sdk
             ];
-
-            hasCC = !stdenvNoCC.targetPlatform.isGhcjs;
-
-            cc =
-              if crossSystem.useiOSPrebuilt or false then
-                buildPackages.darwin.iosSdkPkgs.clang
-              else if crossSystem.useAndroidPrebuilt or false then
-                buildPackages."androidndkPkgs_${crossSystem.androidNdkVersion}".clang
-              else if
-                targetPlatform.isGhcjs
-              # Need to use `throw` so tryEval for splicing works, ugh.  Using
-              # `null` or skipping the attribute would cause an eval failure
-              # `tryEval` wouldn't catch, wrecking accessing previous stages
-              # when there is a C compiler and everything should be fine.
-              then
-                throw "no C compiler provided for this platform"
-              else if crossSystem.isDarwin then
-                buildPackages.llvmPackages.systemLibcxxClang
-              else if crossSystem.useLLVM or false then
-                buildPackages.llvmPackages.clang
-              else if crossSystem.useZig or false then
-                buildPackages.zig.cc
-              else if crossSystem.useArocc or false then
-                buildPackages.arocc
-              else if crossSystem.useGccNG or false then
-                buildPackages.gccNGPackages.gcc
-              else
-                buildPackages.gcc;
-
+            hasCC = !targetPlatform.isGhcjs;
+            cc = buildPackages.targetPackages._tools.cc;
           };
         in
-        if config ? replaceCrossStdenv then
-          config.replaceCrossStdenv { inherit buildPackages baseStdenv; }
-        else
-          baseStdenv;
+        config.replaceCrossStdenv { inherit buildPackages baseStdenv; };
     }
   )
 

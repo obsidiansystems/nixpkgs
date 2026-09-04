@@ -1,7 +1,8 @@
 {
   lib,
   stdenv,
-  wrapCCWith,
+  pkgs,
+  targetPackages,
   overrideCC,
   zig,
   version,
@@ -16,8 +17,13 @@ stdenv.mkDerivation (finalAttrs: {
   passthru = {
     inherit zig;
     isArocc = true;
-    wrapped = wrapCCWith { cc = finalAttrs.finalPackage; };
-    stdenv = overrideCC stdenv finalAttrs.passthru.wrapped;
+  }
+  // lib.optionalAttrs (pkgs.config.allowAliases && pkgs.targetPackages ? _tools) {
+    # Deprecated: the wrapping now happens in `aroccPackages._tools`, in the
+    # stage that consumes the compiler. These names meant what this stage hands
+    # to its successor, which is that successor's `_tools`.
+    wrapped = targetPackages.aroccPackages._tools.cc;
+    stdenv = overrideCC stdenv targetPackages.aroccPackages._tools.cc;
   };
 
   meta = {

@@ -59,6 +59,8 @@ let
       in
         f_0
   */
+  # `op` additionally receives whether its element is `x_0`, the one next to
+  # `lnul`; for the bootstrap fold that is the final stage.
   dfold =
     op: lnul: rnul: list:
     let
@@ -70,7 +72,7 @@ let
         else
           let
             # Note the cycle -- call-by-need ensures finite fold.
-            cur = op pred (builtins.elemAt list n) succ;
+            cur = op (n == 0) pred (builtins.elemAt list n) succ;
             succ = go cur (n + 1);
           in
           cur;
@@ -90,19 +92,24 @@ let
     { allowCustomOverrides = index == 1; } // (stageFun prevStage)
   ) (lib.lists.reverseList stageFuns);
 
-  # Adds the stdenv to the arguments, and sticks in it the previous stage for
-  # debugging purposes.
+  # Sticks the previous and next stages into the stdenv, for debugging. A stage
+  # provides either `stdenvNoCC` (plus a `_tools` overlay) or, deprecated, the
+  # full `stdenv`; whichever it is gets the bookkeeping, and `stage.nix` carries
+  # it onto the `stdenv` it derives.
   folder =
-    nextStage: stageFun: prevStage:
+    isFinal: nextStage: stageFun: prevStage:
     let
       args = stageFun prevStage;
-      args' = args // {
-        stdenv = args.stdenv // {
-          # For debugging
-          __bootPackages = prevStage;
-          __hatPackages = nextStage;
-        };
+      bookkeeping = {
+        __bootPackages = prevStage;
+        __hatPackages = nextStage;
       };
+      args' =
+        args
+        // lib.optionalAttrs (args ? stdenv) { stdenv = args.stdenv // bookkeeping; }
+        // lib.optionalAttrs (args ? stdenvNoCC) { stdenvNoCC = args.stdenvNoCC // bookkeeping; };
+      # Platforms are the same on both; read them from whichever was given.
+      platforms = args.stdenvNoCC or args.stdenv;
       thisStage =
         if args.__raw or false then
           args'
@@ -110,6 +117,10 @@ let
           allPackages (
             (removeAttrs args' [ "selfBuild" ])
             // {
+              # The final stage has no successor to hand a toolchain to; `stage.nix`
+              # drops the deprecated wrapped-tool names there (the empty sentinel
+              # from `dfold` is its `pkgsTargetTarget`).
+              isFinalStage = isFinal;
               adjacentPackages =
                 if args.selfBuild or true then
                   null
@@ -118,16 +129,16 @@ let
                     pkgsBuildBuild = prevStage.buildPackages;
                     pkgsBuildHost = prevStage;
                     pkgsBuildTarget =
-                      if args.stdenv.targetPlatform == args.stdenv.hostPlatform then
+                      if platforms.targetPlatform == platforms.hostPlatform then
                         pkgsBuildHost
                       else
-                        assert args.stdenv.hostPlatform == args.stdenv.buildPlatform;
+                        assert platforms.hostPlatform == platforms.buildPlatform;
                         thisStage;
                     pkgsHostHost =
-                      if args.stdenv.hostPlatform == args.stdenv.targetPlatform then
+                      if platforms.hostPlatform == platforms.targetPlatform then
                         thisStage
                       else
-                        assert args.stdenv.buildPlatform == args.stdenv.hostPlatform;
+                        assert platforms.buildPlatform == platforms.hostPlatform;
                         pkgsBuildHost;
                     pkgsTargetTarget = nextStage;
                   };
@@ -136,33 +147,7 @@ let
     in
     thisStage;
 
-  # This is a hack for resolving cross-compiled compilers' run-time
-  # deps. (That is, compilers that are themselves cross-compiled, as
-  # opposed to used to cross-compile packages.)
-  postStage = buildPackages: {
-    __raw = true;
-    stdenv.cc =
-      if buildPackages.stdenv.hasCC then
-        if
-          buildPackages.stdenv.cc.isClang or false
-        # buildPackages.clang checks targetPackages.stdenv.cc (i. e. this
-        # attribute) to get a sense of the its set's default compiler and
-        # chooses between libc++ and libstdc++ based on that. If we hit this
-        # code here, we'll cause an infinite recursion. Since a set with
-        # clang as its default compiler always means libc++, we can infer this
-        # decision statically.
-        then
-          buildPackages.pkgsBuildTarget.llvmPackages.libcxxClang
-        else
-          buildPackages.gcc
-      else
-        # This will blow up if anything uses it, but that's OK. The `if
-        # buildPackages.stdenv.cc.isClang then ... else ...` would blow up
-        # everything, so we make sure to avoid that.
-        buildPackages.stdenv.cc;
-  };
-
-  pkgs = dfold folder postStage (_: { }) withAllowCustomOverrides;
+  pkgs = dfold folder (_: { }) (_: { }) withAllowCustomOverrides;
 
 in
 # Return the spliced package set, so that consumers of the nixpkgs top-level

@@ -382,7 +382,9 @@ let
         bsdcp
       ];
       shell = "${prevStage.bashNonInteractive}/bin/bash";
-      stdenvNoCC = genericStdenv {
+      # Used to build `fetchurl` and the wrappers below; not the stage's own
+      # `stdenvNoCC` (which has the extra hooks), so it keeps its own name.
+      fetchStdenvNoCC = genericStdenv {
         inherit
           initialPath
           shell
@@ -395,26 +397,15 @@ let
         cc = null;
       };
       fetchurlBoot = import ../../build-support/fetchurl {
-        inherit lib stdenvNoCC;
+        inherit lib;
+        stdenvNoCC = fetchStdenvNoCC;
         inherit (prevStage) curl;
         inherit (config) hashedMirrors rewriteURL;
       };
-      stdenv = genericStdenv {
-        inherit
-          initialPath
-          shell
-          fetchurlBoot
-          ;
-        name = "stdenv-${name}";
-        buildPlatform = localSystem;
-        hostPlatform = localSystem;
-        targetPlatform = localSystem;
-        extraNativeBuildInputs = [
-          ./unpack-source.sh
-          ./always-patchelf.sh
-        ];
-        cc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          inherit lib stdenvNoCC;
+      # The compiler this stage was handed.
+      thisCC = lib.makeOverridable (import ../../build-support/cc-wrapper) {
+          inherit lib;
+          stdenvNoCC = fetchStdenvNoCC;
           name = "${name}-cc";
           inherit (prevStage.freebsd) libc;
           inherit (prevStage) gnugrep coreutils expand-response-params;
@@ -435,7 +426,8 @@ let
             mkExtraBuildCommands prevStage.llvmPackages.clang-unwrapped prevStage.llvmPackages.compiler-rt
           );
           bintools = lib.makeOverridable (import ../../build-support/bintools-wrapper) {
-            inherit lib stdenvNoCC;
+            inherit lib;
+            stdenvNoCC = fetchStdenvNoCC;
             name = "${name}-bintools";
             inherit (prevStage.freebsd) libc;
             inherit (prevStage) gnugrep coreutils expand-response-params;
@@ -446,6 +438,26 @@ let
             nativeLibc = false;
           };
         };
+
+      # `stdenv` is derived from this and `_tools.cc` in `stage.nix`; the name
+      # is the exact inverse of how `stage.nix` would form it from a passed
+      # `stdenv`, so the derivations are unchanged.
+      thisStdenvNoCC = genericStdenv {
+        inherit
+          initialPath
+          shell
+          fetchurlBoot
+          ;
+        name = "stdenv-${name}-no-cc";
+        buildPlatform = localSystem;
+        hostPlatform = localSystem;
+        targetPlatform = localSystem;
+        extraNativeBuildInputs = [
+          ./unpack-source.sh
+          ./always-patchelf.sh
+        ];
+        cc = null;
+        hasCC = false;
         overrides = overrides prevStage;
         preHook = ''
           export NIX_ENFORCE_PURITY="''${NIX_ENFORCE_PURITY-1}"
@@ -456,7 +468,18 @@ let
       };
     in
     {
-      inherit config overlays stdenv;
+      inherit config overlays;
+      stdenvNoCC = thisStdenvNoCC;
+      # The toolchain this stage was handed. Stage-private.
+      bootstrapOverlays = [
+        (
+          self: super: {
+            _tools = super._tools // {
+              cc = thisCC;
+            };
+          }
+        )
+      ];
     };
 in
 [

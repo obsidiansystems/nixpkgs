@@ -67,7 +67,7 @@ let
     # Ensure that -print-prog-name is able to find the correct programs.
     [
       "--with-as=${
-        if targetPackages.stdenv.cc.bintools.isLLVM then binutils else targetPackages.stdenv.cc.bintools
+        if (targetPackages._tools.cc or stdenv.cc).bintools.isLLVM then binutils else (targetPackages._tools.cc or stdenv.cc).bintools
       }/bin/${targetPlatform.config}-as"
     ]
     ++ (

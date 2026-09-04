@@ -54,7 +54,7 @@ buildPythonPackage rec {
         pyLibDir = "${python.pythonOnTargetForTarget}/lib/${python.pythonOnTargetForTarget.libPrefix}";
         cargoBuildTarget = stdenv.targetPlatform.rust.rustcTargetSpec;
         cargoLinkerVar = stdenv.targetPlatform.rust.cargoEnvVarTarget;
-        targetLinker = "${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}cc";
+        targetLinker = "${(targetPackages._tools.cc or stdenv.cc)}/bin/${(targetPackages._tools.cc or stdenv.cc).targetPrefix}cc";
       };
 
   passthru.tests = {

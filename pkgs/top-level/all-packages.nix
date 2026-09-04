@@ -72,43 +72,19 @@ with pkgs;
       allowedRequisites = lib.mapNullable (rs: rs ++ [ bintools ]) (stdenv.allowedRequisites or null);
     };
 
+  # When cross compiling we cannot touch binutils or cc themselves, because
+  # that will cause infinite recursion. `_tools` gives us the reduced rungs of
+  # the toolchain directly, already chosen for our host platform, so there is
+  # nothing to override and nothing to re-select here.
   stdenvNoLibs =
     if stdenvNoCC.hostPlatform != stdenvNoCC.buildPlatform then
-      # We cannot touch binutils or cc themselves, because that will cause
-      # infinite recursion. So instead, we just choose a libc based on the
-      # current platform. That means we won't respect whatever compiler was
-      # passed in with the stdenv stage argument.
-      #
-      # TODO It would be much better to pass the `stdenvNoCC` and *unwrapped*
-      # cc, bintools, compiler-rt equivalent, etc. and create all final stdenvs
-      # as part of the stage. Then we would never be tempted to override a later
-      # thing to create an earlier thing (leading to infinite recursion) and
-      # we also would still respect the stage arguments choices for these
-      # things.
-      (
-        if stdenvNoCC.hostPlatform.isDarwin || stdenvNoCC.hostPlatform.useLLVM or false then
-          overrideCC stdenvNoCC buildPackages.llvmPackages.clangNoCompilerRt
-        else if stdenvNoCC.hostPlatform.useGccNG or false then
-          overrideCC stdenvNoCC buildPackages.gccNGPackages.gccNoLibgcc
-        else
-          gccCrossLibcStdenv
-      )
+      overrideCC stdenvNoCC _tools.ccNoLibs
     else
       mkStdenvNoLibs stdenv;
 
   stdenvNoLibc =
     if stdenvNoCC.hostPlatform != stdenvNoCC.buildPlatform then
-      (
-        if stdenvNoCC.hostPlatform.isDarwin || stdenvNoCC.hostPlatform.useLLVM or false then
-          overrideCC stdenvNoCC buildPackages.llvmPackages.clangNoLibc
-        else if stdenvNoCC.hostPlatform.useGccNG or false then
-          # The split package set can express the two rungs separately, the way
-          # the LLVM set does: no libgcc above, libgcc but no libc here. The
-          # monolithic `gccCrossLibcStdenv` has to serve both.
-          overrideCC stdenvNoCC buildPackages.gccNGPackages.gccWithLibgcc
-        else
-          gccCrossLibcStdenv
-      )
+      overrideCC stdenvNoCC _tools.ccNoLibc
     else
       mkStdenvNoLibs stdenv;
 
@@ -3145,7 +3121,8 @@ with pkgs;
   libclang = llvmPackages.libclang;
   clang-manpages = llvmPackages.clang-manpages;
 
-  clang = llvmPackages.clang;
+  # `clang`, the wrapped form, is an alias now (see `aliases.nix`); this stage
+  # provides `llvmPackages.clang-unwrapped`.
 
   clang-tools = llvmPackages.clang-tools;
 
@@ -3218,9 +3195,10 @@ with pkgs;
   glow-lang = pkgs.gerbilPackages-unstable.glow-lang;
 
   default-gcc-version = 15;
-  gcc = pkgs.${"gcc${toString default-gcc-version}"};
+  # Deprecate wrapped compilers in this stage, LLVM and GCC-NG package sets too,
+  # just want unwrapped. The wrapped toolchain a stage uses comes from `_tools`,
+  # which is provided by the previous stage.
   gccFun = callPackage ../development/compilers/gcc;
-  gcc-unwrapped = gcc.cc;
 
   inherit
     (rec {
@@ -3281,64 +3259,30 @@ with pkgs;
   # profile-guided optimizations
   fastStdenv = overrideCC gccStdenv (wrapNonDeterministicGcc gccStdenv buildPackages.gcc_latest);
 
-  wrapCCMulti =
-    cc:
-    let
-      # Binutils with glibc multi
-      bintools = cc.bintools.override {
-        libc = glibc_multi;
-      };
-    in
-    lowPrio (wrapCCWith {
-      cc = cc.cc.override {
-        stdenv = overrideCC stdenv (wrapCCWith {
-          cc = cc.cc;
-          inherit bintools;
-          libc = glibc_multi;
-        });
-        profiledCompiler = false;
-        enableMultilib = true;
-      };
-      libc = glibc_multi;
-      inherit bintools;
-      extraBuildCommands = ''
-        echo "dontMoveLib64=1" >> $out/nix-support/setup-hook
-      '';
-    });
+  # `wrapCCMulti` and `gcc_multi` are in `_tools` now (aliases at top level).
 
-  wrapClangMulti =
-    clang:
-    callPackage ../development/compilers/llvm/multi.nix {
-      inherit clang;
-      gcc32 = pkgsi686Linux.gcc;
-      gcc64 = pkgs.gcc;
-    };
 
-  gcc_multi = wrapCCMulti gcc;
-  clang_multi = wrapClangMulti clang;
-
-  gccMultiStdenv = overrideCC stdenv buildPackages.gcc_multi;
-  clangMultiStdenv = overrideCC stdenv buildPackages.clang_multi;
+  gccMultiStdenv = overrideCC stdenv _tools.gcc_multi;
+  clangMultiStdenv = overrideCC stdenv _tools.clang_multi;
   multiStdenv = if stdenv.cc.isClang then clangMultiStdenv else gccMultiStdenv;
 
-  gcc_debug = lowPrio (
-    wrapCC (
-      gcc.cc.overrideAttrs {
-        dontStrip = true;
-      }
-    )
-  );
+  gcc_debug-unwrapped = gcc-unwrapped.overrideAttrs {
+    dontStrip = true;
+  };
 
-  gccCrossLibcStdenv = overrideCC stdenvNoCC buildPackages.gccWithoutTargetLibc;
+  gccCrossLibcStdenv = overrideCC stdenvNoCC _tools.gccWithoutTargetLibc;
 
   # The GCC used to build libc for the target platform. Normal gccs will be
   # built with, and use, that cross-compiled libc.
-  gccWithoutTargetLibc =
+  # The wrapped form is `_tools.gccWithoutTargetLibc`; this stage builds the
+  # compiler. It is built against its *target*'s no-libc binutils --- a cross
+  # compiler genuinely needs them --- which is a forward reach, spelled out.
+  gccWithoutTargetLibc-unwrapped =
     let
+      binutilsNoLibc = targetPackages._tools.binutilsNoLibc or _tools.binutilsNoLibc;
       libc1 = binutilsNoLibc.libc;
     in
-    (wrapCCWith {
-      cc = gccFun {
+    gccFun {
         # copy-pasted
         inherit noSysDirs;
         majorMinorVersion = toString default-gcc-version;
@@ -3351,7 +3295,7 @@ with pkgs;
         withoutTargetLibc = true;
         langCC = stdenv.targetPlatform.isCygwin; # can't compile libcygwin1.a without C++
         libcCross = libc1;
-        targetPackages.stdenv.cc.bintools = binutilsNoLibc;
+        targetPackages._tools.cc.bintools = binutilsNoLibc;
         enableShared =
           stdenv.targetPlatform.hasSharedLibraries
 
@@ -3360,27 +3304,58 @@ with pkgs;
           && !stdenv.targetPlatform.isWindows
           && !stdenv.targetPlatform.isCygwin
           && !(stdenv.targetPlatform.useLLVM or false);
-      };
-      bintools = binutilsNoLibc;
-      libc = libc1;
-      extraPackages = [ ];
-    }).overrideAttrs
-      (prevAttrs: {
-        meta = prevAttrs.meta // {
-          badPlatforms =
-            (prevAttrs.meta.badPlatforms or [ ])
-            ++ lib.optionals (stdenv.targetPlatform == stdenv.hostPlatform) [ stdenv.hostPlatform.system ];
-        };
-      });
+    };
 
   inherit (callPackage ../development/compilers/gcc/all.nix { inherit noSysDirs; })
-    gcc13
-    gcc14
-    gcc15
-    gcc16
+    gcc13-unwrapped
+    gcc14-unwrapped
+    gcc15-unwrapped
+    gcc16-unwrapped
     ;
 
-  gcc_latest = gcc16;
+  # The default version's unwrapped compiler. The bootstrap re-injects this
+  # the way it re-injects `gcc`, so in the final stage it is the stage-4 one.
+  gcc-unwrapped = pkgs.${"gcc${toString default-gcc-version}-unwrapped"};
+  gcc-unwrapped_latest = gcc16-unwrapped;
+
+  # The Fortran frontends, unwrapped; `_tools` wraps them. The unversioned one
+  # follows the default `gcc`, as the by-name package did.
+  gfortran-unwrapped = gcc-unwrapped.override {
+    name = "gfortran";
+    langFortran = true;
+    langCC = false;
+    langC = false;
+    profiledCompiler = false;
+  };
+  gfortran13-unwrapped = gcc13-unwrapped.override {
+    name = "gfortran";
+    langFortran = true;
+    langCC = false;
+    langC = false;
+    profiledCompiler = false;
+  };
+  gfortran14-unwrapped = gcc14-unwrapped.override {
+    name = "gfortran";
+    langFortran = true;
+    langCC = false;
+    langC = false;
+    profiledCompiler = false;
+  };
+  gfortran15-unwrapped = gcc15-unwrapped.override {
+    name = "gfortran";
+    langFortran = true;
+    langCC = false;
+    langC = false;
+    profiledCompiler = false;
+  };
+  gfortran16-unwrapped = gcc16-unwrapped.override {
+    name = "gfortran";
+    langFortran = true;
+    langCC = false;
+    langC = false;
+    profiledCompiler = false;
+  };
+
 
   libgccjit = gcc.cc.override {
     name = "libgccjit";
@@ -3392,10 +3367,9 @@ with pkgs;
     enableLTO = false;
   };
 
-  gnat = pkgs."gnat${toString default-gcc-version}"; # When changing this, update also gnatPackages
 
-  gnat13 = wrapCC (
-    gcc13.cc.override {
+  gnat13-unwrapped =
+    gcc13-unwrapped.override {
       name = "gnat";
       langC = true;
       langCC = false;
@@ -3406,23 +3380,22 @@ with pkgs;
       # If we are cross-compiling GNAT, we may as well do the same.
       gnat-bootstrap =
         if stdenv.hostPlatform == stdenv.targetPlatform && stdenv.buildPlatform == stdenv.hostPlatform then
-          buildPackages.gnat-bootstrap13
+          _tools.gnat-bootstrap13
         else
-          buildPackages.gnat13;
+          _tools.gnat13;
       stdenv =
         if
           stdenv.hostPlatform == stdenv.targetPlatform
           && stdenv.buildPlatform == stdenv.hostPlatform
           && stdenv.buildPlatform.isDarwin
         then
-          overrideCC gccStdenv gnat-bootstrap13
+          overrideCC gccStdenv (targetPackages._tools.gnat-bootstrap13 or _tools.gnat-bootstrap13)
         else
           stdenv;
-    }
-  );
+    };
 
-  gnat14 = wrapCC (
-    gcc14.cc.override {
+  gnat14-unwrapped =
+    gcc14-unwrapped.override {
       name = "gnat";
       langC = true;
       langCC = false;
@@ -3433,23 +3406,22 @@ with pkgs;
       # If we are cross-compiling GNAT, we may as well do the same.
       gnat-bootstrap =
         if stdenv.hostPlatform == stdenv.targetPlatform && stdenv.buildPlatform == stdenv.hostPlatform then
-          buildPackages.gnat-bootstrap14
+          _tools.gnat-bootstrap14
         else
-          buildPackages.gnat14;
+          _tools.gnat14;
       stdenv =
         if
           stdenv.hostPlatform == stdenv.targetPlatform
           && stdenv.buildPlatform == stdenv.hostPlatform
           && stdenv.buildPlatform.isDarwin
         then
-          overrideCC gccStdenv gnat-bootstrap14
+          overrideCC gccStdenv (targetPackages._tools.gnat-bootstrap14 or _tools.gnat-bootstrap14)
         else
           stdenv;
-    }
-  );
+    };
 
-  gnat15 = wrapCC (
-    gcc15.cc.override {
+  gnat15-unwrapped =
+    gcc15-unwrapped.override {
       name = "gnat";
       langC = true;
       langCC = false;
@@ -3460,23 +3432,22 @@ with pkgs;
       # If we are cross-compiling GNAT, we may as well do the same.
       gnat-bootstrap =
         if stdenv.hostPlatform == stdenv.targetPlatform && stdenv.buildPlatform == stdenv.hostPlatform then
-          buildPackages.gnat-bootstrap15
+          _tools.gnat-bootstrap15
         else
-          buildPackages.gnat15;
+          _tools.gnat15;
       stdenv =
         if
           stdenv.hostPlatform == stdenv.targetPlatform
           && stdenv.buildPlatform == stdenv.hostPlatform
           && stdenv.buildPlatform.isDarwin
         then
-          overrideCC gccStdenv gnat-bootstrap15
+          overrideCC gccStdenv (targetPackages._tools.gnat-bootstrap15 or _tools.gnat-bootstrap15)
         else
           stdenv;
-    }
-  );
+    };
 
-  gnat16 = wrapCC (
-    gcc16.cc.override {
+  gnat16-unwrapped =
+    gcc16-unwrapped.override {
       name = "gnat";
       langC = true;
       langCC = false;
@@ -3487,47 +3458,33 @@ with pkgs;
       # If we are cross-compiling GNAT, we may as well do the same.
       gnat-bootstrap =
         if stdenv.hostPlatform == stdenv.targetPlatform && stdenv.buildPlatform == stdenv.hostPlatform then
-          buildPackages.gnat-bootstrap16
+          _tools.gnat-bootstrap16
         else
-          buildPackages.gnat16;
+          _tools.gnat16;
       stdenv =
         if
           stdenv.hostPlatform == stdenv.targetPlatform
           && stdenv.buildPlatform == stdenv.hostPlatform
           && stdenv.buildPlatform.isDarwin
         then
-          overrideCC gccStdenv gnat-bootstrap16
+          overrideCC gccStdenv (targetPackages._tools.gnat-bootstrap16 or _tools.gnat-bootstrap16)
         else
           stdenv;
-    }
-  );
+    };
 
-  gnat-bootstrap = pkgs."gnat-bootstrap${toString default-gcc-version}";
 
-  gnat-bootstrap13 = wrapCCWith {
-    cc = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "13"; };
-    isAlireGNAT = true;
-  };
+  gnat-bootstrap13-unwrapped = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "13"; };
 
-  gnat-bootstrap14 = wrapCCWith {
-    cc = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "14"; };
-    isAlireGNAT = true;
-  };
+  gnat-bootstrap14-unwrapped = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "14"; };
 
-  gnat-bootstrap15 = wrapCCWith {
-    cc = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "15"; };
-    isAlireGNAT = true;
-  };
+  gnat-bootstrap15-unwrapped = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "15"; };
 
-  gnat-bootstrap16 = wrapCCWith {
-    cc = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "16"; };
-    isAlireGNAT = true;
-  };
+  gnat-bootstrap16-unwrapped = callPackage ../development/compilers/gnat-bootstrap { majorVersion = "16"; };
 
-  gnat13Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = buildPackages.gnat13; });
-  gnat14Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = buildPackages.gnat14; });
-  gnat15Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = buildPackages.gnat15; });
-  gnat16Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = buildPackages.gnat16; });
+  gnat13Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = _tools.gnat13; });
+  gnat14Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = _tools.gnat14; });
+  gnat15Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = _tools.gnat15; });
+  gnat16Packages = recurseIntoAttrs (callPackage ./ada-packages.nix { gnat = _tools.gnat16; });
   gnatPackages = pkgs."gnat${toString default-gcc-version}Packages";
 
   inherit (gnatPackages)
@@ -3535,8 +3492,8 @@ with pkgs;
     gnatprove
     ;
 
-  gccgo = wrapCC (
-    gcc.cc.override {
+  gccgo-unwrapped =
+    gcc-unwrapped.override {
       name = "gccgo";
       langCC = true; # required for go.
       langC = true;
@@ -3547,11 +3504,10 @@ with pkgs;
     // {
       # not supported on darwin: https://github.com/golang/go/issues/463
       meta.broken = stdenv.hostPlatform.isDarwin;
-    }
-  );
+    };
 
-  gccgo13 = wrapCC (
-    gcc13.cc.override {
+  gccgo13-unwrapped =
+    gcc13-unwrapped.override {
       name = "gccgo";
       langCC = true; # required for go.
       langC = true;
@@ -3562,11 +3518,10 @@ with pkgs;
     // {
       # not supported on darwin: https://github.com/golang/go/issues/463
       meta.broken = stdenv.hostPlatform.isDarwin;
-    }
-  );
+    };
 
-  gccgo14 = wrapCC (
-    gcc14.cc.override {
+  gccgo14-unwrapped =
+    gcc14-unwrapped.override {
       name = "gccgo";
       langCC = true; # required for go.
       langC = true;
@@ -3577,11 +3532,10 @@ with pkgs;
     // {
       # not supported on darwin: https://github.com/golang/go/issues/463
       meta.broken = stdenv.hostPlatform.isDarwin;
-    }
-  );
+    };
 
-  gccgo15 = wrapCC (
-    gcc15.cc.override {
+  gccgo15-unwrapped =
+    gcc15-unwrapped.override {
       name = "gccgo";
       langCC = true; # required for go.
       langC = true;
@@ -3592,11 +3546,10 @@ with pkgs;
     // {
       # not supported on darwin: https://github.com/golang/go/issues/463
       meta.broken = stdenv.hostPlatform.isDarwin;
-    }
-  );
+    };
 
-  gccgo16 = wrapCC (
-    gcc16.cc.override {
+  gccgo16-unwrapped =
+    gcc16-unwrapped.override {
       name = "gccgo";
       langCC = true; # required for go.
       langC = true;
@@ -3607,8 +3560,7 @@ with pkgs;
     // {
       # not supported on darwin: https://github.com/golang/go/issues/463
       meta.broken = stdenv.hostPlatform.isDarwin;
-    }
-  );
+    };
 
   ghdl-mcode = ghdl.override { backend = "mcode"; };
 
@@ -4132,83 +4084,6 @@ with pkgs;
 
   vyper = with python3Packages; toPythonApplication vyper;
 
-  wrapCCWith =
-    {
-      cc,
-      # This should be the only bintools runtime dep with this sort of logic. The
-      # Others should instead delegate to the next stage's choice with
-      # `targetPackages.stdenv.cc.bintools`. This one is different just to
-      # provide the default choice, avoiding infinite recursion.
-      # See the bintools attribute for the logic and reasoning. We need to provide
-      # a default here, since eval will hit this function when bootstrapping
-      # stdenv where the bintools attribute doesn't exist, but will never actually
-      # be evaluated -- callPackage ends up being too eager.
-      bintools ? pkgs.bintools,
-      libc ? bintools.libc,
-      # libc++ from the default LLVM version is bound at the top level, but we
-      # want the C++ library to be explicitly chosen by the caller, and null by
-      # default.
-      libcxx ? null,
-      extraPackages ? lib.optional (
-        cc.isGNU or false && stdenv.targetPlatform.isMinGW
-      ) targetPackages.threads.package,
-      nixSupport ? { },
-      ...
-    }@extraArgs:
-    callPackage ../build-support/cc-wrapper (
-      let
-        self = {
-          nativeTools = stdenv.targetPlatform == stdenv.hostPlatform && stdenv.cc.nativeTools or false;
-          nativeLibc = stdenv.targetPlatform == stdenv.hostPlatform && stdenv.cc.nativeLibc or false;
-          nativePrefix = stdenv.cc.nativePrefix or "";
-          noLibc = !self.nativeLibc && (self.libc == null);
-
-          isGNU = cc.isGNU or false;
-          isClang = cc.isClang or false;
-          isArocc = cc.isArocc or false;
-          isZig = cc.isZig or false;
-
-          inherit
-            cc
-            bintools
-            libc
-            libcxx
-            extraPackages
-            nixSupport
-            ;
-        }
-        // extraArgs;
-      in
-      self
-    );
-
-  wrapCC =
-    cc:
-    wrapCCWith {
-      inherit cc;
-    };
-
-  wrapBintoolsWith =
-    {
-      bintools,
-      libc ? targetPackages.libc or pkgs.libc,
-      ...
-    }@extraArgs:
-    callPackage ../build-support/bintools-wrapper (
-      let
-        self = {
-          nativeTools = stdenv.targetPlatform == stdenv.hostPlatform && stdenv.cc.nativeTools or false;
-          nativeLibc = stdenv.targetPlatform == stdenv.hostPlatform && stdenv.cc.nativeLibc or false;
-          nativePrefix = stdenv.cc.nativePrefix or "";
-
-          noLibc = (self.libc == null);
-
-          inherit bintools libc;
-        }
-        // extraArgs;
-      in
-      self
-    );
 
   # prolog
   yosys-bluespec = callPackage ../development/compilers/yosys/plugins/bluespec.nix { };
@@ -4836,18 +4711,10 @@ with pkgs;
     noSysDirs = (stdenv.targetPlatform != stdenv.hostPlatform) || noSysDirs;
     withAllTargets = true;
   };
-  binutils = wrapBintoolsWith {
-    bintools = binutils-unwrapped;
-  };
-  binutils_nogold = lowPrio (wrapBintoolsWith {
-    bintools = binutils-unwrapped.override {
-      enableGold = false;
-    };
-  });
-  binutilsNoLibc = wrapBintoolsWith {
-    bintools = binutils-unwrapped;
-    libc = targetPackages.preLibcHeaders or preLibcHeaders;
-  };
+  # `binutils`, `binutils_nogold` and `binutilsNoLibc`, the wrapped forms, are
+  # aliases now (`targetPackages._tools.*`): the wrapping happens in `_tools`,
+  # in the stage that consumes the tools. This stage provides the unwrapped
+  # ones above.
 
   libbfd = callPackage ../development/tools/misc/binutils/libbfd.nix { };
 
@@ -4868,42 +4735,20 @@ with pkgs;
     autoreconfHook = buildPackages.autoreconfHook269;
   };
 
-  # Here we select the default bintools implementations to be used.  Note when
-  # cross compiling these are used not for this stage but the *next* stage.
-  # That is why we choose using this stage's target platform / next stage's
-  # host platform.
-  #
-  # Because this is the *next* stages choice, it's a bit non-modular to put
-  # here. In theory, bootstrapping is supposed to not be a chain but at tree,
-  # where each stage supports many "successor" stages, like multiple possible
-  # futures. We don't have a better alternative, but with this downside in
-  # mind, please be judicious when using this attribute. E.g. for building
-  # things in *this* stage you should use probably `stdenv.cc.bintools` (from a
-  # default or alternate `stdenv`), at build time, and try not to "force" a
-  # specific bintools at runtime at all.
-  #
-  # In other words, try to only use this in wrappers, and only use those
-  # wrappers from the next stage.
-  bintools-unwrapped =
-    let
-      inherit (stdenv.targetPlatform) linker;
-    in
-    if linker == "lld" then
-      llvmPackages.bintools-unwrapped
-    else if linker == "cctools" then
-      darwin.binutils-unwrapped
-    else if linker == "bfd" then
-      binutils-unwrapped
-    else if linker == "gold" then
-      binutils-unwrapped.override { enableGoldDefault = true; }
-    else
-      null;
-  bintoolsNoLibc = wrapBintoolsWith {
-    bintools = bintools-unwrapped;
-    libc = targetPackages.preLibcHeaders or preLibcHeaders;
-  };
-  bintools = wrapBintoolsWith {
-    bintools = bintools-unwrapped;
+
+  # The toolchain this stage was handed by the stage before it. See
+  # `stage-tools.nix`.
+  _tools = import ./stage-tools.nix {
+    inherit lib buildPackages libc preLibcHeaders threads;
+    inherit
+      llvmPackages
+      gccNGPackages
+      zig
+      aroccPackages
+      ;
+    inherit (stdenv) hostPlatform buildPlatform;
+    # Through the package set rather than a `rec`, so overlays compose.
+    tools = _tools;
   };
 
   black = with python3Packages; toPythonApplication black;
@@ -5027,11 +4872,11 @@ with pkgs;
   # This is for e.g. LLVM libraries on linux.
   gccForLibs =
     if
-      stdenv.targetPlatform == stdenv.hostPlatform && targetPackages.stdenv.cc.isGNU
+      stdenv.targetPlatform == stdenv.hostPlatform && (targetPackages._tools.cc or stdenv.cc).isGNU
     # Can only do this is in the native case, otherwise we might get infinite
     # recursion if `targetPackages.stdenv.cc.cc` itself uses `gccForLibs`.
     then
-      targetPackages.stdenv.cc.cc
+      (targetPackages._tools.cc or stdenv.cc).cc
     else
       gcc.cc;
 
@@ -5052,13 +4897,9 @@ with pkgs;
   #       '';
   #     };
   #
-  distccWrapper = makeOverridable (
-    {
-      extraConfig ? "",
-    }:
-    wrapCC (distcc.links extraConfig)
-  ) { };
-  distccStdenv = lowPrio (overrideCC stdenv buildPackages.distccWrapper);
+  # `distccWrapper`, the wrapped form, is an alias now; the wrapping is in
+  # `_tools`.
+  distccStdenv = lowPrio (overrideCC stdenv _tools.distccWrapper);
 
   distccMasquerade =
     if stdenv.hostPlatform.isDarwin then
@@ -5151,13 +4992,7 @@ with pkgs;
 
   mkdocs = with python3Packages; toPythonApplication mkdocs;
 
-  mold = wrapBintoolsWith {
-    bintools = mold-unwrapped;
-    extraBuildCommands = ''
-      wrap ${targetPackages.stdenv.cc.bintools.targetPrefix}ld.mold ${../build-support/bintools-wrapper/ld-wrapper.sh} ${mold-unwrapped}/bin/ld.mold
-      wrap ${targetPackages.stdenv.cc.bintools.targetPrefix}mold ${../build-support/bintools-wrapper/ld-wrapper.sh} ${mold-unwrapped}/bin/mold
-    '';
-  };
+  # `mold`, the wrapped form, is an alias now; the wrapping is in `_tools`.
 
   mopsa = ocamlPackages.mopsa.bin;
 
@@ -5327,19 +5162,7 @@ with pkgs;
 
   vcpkg-tool-unwrapped = vcpkg-tool.override { doWrap = false; };
 
-  wild =
-    let
-      ldWrapper = ../build-support/bintools-wrapper/ld-wrapper.sh;
-    in
-    wrapBintoolsWith {
-      bintools = wild-unwrapped;
-      extraBuildCommands = ''
-        wrap wild ${ldWrapper} ${lib.getExe buildPackages.wild-unwrapped}
-        wrap ld.wild ${ldWrapper} ${lib.getExe buildPackages.wild-unwrapped}
-        wrap ${stdenv.cc.bintools.targetPrefix}ld.wild ${ldWrapper} ${lib.getExe buildPackages.wild-unwrapped}
-        wrap ${stdenv.cc.bintools.targetPrefix}ld ${ldWrapper} ${lib.getExe buildPackages.wild-unwrapped}
-      '';
-    };
+  # `wild`, the wrapped form, is an alias now; the wrapping is in `_tools`.
 
   whisper-cpp-vulkan = whisper-cpp.override {
     vulkanSupport = true;

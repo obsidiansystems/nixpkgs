@@ -97,6 +97,8 @@ let
   makeStdenv =
     {
       cc,
+      hasCC ? cc != null,
+      name ? "stdenv",
       fetchurl,
       extraPath ? [ ],
       overrides ? (self: super: { }),
@@ -142,6 +144,8 @@ let
       inherit
         shell
         cc
+        hasCC
+        name
         overrides
         ;
     };
@@ -199,29 +203,35 @@ in
     }
   )
 
-  # First build a stdenv based only on tools outside the store.
+  # First build a stdenv based only on tools outside the store. This is the
+  # impure case: the compiler handed over is the `nativeTools` wrapper stage 0
+  # made, and it travels as `_tools.cc` like any other.
   (prevStage: {
     inherit config overlays;
-    stdenv =
-      makeStdenv {
-        inherit (prevStage) cc fetchurl;
-        overrides = self: super: { inherit (prevStage) fetchurl; };
-      }
-      // {
-        inherit (prevStage) fetchurl;
-      };
+    stdenvNoCC = makeStdenv {
+      name = "stdenv-no-cc";
+      cc = null;
+      hasCC = false;
+      inherit (prevStage) fetchurl;
+      overrides = self: super: { inherit (prevStage) fetchurl; };
+    };
+    bootstrapOverlays = [ (self: super: { _tools = super._tools // { inherit (prevStage) cc; }; }) ];
   })
 
   # Using that, build a stdenv that adds the ‘xz’ command (which most systems
   # don't have, so we mustn't rely on the native environment providing it).
   (prevStage: {
     inherit config overlays;
-    stdenv = makeStdenv {
-      inherit (prevStage.stdenv) cc fetchurl;
+    stdenvNoCC = makeStdenv {
+      name = "stdenv-no-cc";
+      cc = null;
+      hasCC = false;
+      inherit (prevStage) fetchurl;
       extraPath = [ prevStage.xz ];
       overrides = self: super: { inherit (prevStage) fetchurl xz; };
       extraNativeBuildInputs = if localSystem.isLinux then [ prevStage.patchelf ] else [ ];
     };
+    bootstrapOverlays = [ (self: super: { _tools = super._tools // { inherit (prevStage.stdenv) cc; }; }) ];
   })
 
 ]

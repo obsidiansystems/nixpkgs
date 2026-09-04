@@ -187,8 +187,8 @@ let
   libEnvVar = lib.optionalString stdenv.hostPlatform.isDarwin "DY" + "LD_LIBRARY_PATH";
 
   runtimeDeps = [
-    targetPackages.stdenv.cc
-    targetPackages.stdenv.cc.bintools
+    (targetPackages._tools.cc or stdenv.cc)
+    (targetPackages._tools.cc or stdenv.cc).bintools
     coreutils # for cat
   ]
   ++ lib.optionals useLLVM [
@@ -210,7 +210,7 @@ let
   ]
   # On darwin, we need unwrapped bintools as well (for otool)
   ++ lib.optionals (stdenv.targetPlatform.linker == "cctools") [
-    targetPackages.stdenv.cc.bintools.bintools
+    (targetPackages._tools.cc or stdenv.cc).bintools.bintools
   ];
 
 in

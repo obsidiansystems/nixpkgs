@@ -20,8 +20,12 @@ let
   inherit (lib.customisation) mapCrossIndex renameCrossIndexFrom;
   inherit (lib) mapAttrs;
 
-  spliceReal =
-    inputs:
+  # `defaultIndex` names the input whose values are the ones a consumer gets
+  # when it does not go through `__spliced`: `hostTarget` for packages, and
+  # `buildHost` for `_tools` (see `shiftTools`).
+  spliceReal = spliceRealFrom "hostTarget";
+  spliceRealFrom =
+    defaultIndex: inputs:
     let
       mash =
         # Other pkgs sets
@@ -31,7 +35,8 @@ let
         // inputs.targetTarget
         # The same pkgs sets one probably intends
         // inputs.buildHost
-        // inputs.hostTarget;
+        // inputs.hostTarget
+        // inputs.${defaultIndex};
       merge =
         name: defaultValue:
         let
@@ -53,8 +58,8 @@ let
           getOutputs =
             value: lib.genAttrs (value.outputs or (lib.optional (value ? out) "out")) (output: value.${output});
           outputNames = defaultValue.outputs or (lib.optional (defaultValue ? out) "out");
-          outputSplice = spliceReal (
-            mapCrossIndex tryGetOutputs value' // { hostTarget = getOutputs value'.hostTarget; }
+          outputSplice = spliceRealFrom defaultIndex (
+            mapCrossIndex tryGetOutputs value' // { ${defaultIndex} = getOutputs value'.${defaultIndex}; }
           );
         in
         # The derivation along with its outputs, which we recur
@@ -62,13 +67,43 @@ let
         if lib.isDerivation defaultValue then
           augmentedValue // lib.genAttrs outputNames (out: outputSplice.${out})
         else if lib.isAttrs defaultValue then
-          spliceReal value'
+          spliceRealFrom defaultIndex value'
         else
           # Don't be fancy about non-derivations. But we could have used used
           # `__functor__` for functions instead.
           defaultValue;
     in
     mapAttrs merge mash;
+
+  # Splices the sets, with `_tools` off by one from everything else. A set's `_tools` is the
+  # toolchain it was *handed*: it runs on the set's build platform and targets
+  # the set's host platform. So the toolchain that "runs on build, targets
+  # host" --- what a `nativeBuildInputs` entry needs, the `buildHost` slot ---
+  # is `pkgsHostTarget._tools`, i.e. our own, and the one that "runs on host,
+  # targets target" (`hostTarget`) is `pkgsTargetTarget._tools`. The final
+  # stage has no `pkgsTargetTarget._tools`; the splice then falls back to the
+  # `buildHost` one. This applies to every set spliced this way, so scopes
+  # like `llvmPackages` get the same treatment for their own `_tools`.
+  shiftTools =
+    inputs:
+    let
+      without = mapAttrs (_: set: removeAttrs set [ "_tools" ]) inputs;
+      tools = {
+        buildBuild = inputs.buildHost._tools or { };
+        buildHost = inputs.hostTarget._tools or { };
+        hostTarget = inputs.targetTarget._tools or { };
+        buildTarget = { };
+        hostHost = { };
+        targetTarget = { };
+      };
+    in
+    spliceReal without
+    // lib.optionalAttrs (inputs.hostTarget ? _tools) {
+      # A consumer that reads `_tools.cc` directly, rather than through the
+      # splicer, gets *this* stage's toolchain --- what `stdenv.cc` is --- so
+      # the default is the `buildHost` slot, not `hostTarget`.
+      _tools = spliceRealFrom "buildHost" tools;
+    };
 
   splicePackages =
     {
@@ -79,7 +114,7 @@ let
       pkgsHostTarget,
       pkgsTargetTarget,
     }@args:
-    if actuallySplice then spliceReal (renameCrossIndexFrom "pkgs" args) else pkgsHostTarget;
+    if actuallySplice then shiftTools (renameCrossIndexFrom "pkgs" args) else pkgsHostTarget;
 
   splicedPackages =
     splicePackages {
@@ -123,7 +158,20 @@ in
 
   newScope = extra: lib.callPackageWith (pkgsForCall // extra);
 
-  pkgs = if actuallySplice then splicedPackages // { recurseForDerivations = false; } else pkgs;
+  # `pkgs._tools` is this stage's toolchain, unspliced: bootstrapping plumbing
+  # passes its entries into wrappers and dependency lists as plain
+  # derivations, and a spliced one would have the splicer swap in the next
+  # stage's. A package that takes `_tools` as an argument gets the spliced
+  # one from `pkgsForCall` above.
+  pkgs =
+    if actuallySplice then
+      splicedPackages
+      // {
+        inherit (pkgs) _tools;
+        recurseForDerivations = false;
+      }
+    else
+      pkgs;
 
   # prefill 2 fields of the function for convenience
   makeScopeWithSplicing = lib.makeScopeWithSplicing splicePackages pkgs.newScope;

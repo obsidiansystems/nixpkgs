@@ -49,11 +49,16 @@ in
   # defined as the current stage.
   adjacentPackages,
 
-  # The standard environment to use for building packages.
-  stdenv,
+  # Whether this is the last stage of the bootstrap, i.e. there is no successor
+  # stage. Set by the booter; only matters when `adjacentPackages` is not null
+  # (a self-building stage is its own successor).
+  isFinalStage ? false,
 
-  # `stdenv` without a C compiler. Passing in this helps avoid infinite
-  # recursions, and may eventually replace passing in the full stdenv.
+  # `stdenv` without a C compiler. This is what a bootstrapping stage provides,
+  # together with an overlay setting `_tools`; the full `stdenv` is then derived
+  # from the two below, as `stdenvNoCC` with `_tools.cc` put back in.
+  #
+  # The default is for stages that still pass `stdenv` (see next argument).
   stdenvNoCC ? stdenv.override {
     name = "${stdenv.name}-no-cc";
     cc = null;
@@ -62,6 +67,14 @@ in
     # size down from ~1 GiB to ~83 MiB, which is a considerable reduction.
     ${if stdenv.hostPlatform.isDarwin then "extraBuildInputs" else null} = [ ];
   },
+
+  # Deprecated. Bootstrapping stages used to pass the full `stdenv`, with the
+  # compiler choice baked in; every in-tree bootstrap now passes `stdenvNoCC`
+  # and a `_tools` overlay instead, and `stdenv` is derived in the fixpoint.
+  # The only remaining callers are the user hooks `config.replaceStdenv` and
+  # `config.replaceCrossStdenv`, which by contract hand over a whole `stdenv`;
+  # the `stdenvNoCC` default above exists for them.
+  stdenv ? null,
 
   # This is used because stdenv replacement and the stdenvCross do benefit from
   # the overridden configuration provided by the user, as opposed to the normal
@@ -72,8 +85,8 @@ in
   # outside of the store.  Thus, GCC, GFortran, & co. must always look for files
   # in standard system directories (/usr/include, etc.)
   noSysDirs ?
-    stdenv.buildPlatform.system != "x86_64-solaris"
-    && stdenv.buildPlatform.system != "x86_64-kfreebsd-gnu",
+    stdenvNoCC.buildPlatform.system != "x86_64-solaris"
+    && stdenvNoCC.buildPlatform.system != "x86_64-kfreebsd-gnu",
 
   # The configuration attribute set
   config,
@@ -81,6 +94,13 @@ in
   # A list of overlays (Additional `self: super: { .. }` customization
   # functions) to be fixed together in the produced package set
   overlays,
+
+  # Overlays private to this bootstrapping stage. Folded in just like
+  # `overlays`, but *not* forwarded to `nixpkgsFun` re-invocations
+  # (`pkgsMusl`, `pkgsStatic`, `pkgsCross.*`, ...), which re-bootstrap from
+  # scratch and must not inherit another chain's toolchain. This is where a
+  # stage says which `_tools` it was handed.
+  bootstrapOverlays ? [ ],
 }@args:
 
 let
@@ -138,7 +158,39 @@ let
       pkgs = self.pkgsHostTarget;
       targetPackages = self.pkgsTargetTarget;
 
-      inherit stdenv stdenvNoCC;
+      inherit stdenvNoCC bootstrapOverlays;
+
+      # The full standard environment: `stdenvNoCC` with the toolchain this
+      # stage was handed put back in. The name is the exact inverse of how the
+      # `stdenvNoCC` default above is formed, so `genericStdenv` sees the same
+      # arguments it would have been given directly and the derivation is
+      # unchanged.
+      #
+      # `.override` re-evaluates `genericStdenv` and so drops attributes that
+      # were merged on afterwards, which is where the bootstrap bookkeeping
+      # lives; carry it across.
+      stdenv =
+        if stdenv != null then
+          stdenv
+        else
+          let
+            # A platform with no C compiler has `_tools.cc` as a `throw` (it
+            # has to be, for splicing's `tryEval` to cope); that is "no cc"
+            # here, not an error.
+            hasCC = (builtins.tryEval self._tools.cc).success && self._tools.cc != null;
+            derived = stdenvNoCC.override {
+              name = lib.removeSuffix "-no-cc" stdenvNoCC.name;
+              inherit hasCC;
+              cc = if hasCC then self._tools.cc else null;
+              # The inverse of the `stdenvNoCC` default above dropping the
+              # Darwin SDK: the SDK is part of the toolchain a stage is handed,
+              # so it comes back from `_tools` too.
+              extraBuildInputs = lib.optional ((self._tools.sdk or null) != null) self._tools.sdk;
+            };
+          in
+          derived
+          // lib.optionalAttrs (stdenvNoCC ? __bootPackages) { inherit (stdenvNoCC) __bootPackages; }
+          // lib.optionalAttrs (stdenvNoCC ? __hatPackages) { inherit (stdenvNoCC) __hatPackages; };
     };
 
   splice = self: super: import ./splice.nix lib self (adjacentPackages != null);
@@ -161,7 +213,18 @@ let
       "The following attributes were defined both in `pkgs/top-level/all-packages.nix` and elsewhere, most likely in `pkgs/by-name/`: ${lib.concatStringsSep ", " (lib.attrNames conflictingAttrs)}";
     res;
 
-  aliases = self: super: lib.optionalAttrs config.allowAliases (import ./aliases.nix lib self super);
+  # Whether there is a successor stage to take the deprecated wrapped-tool
+  # names (`gcc`, `clang`, `binutils`, ...) from. `aliases.nix` decides which
+  # *names* exist with it, so it must not go through the fixpoint (`self`),
+  # nor force the next stage's attribute names (that cycles back through the
+  # platforms). A self-building stage is its own successor, so it keeps them.
+  targetPackagesHaveTools = adjacentPackages == null || !isFinalStage;
+
+  aliases =
+    self: super:
+    lib.optionalAttrs config.allowAliases (
+      import ./aliases.nix lib self (super // { __targetPackagesHaveTools = targetPackagesHaveTools; })
+    );
 
   variants =
     self: super:
@@ -170,9 +233,9 @@ let
         inherit
           lib
           nixpkgsFun
-          stdenv
           overlays
           ;
+        inherit (self) stdenv;
       } self super
     );
 
@@ -212,7 +275,7 @@ let
     # Used by wine, firefox with debugging version of Flash, ...
     pkgsi686Linux =
       let
-        isSupported = stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isx86;
+        isSupported = stdenvNoCC.hostPlatform.isLinux && stdenvNoCC.hostPlatform.isx86;
       in
       if !config.allowAliases || isSupported then
         nixpkgsFun {
@@ -234,11 +297,11 @@ let
             })
           ]
           ++ overlays;
-          ${if stdenv.hostPlatform == stdenv.buildPlatform then "localSystem" else "crossSystem"} = {
+          ${if stdenvNoCC.hostPlatform == stdenvNoCC.buildPlatform then "localSystem" else "crossSystem"} = {
             config =
               if isSupported then
                 lib.systems.parse.tripleFromSystem (
-                  stdenv.hostPlatform.parsed
+                  stdenvNoCC.hostPlatform.parsed
                   // {
                     cpu = lib.systems.parse.cpuTypes.i686;
                   }
@@ -254,11 +317,11 @@ let
     # Otherwise, return a natively built linux package set for the current cpu architecture string.
     # (ABI and other details will be set to the default for the cpu/os pair)
     pkgsLinux =
-      if stdenv.hostPlatform.isLinux then
+      if stdenvNoCC.hostPlatform.isLinux then
         self
       else
         nixpkgsFun {
-          localSystem = lib.systems.elaborate "${stdenv.hostPlatform.parsed.cpu.name}-linux";
+          localSystem = lib.systems.elaborate "${stdenvNoCC.hostPlatform.parsed.cpu.name}-linux";
         };
 
     # Extend the package set with zero or more overlays. This preserves
@@ -289,7 +352,7 @@ let
           {
             pkgsStatic = super';
           }
-          // lib.optionalAttrs super'.stdenv.hostPlatform.isMusl {
+          // lib.optionalAttrs super'.stdenvNoCC.hostPlatform.isMusl {
             pkgsMusl = super';
           }
         )
@@ -298,14 +361,14 @@ let
       crossSystem = {
         isStatic = true;
         config = lib.systems.parse.tripleFromSystem (
-          if stdenv.hostPlatform.isLinux then
-            lib.systems.parse.mkMuslSystem stdenv.hostPlatform.parsed
+          if stdenvNoCC.hostPlatform.isLinux then
+            lib.systems.parse.mkMuslSystem stdenvNoCC.hostPlatform.parsed
           else
-            stdenv.hostPlatform.parsed
+            stdenvNoCC.hostPlatform.parsed
         );
         gcc =
-          lib.optionalAttrs (stdenv.hostPlatform.system == "powerpc64-linux") { abi = "elfv2"; }
-          // stdenv.hostPlatform.gcc or { };
+          lib.optionalAttrs (stdenvNoCC.hostPlatform.system == "powerpc64-linux") { abi = "elfv2"; }
+          // stdenvNoCC.hostPlatform.gcc or { };
       };
     };
   };
@@ -370,6 +433,7 @@ let
       configOverrides
       internallyDisallowedAttrPathsOverlay
     ]
+    ++ bootstrapOverlays
     ++ overlays
     ++ [
       stdenvOverrides

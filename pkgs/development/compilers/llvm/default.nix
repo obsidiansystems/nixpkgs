@@ -6,11 +6,13 @@
   targetPackages,
   stdenv,
   pkgs,
-  # This is the default binutils, but with *this* version of LLD rather
-  # than the default LLVM version's, if LLD is the choice. We use these for
-  # the `useLLVM` bootstrapping below.
-  bootBintoolsNoLibc ? if stdenv.targetPlatform.linker == "lld" then null else pkgs.bintoolsNoLibc,
-  bootBintools ? if stdenv.targetPlatform.linker == "lld" then null else pkgs.bintools,
+  # The bintools this set's wrappers link with: the ones the stage was handed,
+  # unless the host platform links with LLD, in which case null means "the
+  # LLVM binutils of *this* version, wrapped here". Keyed on the host platform
+  # because `_tools` wrap for this stage, not for the next one.
+  bootBintoolsNoLibc ?
+    if stdenv.hostPlatform.linker == "lld" then null else pkgs._tools.bintoolsNoLibc,
+  bootBintools ? if stdenv.hostPlatform.linker == "lld" then null else pkgs._tools.bintools,
   llvmVersions ? { },
   generateSplicesForMkScope,
   patchesFn ? lib.id,

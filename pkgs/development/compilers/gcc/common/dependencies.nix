@@ -61,7 +61,7 @@ in
     (
       if buildIsHost then
         [
-          targetPackages.stdenv.cc.bintools # newly-built gcc will be used
+          (targetPackages._tools.cc or stdenv.cc).bintools # newly-built gcc will be used
         ]
       else
         assert hostIsTarget;
@@ -79,7 +79,7 @@ in
     libxcrypt
   ]
   ++ [
-    targetPackages.stdenv.cc.bintools # For linking code at run-time
+    (targetPackages._tools.cc or stdenv.cc).bintools # For linking code at run-time
   ]
   ++ optionals (isl != null) [ isl ]
   ++ optionals (zlib != null) [ zlib ]

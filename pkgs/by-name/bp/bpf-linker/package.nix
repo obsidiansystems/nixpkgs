@@ -35,7 +35,7 @@ rustPlatform.buildRustPackage rec {
 
   nativeCheckInputs = [
     btfdump
-    llvmPackagesForLinker.clang.cc
+    llvmPackagesForLinker.clang-unwrapped
     llvmPackagesForLinker.llvm
   ];
 

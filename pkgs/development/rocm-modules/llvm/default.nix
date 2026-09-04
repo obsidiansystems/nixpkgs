@@ -124,6 +124,9 @@ let
   # An llvmPackages (pkgs/development/compilers/llvm/) built from ROCm LLVM's source tree
   llvmPackagesRocm = llvmPackages_base.override (_old: {
     stdenv = stdenvToBuildRocmLlvm;
+    # A fork built from its own source: its `_tools` must wrap the binutils and
+    # clang built here, not the stock `llvmPackages_22`'s.
+    standalone = true;
 
     # not setting gitRelease = because that causes patch selection logic to use git patches
     # ROCm LLVM is closer to 20 official

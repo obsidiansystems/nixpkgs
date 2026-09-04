@@ -171,8 +171,45 @@ let
     }:
 
     let
+      # The compiler this stage was handed. Built directly from `cc-wrapper`,
+      # with `nativeTools = false` at every stage, so nothing here reaches
+      # through the package set (and so nothing can reach forward).
+      thisCC =
+        if prevStage.gcc-unwrapped == null then
+          null
+        else
+          (lib.makeOverridable (import ../../build-support/cc-wrapper) {
+            name = "${name}-gcc-wrapper";
+            nativeTools = false;
+            nativeLibc = false;
+            expand-response-params = lib.optionalString (
+              prevStage.stdenv.hasCC or false && prevStage.stdenv.cc != "/dev/null"
+            ) prevStage.expand-response-params;
+            cc = prevStage.gcc-unwrapped;
+            bintools = prevStage.binutils;
+            isGNU = true;
+            inherit (prevStage) libc;
+            inherit lib;
+            inherit (prevStage) coreutils gnugrep;
+            stdenvNoCC = prevStage.ccWrapperStdenv;
+            fortify-headers = prevStage.fortify-headers;
+            runtimeShell = prevStage.ccWrapperStdenv.shell;
+          }).overrideAttrs
+            (
+              a:
+              lib.optionalAttrs (prevStage.gcc-unwrapped.passthru.isXgcc or false) {
+                # This affects only `xgcc` (the compiler which compiles the final compiler).
+                postFixup = (a.postFixup or "") + ''
+                  echo "--sysroot=${lib.getDev prevStage.libc}" >> $out/nix-support/cc-cflags
+                '';
+              }
+            );
+
+      # `stdenv` is derived from this and `_tools.cc` in `stage.nix`; the name
+      # is the exact inverse of how `stage.nix` would form it from a passed
+      # `stdenv`, so the derivations are unchanged.
       thisStdenv = genericStdenv {
-        name = "${name}-stdenv-linux";
+        name = "${name}-stdenv-linux-no-cc";
         buildPlatform = localSystem;
         hostPlatform = localSystem;
         targetPlatform = localSystem;
@@ -197,36 +234,8 @@ let
           inherit (config) rewriteURL;
         };
 
-        cc =
-          if prevStage.gcc-unwrapped == null then
-            null
-          else
-            (lib.makeOverridable (import ../../build-support/cc-wrapper) {
-              name = "${name}-gcc-wrapper";
-              nativeTools = false;
-              nativeLibc = false;
-              expand-response-params = lib.optionalString (
-                prevStage.stdenv.hasCC or false && prevStage.stdenv.cc != "/dev/null"
-              ) prevStage.expand-response-params;
-              cc = prevStage.gcc-unwrapped;
-              bintools = prevStage.binutils;
-              isGNU = true;
-              inherit (prevStage) libc;
-              inherit lib;
-              inherit (prevStage) coreutils gnugrep;
-              stdenvNoCC = prevStage.ccWrapperStdenv;
-              fortify-headers = prevStage.fortify-headers;
-              runtimeShell = prevStage.ccWrapperStdenv.shell;
-            }).overrideAttrs
-              (
-                a:
-                lib.optionalAttrs (prevStage.gcc-unwrapped.passthru.isXgcc or false) {
-                  # This affects only `xgcc` (the compiler which compiles the final compiler).
-                  postFixup = (a.postFixup or "") + ''
-                    echo "--sysroot=${lib.getDev prevStage.libc}" >> $out/nix-support/cc-cflags
-                  '';
-                }
-              );
+        cc = null;
+        hasCC = false;
 
         overrides = self: super: (overrides self super) // { fetchurl = thisStdenv.fetchurlBoot; };
       };
@@ -234,7 +243,20 @@ let
     in
     {
       inherit config overlays;
-      stdenv = thisStdenv;
+      stdenvNoCC = thisStdenv;
+      # The toolchain this stage was handed. Stage-private, so it does not ride
+      # along into `pkgsMusl` and friends, which bootstrap their own.
+      bootstrapOverlays = [
+        (
+          self: super: {
+            _tools = super._tools // {
+              cc = thisCC;
+              cc-unwrapped = prevStage.gcc-unwrapped;
+              bintools = prevStage.binutils;
+            };
+          }
+        )
+      ];
     };
 
 in
@@ -348,7 +370,7 @@ in
         # TODO(@sternenseemann): Can we already build the wrapper with the actual runtimeShell here?
         # Historically, the wrapper didn't use runtimeShell, so the used shell had to be changed explicitly
         # (or stdenvNoCC.shell would be used) which happened in stage4.
-        binutils = super.binutils.override {
+        binutils = super._tools.binutils.override {
           runtimeShell = "${stage0.bash}/bin/bash";
         };
         gcc-unwrapped =
@@ -495,9 +517,9 @@ in
           # and that can fail to load.  Therefore we upgrade `ld` to use newer libc;
           # apparently the interpreter needs to match libc, too.
           bintools = self.stdenvNoCC.mkDerivation {
-            pname = prevStage.bintools.bintools.pname + "-patchelfed-ld";
-            inherit (prevStage.bintools.bintools) version;
-            passthru = { inherit (prevStage.bintools.passthru) isFromBootstrapFiles; };
+            pname = prevStage.binutils.bintools.pname + "-patchelfed-ld";
+            inherit (prevStage.binutils.bintools) version;
+            passthru = { inherit (prevStage.binutils.passthru) isFromBootstrapFiles; };
             enableParallelBuilding = true;
             dontUnpack = true;
             dontBuild = true;
@@ -506,7 +528,7 @@ in
             # We wouldn't need to *copy* all, but it's easier and the result is temporary anyway.
             installPhase = ''
               mkdir -p "$out"/bin
-              cp -a '${prevStage.bintools.bintools}'/bin/* "$out"/bin/
+              cp -a '${prevStage.binutils.bintools}'/bin/* "$out"/bin/
               chmod +w "$out"/bin/ld.bfd
               patchelf --set-interpreter '${self.libc}'/lib/ld*.so.? \
                 --set-rpath "${self.libc}/lib:$(patchelf --print-rpath "$out"/bin/ld.bfd)" \
@@ -638,10 +660,15 @@ in
           ;
         ${localSystem.libc} = prevStage.${localSystem.libc};
         # Since this is the first fresh build of binutils since stage2, our own runtimeShell will be used.
-        binutils = super.binutils.override {
+        binutils = super._tools.binutils.override {
           # Build expand-response-params with last stage like below
           inherit (prevStage) expand-response-params;
         };
+
+        # `gcc-unwrapped` in a stage is the compiler the stage *uses* --- what
+        # `gcc.cc` is --- not the one it builds. Now that it is a real attribute
+        # rather than `gcc.cc`, say so here, next to the `gcc` it belongs to.
+        gcc-unwrapped = prevStage.gcc-unwrapped;
 
         gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
           nativeTools = false;
@@ -689,8 +716,30 @@ in
     assert isBuiltByNixpkgsCompiler prevStage.patchelf;
     {
       inherit config overlays;
-      stdenv = genericStdenv rec {
-        name = "stdenv-linux";
+
+      # The toolchain this stage was handed, as an overlay on `_tools`; `stdenv`
+      # is derived from it and `stdenvNoCC` in `stage.nix`. This is the same
+      # re-injection `overrides` below does for `gcc` and `binutils`, stated as
+      # what it is. Stage-private: it must not ride along into `pkgsMusl` and
+      # friends, which bootstrap their own.
+      bootstrapOverlays = [
+        (
+          self: super: {
+            _tools = super._tools // {
+              cc = prevStage.gcc;
+              cc-unwrapped = prevStage.gcc-unwrapped;
+              bintools = prevStage.binutils;
+              bintools-unwrapped = prevStage.binutils-unwrapped;
+              # The GNU-by-name entry is the same re-injected wrapper: `overrides`
+              # below re-injects `binutils`, and this is what that name means here.
+              binutils = prevStage.binutils;
+            };
+          }
+        )
+      ];
+
+      stdenvNoCC = genericStdenv rec {
+        name = "stdenv-linux-no-cc";
 
         buildPlatform = localSystem;
         hostPlatform = localSystem;
@@ -706,9 +755,10 @@ in
           prevStage.updateAutotoolsGnuConfigScriptsHook
         ];
 
-        cc = prevStage.gcc;
+        cc = null;
+        hasCC = false;
 
-        shell = cc.shell;
+        shell = prevStage.gcc.shell;
 
         inherit (prevStage.stdenv) fetchurlBoot;
 
@@ -858,8 +908,8 @@ in
           }
           // lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) {
             # Need to get rid of these when cross-compiling.
-            inherit (prevStage) binutils binutils-unwrapped;
-            gcc = cc;
+            inherit (prevStage) binutils binutils-unwrapped gcc-unwrapped;
+            gcc = prevStage.gcc;
             # The same wrapper `stdenv.cc` links with, so everything wrapped or built
             # against `bintools` (`gccN`, `autoPatchelfHook`, ...) uses the same
             # bintools as `stdenv.cc`.
@@ -882,7 +932,12 @@ in
     assert isBuiltByNixpkgsCompiler prevStage.gnugrep;
     assert isBuiltByNixpkgsCompiler prevStage.patchelf;
     {
-      inherit (prevStage) config overlays stdenv;
+      inherit (prevStage)
+        config
+        overlays
+        stdenvNoCC
+        bootstrapOverlays
+        ;
     }
   )
 ]

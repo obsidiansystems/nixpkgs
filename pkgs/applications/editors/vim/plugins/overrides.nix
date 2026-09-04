@@ -531,7 +531,7 @@ assertNoAdditions {
       " "let g:clang_library_path='${lib.getLib llvmPackages.libclang}/lib/libclang.so'"
 
             substituteInPlace "$out"/plugin/libclang.py \
-              --replace-fail "/usr/lib/clang" "${llvmPackages.clang.cc}/lib/clang"
+              --replace-fail "/usr/lib/clang" "${llvmPackages.clang-unwrapped}/lib/clang"
     '';
     meta = old.meta // {
       # Docs say bsd3, except some LLVM project files under ncsa.
@@ -587,7 +587,7 @@ assertNoAdditions {
 
   clighter8 = super.clighter8.overrideAttrs {
     preFixup = ''
-      sed "/^let g:clighter8_libclang_path/s|')$|${lib.getLib llvmPackages.clang.cc}/lib/libclang.so')|" \
+      sed "/^let g:clighter8_libclang_path/s|')$|${lib.getLib llvmPackages.clang-unwrapped}/lib/libclang.so')|" \
         -i "$out"/plugin/clighter8.vim
     '';
   };

@@ -104,7 +104,7 @@ stdenv.mkDerivation (finalAttrs: {
     # Same pattern as for openmpi (see https://github.com/NixOS/nixpkgs/pull/58964#discussion_r275059427).
     substituteInPlace "''${!outputDev}"/share/pmix/pmixcc-wrapper-data.txt \
       --replace-fail compiler=${stdenv.cc.targetPrefix}gcc \
-        compiler=${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}cc
+        compiler=${(targetPackages._tools.cc or stdenv.cc)}/bin/${(targetPackages._tools.cc or stdenv.cc).targetPrefix}cc
   '';
 
   postFixup = lib.optionalString (lib.elem "dev" finalAttrs.outputs) ''

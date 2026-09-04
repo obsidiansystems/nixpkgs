@@ -80,7 +80,7 @@ stdenv.mkDerivation (finalAttrs: {
         llvmMajor = lib.versions.major llvmPackages.llvm.version;
       in
       {
-        resourceDir = "${llvmPackages.clang.cc.lib}/lib/clang/${llvmMajor}";
+        resourceDir = "${llvmPackages.clang-unwrapped.lib}/lib/clang/${llvmMajor}";
         libclang = "${lib.getLib llvmPackages.libclang}/lib/libclang.so";
         libc-cflags = "${llvmPackages.clang}/nix-support/libc-cflags";
         libcxx-cflags = "${llvmPackages.clang}/nix-support/libcxx-cxxflags";

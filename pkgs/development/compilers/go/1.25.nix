@@ -19,7 +19,7 @@ let
 
   # We need a target compiler which is still runnable at build time,
   # to handle the cross-building case where build != host == target
-  targetCC = pkgsBuildTarget.targetPackages.stdenv.cc;
+  targetCC = (pkgsBuildTarget.targetPackages._tools.cc or pkgsBuildTarget.stdenv.cc);
 
   isCross = stdenv.buildPlatform != stdenv.targetPlatform;
 in

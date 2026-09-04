@@ -1,11 +1,12 @@
 {
+  stdenv,
   targetPackages,
   lib,
   makeSetupHook,
   dieHook,
   writeShellScript,
   tests,
-  cc ? targetPackages.stdenv.cc,
+  cc ? (targetPackages._tools.cc or stdenv.cc),
   sanitizers ? [ ],
 }:
 

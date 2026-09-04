@@ -148,7 +148,7 @@ stdenv.mkDerivation (finalAttrs: {
     let
       nativeToolchainFlags =
         let
-          nativeCC = pkgsBuildBuild.targetPackages.stdenv.cc;
+          nativeCC = (pkgsBuildBuild.targetPackages._tools.cc or pkgsBuildBuild.stdenv.cc);
           nativeBintools = nativeCC.bintools.bintools;
         in
         [

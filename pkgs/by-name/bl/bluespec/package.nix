@@ -219,7 +219,7 @@ stdenv.mkDerivation rec {
     # thus wrapping `/bin/bsc` messes up the scriptname detection in it.
     wrapProgram $out/bin/core/bsc \
       --prefix PATH : ${
-        lib.makeBinPath (if stdenv.hostPlatform.isDarwin then [ cctools ] else [ targetPackages.stdenv.cc ])
+        lib.makeBinPath (if stdenv.hostPlatform.isDarwin then [ cctools ] else [ (targetPackages._tools.cc or stdenv.cc) ])
       }
   '';
 
