@@ -1117,6 +1117,10 @@ assert bootstrapTools.passthru.isFromBootstrapFiles or false; # sanity check
             # These have to be dropped from the overlay when cross-compiling. Wrappers are obviously target-specific.
             # darwin.binutils is not yet ready to be target-independent.
             (lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) (bintoolsPackages prevStage))
+            # The same wrapper `stdenv.cc` links with.
+            (lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) {
+              bintools = self.darwin.binutils;
+            })
             {
               "llvmPackages_${llvmVersion}" = overrideLlvmPackagesScope super."llvmPackages_${llvmVersion}" (
                 finalLLVM: _:

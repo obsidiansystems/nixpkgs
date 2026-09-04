@@ -860,6 +860,10 @@ in
             # Need to get rid of these when cross-compiling.
             inherit (prevStage) binutils binutils-unwrapped;
             gcc = cc;
+            # The same wrapper `stdenv.cc` links with, so everything wrapped or built
+            # against `bintools` (`gccN`, `autoPatchelfHook`, ...) uses the same
+            # bintools as `stdenv.cc`.
+            bintools = self.binutils;
           };
       };
     }
