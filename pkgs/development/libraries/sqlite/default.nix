@@ -90,19 +90,22 @@ stdenv.mkDerivation (finalAttrs: {
       hash = "sha256-JJnIF/2SmGgPzQe7E4DmC61komZpbmjnIemggpBPLdM=";
     })
 
-    # --with-tcl and --with-tclsh were tangled together in bad ways. I
-    # (@Ericson2314) wrote this patch to untangle and submit upstream. It
-    # unbreaks our cross builds.
+    # --with-tcl and --with-tclsh were tangled together in bad ways. This
+    # untangles them, which unbreaks our cross builds.
     #
-    # https://sqlite.org/forum/forumpost?udc=1&name=fe9e99eb27c8c2ba
+    # https://sqlite.org/forum/forumpost/fe9e99eb27c8c2ba
     #
-    # The intent is to submit it there once I have enough forum privileges
-    # to do so. The Nixpkgs copy will remain the sole copy in the meantime.
+    # Upstream has taken it onto the `cygwin-msys-tclsh-forum-fe9e99eb`
+    # branch, pending testing on Cygwin/MSYS; it is not on trunk yet.
     #
-    # TODO make it unconditional next mass rebuild. If version of this is
-    # upstreamed, also replace this with a fetchpatch of the final landed
-    # change for older versions.
-    ./separate-build-and-host-tcl.patch
+    # TODO make it unconditional next mass rebuild. Once it lands on
+    # trunk, point this at the trunk commit instead, and drop it
+    # entirely once a release contains it.
+    (fetchpatch {
+      url = "https://github.com/sqlite/sqlite/commit/d501b949a39d276494c8e36cdc2b94bfe28e671c.patch";
+      includes = [ "autosetup/sqlite-config.tcl" ];
+      hash = "sha256-eTeb1o1aCjXG5jv3jK6KtSA7Lcr7lrUY+sI0iq/U8zU=";
+    })
   ];
 
   buildInputs = [
